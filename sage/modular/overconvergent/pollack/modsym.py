@@ -26,9 +26,12 @@ def flip(A):
 @cached_function
 def unimod_matrices2(r,s):
 	"""connects the rational number 1/0 to r/s"""
-	if s<>0:
+        
+	if s:
 		v=[]
-		list=convergents(r/s)
+# the function contfrac_q in https://github.com/williamstein/psage/blob/master/psage/modform/rational/modular_symbol_map.pyx
+# is very, very relevant to massively optimizing this.
+		list=convergents(QQ(r)/s)
 		for j in range(0,len(list)-1):
 			a=list[j].numerator()
 			c=list[j].denominator()
