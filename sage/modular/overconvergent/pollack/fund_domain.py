@@ -29,10 +29,10 @@ from sage.rings.integer_ring import ZZ
 
 class manin_relations(SageObject):
     def __init__(self, N):
-        """
+        r"""
         
         INPUT:
-            N -- a positive integer
+           ``N`` -- a positive integer
 
         OUTPUT:
             none
@@ -341,27 +341,27 @@ class manin_relations(SageObject):
 
 
     def level(self):
-	"""
-	Returns the level N of Gamma_0(N) that we work with.
+	r"""
+	Returns the level `N` of `\Gamma_0(N)` that we work with.
 	"""
 	return self.__N
 
 
     def P1(self):
-        """
-        Returns the Sage representation of P^1(Z/NZ) that we work with.
+        r"""
+        Returns the Sage representation of `P^1(Z/NZ)` that we work with.
         """
         return deepcopy(self.__P)
 
     def P1_to_mats(self):
-        """
+        r"""
         Returns the translation table between the Sage and geometric 
-	descriptions of P^1(Z/NZ).
+	descriptions of `P^1(Z/NZ)`.
         """
         return deepcopy(self.__P1_to_mats)
 
     def symbol_generator_indices(self):
-        """
+        r"""
         Returns a list of indices of the (geometric) coset representatives 
 	whose values (on the associated degree zero divisors) determine the 
 	modular symbol.
@@ -369,7 +369,7 @@ class manin_relations(SageObject):
         return deepcopy(self.__gens)
 
     def two_torsion_indices(self):
-        """
+        r"""
         Returns a list of indices pointing to the coset generators whose 
 	paths are identified by some 2-torsion element (which switches the 
 	path orientation).
@@ -377,46 +377,46 @@ class manin_relations(SageObject):
         return deepcopy(self.__twotor)
 
     def two_torsion_relation_matrices(self):
-        """
-        Returns a list of (2-torsion in PSL_2(Z)) matrices in Gamma_0(N) that 
-	give the orientation identification in the paths indexed by 
+        r"""
+        Returns a list of (2-torsion in `PSL_2(Z)`) matrices in `\Gamma_0(N)` 
+        that give the orientation identification in the paths indexed by 
 	two_torsion_indices().
         """
         return deepcopy(self.__twotorrels)
 
     def three_torsion_indices(self):
-        """
+        r"""
         Returns a list of indices pointing to (geometric) coset 
 	representatives that form one side of an ideal triangle with an 
-	interior fixed point of a 3-torsion element of Gamma_0(N).
+	interior fixed point of a 3-torsion element of `\Gamma_0(N)`.
         """
         return deepcopy(self.__threetor)
 
     def three_torsion_relation_matrices(self):
-        """
-        A list of (3-torsion in PSL_2(Z)) matrices in Gamma_0(N) that give 
-        the interior fixed point indexed by three_torsion_indices().
+        r"""
+        A list of (3-torsion in `PSL_2(Z)`) matrices in `\Gamma_0(N)` that 
+        give the interior fixed point indexed by three_torsion_indices().
         """
         return deepcopy(self.__threetorrels)
 
     def coset_relations(self):
-        """
-        Returns a list of lists of triples (d, A, i), one for each coset 
-	representative of Gamma_0(N) (ordered to correspond to the 
+        r"""
+        Returns a list of lists of triples `(d, A, i)`, one for each coset 
+	representative of `\Gamma_0(N)` (ordered to correspond to the 
 	representatives of self.mats) expressing the value of a 
         modular symbol on the associated unimodular path as a sum of terms 
 
-             d * (value on the i-th representative) | A
+            `d * (value on the i-th representative) | A`
 
-        where the  index i must appear in self.gens, and the slash gives 
+        where the index `i` must appear in self.gens, and the slash gives 
 	the matrix action.
         """
         return deepcopy(self.__rels)
 
     def form_list_of_cusps(self):
-        """
-        Constructs a fundamental domain for Gamma_0(N) as in [PS] section 2 
-	(and section 2.5 for the case of 3-torsion) made up of unimodular 
+        r"""
+        Constructs a fundamental domain for `\Gamma_0(N)` as in [PS] Section 2 
+	(and Section 2.5 for the case of 3-torsion) made up of unimodular 
 	paths and returns the list of rational numbers which mark where 
 	this fundamental domain meets the real axis.
     
@@ -531,7 +531,7 @@ class manin_relations(SageObject):
             ## ---------------------------------------------------------------
             
 	    s=1
-            while s<len(C):       ## range over odd indices in the final list C
+            while s < len(C):    ## range over odd indices in the final list C
                 if C[s] == "i":
                     C[s]="?"
                 
@@ -559,15 +559,13 @@ class manin_relations(SageObject):
         C = [Rational(C[s]) for s in range(0,len(C),2)]
         return C
 
-
-
     def is_unimodular_path(self, r1, r2):
-        """
+        r"""
         Determines whether two (non-infinite) cusps are connected by a 
 	unimodular path.
     
         INPUT:
-            r1, r2 -- rational numbers
+            ``r1, r2`` -- rational numbers
         
         OUTPUT:
             boolean
@@ -582,16 +580,16 @@ class manin_relations(SageObject):
 
 
     def unimod_to_matrices(self, r1, r2):
-        """
+        r"""
 	Returns the two matrices whose associated unimodular paths connect 
-	r1 -> r2 and r2 -> r1, respectively.
+	`r1 -> r2` and `r2 -> r1`, respectively.
     
         INPUT:
-            r1, r2 -- rational numbers (that are assumed to be related by 
+            ``r1, r2`` -- rational numbers (that are assumed to be related by 
 	    a unimodular path!)
         
         OUTPUT:
-            a pair of 2x2 matrix of determinant 1
+            a pair of `2 x 2` matrix of determinant 1
 
         EXAMPLES:
         """
@@ -606,17 +604,17 @@ class manin_relations(SageObject):
 
 
     def mat_boundary_of_fd(self,C):
-        """
+        r"""
         Returns a list of matrices whose associated unimodular paths gives 
-	the boundary of a fundamental domain for Gamma_0(N).  
-        (In the case when Gamma_0(N) has three torsion the shape is slightly 
-	smaller than a fundamental domain.  See `\S2.5` of Pollack-Stevens.)
+	the boundary of a fundamental domain for `\Gamma_0(N)`.  
+        (In the case when `\Gamma_0(N)` has three torsion the shape is slightly
+        smaller than a fundamental domain.  See `\S2.5` of Pollack-Stevens.)
 	
         INPUT:
             a list of rational numbers coming from form_list_of_cusps
         
         OUTPUT:
-            a list of 2x2 integer matrices of determinant 1
+            a list of `2 x 2` integer matrices of determinant 1
 	      
         EXAMPLES:
         """

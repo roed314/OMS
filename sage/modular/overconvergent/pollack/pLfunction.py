@@ -165,7 +165,7 @@ def pLfunction_coef(Phi,ap,n,D,gam,error=None):
     
     OUTPUT:
 
-    The nth coefficient of the `p`-adic `L`-function in the `T`-variable
+    The `n`th coefficient of the `p`-adic `L`-function in the `T`-variable
     of a quadratic twist of `\Phi`
 
     EXAMPLES:
