@@ -109,40 +109,81 @@ def basic_hecke_matrix(a,ell):
         return Matrix(2,2,[ell,0,0,1])
 
 @cached_function
-def prep_hecke_individual(ell,N,M,m):
-    ans=[[] for a in range(len(M.coset_reps()))]
-    for a in range(ell):
-        gama=basic_hecke_matrix(a,ell)
-        t=gama*M.coset_reps(M.generator_indices(m))
-        v=unimod_matrices_from_infty(t[0,0],t[1,0])+unimod_matrices_to_infty(t[0,1],t[1,1])
-        for b in range(len(v)):
-            A=v[b]
-            i=M.P1().index(A[1,0],A[1,1])
-            j=M.P1_to_mats(i)
-            B=M.coset_reps(j)
-            C=invert(A[0,0],A[0,1],A[1,0],A[1,1])
-            gaminv=B*C
-            ans[j]=ans[j]+[gaminv*gama]
-    if N%ell<>0:
-        gama=basic_hecke_matrix(Infinity,ell)
-        t=gama*M.coset_reps(M.generator_indices(m))
-        v=unimod_matrices_from_infty(t[0,0],t[1,0])+unimod_matrices_to_infty(t[0,1],t[1,1])
-        for b in range(len(v)):
-            A=v[b]
-            i=M.P1().index(A[1,0],A[1,1])
-            j=M.P1_to_mats(i)
-            B=M.coset_reps(j)
-            C=invert(A[0,0],A[0,1],A[1,0],A[1,1])
-            gaminv=B*C
-            ans[j]=ans[j]+[gaminv*gama]
+def prep_hecke_individual(ell,M,m):
+    """
+    This function does some precomputations needed to compute T_ell.  In particular,
+    if phi is a modular symbol and D_m is the divisor associated to our m-th chosen 
+    generator, to compute (phi|T_ell)(D_m) one needs to compute phi(gam_a D_m)|gam_a where
+    gam_a run thru the ell+1 matrices defining T_ell.  One then takes gam_a D_m and writes it
+    as a sum of unimodular divisors.  For each such unimodular divisor, say [M] where M is a
+    SL_2 matrix, we then write M=gam*M_i where gam is in Gamma_0(N) and M_i is one of our
+    chosen coset representatives.  Then phi([M]) = phi([M_i]) | gam^(-1).  Thus, one has
+    
+        (phi | gam_a)(D_m) = sum_i sum_j phi([M_i]) | gam_{ij}^(-1) * gam_a
+
+    as i runs over the indices of all coset representatives and j simply runs over however many
+    times M_i appears in the above computation.  
+
+    Finally, the output of this function is a list L enumerated by the coset representatives 
+    in M.coset_reps() where each element of this list is a list of matrices, and the entries of L
+    satisfy:
+
+        L[i][j] = gam_{ij} * gam_a  
+
+    INPUT:
+        ell -- a prime
+        M -- Manin relations of level N
+        m -- index of a generator 
+        
+    OUTPUT:
+	A list of lists (see above).
+
+    EXAMPLES:
+    """
+
+    N = M.level()
+    ans = [[] for a in range(len(M.coset_reps()))]  ## this will be the list L above enumerated by coset reps
+
+    ##  This loop will runs thru the ell+1 (or ell) matrices defining T_ell of the form [1,a,0,ell] and carry out the computation
+    ##  described above.
+    ##  -------------------------------------
+    for a in range(ell+1):
+	if (a<ell) or (N%ell!=0):   ## if the level is not prime to ell the matrix [ell,0,0,1] is avoided.
+           gama = basic_hecke_matrix(a,ell)
+           t = gama*M.coset_reps(M.generator_indices(m))  ##  In the notation above this is gam_a * D_m
+           v = unimod_matrices_from_infty(t[0,0],t[1,0]) + unimod_matrices_to_infty(t[0,1],t[1,1])  ##  This expresses t as a sum of unimodular divisors
+
+           ## This loop runs over each such unimodular divisor
+           ## ------------------------------------------------
+           for b in range(len(v)):
+               A = v[b]    ##  A is the b-th unimodular divisor
+               i = M.P1().index(A[1,0],A[1,1])      ##  i is the index in SAGE P1 of the bottom row of A
+               j = M.P1_to_mats(i)                  ##  j is the index of our coset rep equivalent to A
+               B = M.coset_reps(j)                    ##  B is that coset rep
+               C = invert(A[0,0],A[0,1],A[1,0],A[1,1])   ##  C equals A^(-1).  This is much faster than just inverting thru SAGE
+               gaminv = B * C                              ##  gaminv = B*A^(-1)
+               ans[j] = ans[j] + [gaminv*gama]             ##  The matrix gaminv * gama is added to our list in the j-th slot (as described above)
 
     return ans
 
 @cached_function
-def prep_hecke(ell,N,M):
-    ans=[]
+    """
+    Carries out prep_hecke_individual for each generator index and puts all of the answers in a long list.
+
+    INPUT:
+        ell -- a prime
+        M -- Manin relations of level N
+        
+    OUTPUT:
+	A list of lists of lists
+
+    EXAMPLES:
+    """
+
+def prep_hecke(ell,M):
+    ans = []
     for m in range(len(M.generator_indices())):
-        ans=ans+[prep_hecke_individual(ell,N,M,m)]
+        ans = ans + [prep_hecke_individual(ell,M,m)]
     return ans
             
 
@@ -152,9 +193,9 @@ def prep_hecke(ell,N,M):
 
 class modsym(SageObject):
     def __init__(self,level,data,manin,full_data=None):
-        self.level=level
-        self.data=data
-        self.manin=manin
+        self.level = level
+        self.data = data
+        self.manin = manin
         if full_data<>None:
             self.full_data=full_data
         else:
@@ -292,7 +333,7 @@ class modsym(SageObject):
             self.compute_full_data_from_gen_data()
             self.normalize_full_data()
         psi=self.zero()
-        v=prep_hecke(ell,self.level,self.manin)
+        v=prep_hecke(ell,self.manin)
         for m in range(len(self.manin.generator_indices())):
             for j in range(len(self.manin.coset_reps())):
                 for r in range(len(v[m][j])):
