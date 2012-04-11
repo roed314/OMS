@@ -346,6 +346,13 @@ class manin_relations(SageObject):
 	"""
 	return self.__N
 
+    def coset_reps(self):
+	r"""
+	Returns the list of coset_reps created out of the constructed fundamental 
+        domain for Gamma_0(N)
+	"""
+	return deep_copy(self.__mats)
+
 
     def P1(self):
         r"""
