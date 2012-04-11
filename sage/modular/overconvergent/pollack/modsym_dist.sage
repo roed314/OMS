@@ -1,67 +1,94 @@
 class modsym_dist(modsym):
-	def ms(self):
-		"""demotes to a regular modular symbol"""
-		return modsym(self.level,self.data,self.manin)
+    
+    def ms(self):
+        """
+	demotes to a regular modular symbol
+	"""
+	return modsym(self.level,self.data,self.manin)
 
-	def p(self):
-		"""returns the underlying prime"""
-		return self.data[0].p
+    def p(self):
+	"""
+	returns the underlying prime
+	"""
+	return self.data[0].p
 
-	def weight(self):
-		"""returns the underlying weight"""		
-		return self.data[0].weight
+    def weight(self):
+	"""
+        returns the underlying weight
+        """		
+        return self.data[0].weight
 
-	def num_moments(self):
-		"""returns the number of moments of each value of self"""
-		return self.data[0].num_moments()
+    def num_moments(self):
+        """
+        returns the number of moments of each value of self
+        """
+	return self.data[0].num_moments()
 
-	def eval(self,A):
-		"""here A is a 2x2 matrix and this function returns self evaluated and the divisor attached to A = A(\infty)-A(0)"""
-		ans=self.ms().eval(A)
-		return ans.normalize()
+    def eval(self,A):
+        """
+        here A is a 2x2 matrix and this function returns self evaluated and 
+        the divisor attached to A = A(\infty)-A(0)
+        """
+	ans=self.ms().eval(A)
+	return ans.normalize()
 
-	def specialize(self):
-		"""returns the underlying classical symbol of weight k -- i.e. applies the canonical map D_k --> Sym^k to all values of self"""
-		v=[]
-		for j in range(0,len(self.data)):
-			v=v+[self.data[j].specialize()]
-		return modsym_symk(self.level,v,self.manin)
+    def specialize(self):
+        """
+        returns the underlying classical symbol of weight k -- i.e. applies 
+        the canonical map D_k --> Sym^k to all values of self
+        """
+	v=[]
+	for j in range(0,len(self.data)):
+            v=v+[self.data[j].specialize()]
+	return modsym_symk(self.level,v,self.manin)
 	
-	def valuation(self):
-		"""returns the exponent of the highest power of p which divides all moments of all values of self"""
-		return min([self.data[j].valuation() for j in range(0,len(self.data))])
+    def valuation(self):
+	"""
+        returns the exponent of the highest power of p which divides all 
+        moments of all values of self
+        """
+	return min([self.data[j].valuation() for j in range(0,len(self.data))])
 
-	def normalize(self):
-		"""normalized every values of self -- e.g. reduces each values j-th moment modulo p^(N-j)"""
-		assert self.valuation()>=0, "moments are not integral"
-		v=[]
-		for j in range(0,len(self.data)):
-			v=v+[self.data[j].normalize()]
-		ans=modsym_dist(self.level,v,self.manin,self.full_data)
-		ans.normalize_full_data()
-		
-		return ans
+    def normalize(self):
+        """
+        normalized every values of self -- e.g. reduces each values j-th moment
+        modulo p^(N-j)
+        """
+        assert self.valuation()>=0, "moments are not integral"
+        v=[]
+        for j in range(0,len(self.data)):
+             v=v+[self.data[j].normalize()]
+        ans=modsym_dist(self.level,v,self.manin,self.full_data)
+        ans.normalize_full_data()
+        return ans
 
-	def change_precision(self,M):
-		"""only holds on to M moments of each value of self"""
-		v=[]
-		for j in range(0,len(self.data)):
-			v=v+[self.data[j].change_precision(M)]
-		return modsym_dist(self.level,v,self.manin)
+    def change_precision(self,M):
+        """
+        only holds on to M moments of each value of self
+        """
+	v=[]
+	for j in range(0,len(self.data)):
+	    v=v+[self.data[j].change_precision(M)]
+	return modsym_dist(self.level,v,self.manin)
 
-	def lift(self,phi,ap):
-		"""Greenberg trick of lifting and applying U_p --- phi is the (exact) classical symbol"""
-		v=[]
-		for a in range(self.ngens()):
-			v=v+[self.data[a].lift()]
-		Phi=modsym_dist(self.level,v,self.manin)
-		k=self.weight()
-		for a in range(self.ngens()):
-			for j in range(k+1):
-				Phi.data[a].moments[j]=(phi.data[a].coef(j))%(p^(Phi.num_moments()))
-		return Phi.hecke(self.p()).scale(1/ap).normalize()
+    def lift(self,phi,ap):
+	"""
+        Greenberg trick of lifting and applying U_p --- phi is the (exact) 
+        classical symbol
+        """
+        v=[]
+	for a in range(self.ngens()):
+            v=v+[self.data[a].lift()]
+	Phi=modsym_dist(self.level,v,self.manin)
+	k=self.weight()
+	for a in range(self.ngens()):
+            for j in range(k+1):
+		Phi.data[a].moments[j]=(phi.data[a].coef(j))%(p^(Phi.num_moments()))
+	return Phi.hecke(self.p()).scale(1/ap).normalize()
 
-	def lift_to_modsym_dist_fam(self,w):
+    def lift_to_modsym_dist_fam(self,w):
+    	"""
+	"""
 		p=self.p()
 		deg=floor((self.num_moments()+1)*(p-2)/(p-1))
 		v=[]
