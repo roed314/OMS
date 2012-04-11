@@ -266,7 +266,7 @@ class manin_relations(SageObject):
                 cusp1 = cusps[r]
                 cusp2 = cusps[s]
                 if self.is_unimodular_path(cusp1,cusp2):
-                    A,B = unimod_to_matrices(cusp1,cusp2)  
+                    A,B = self.unimod_to_matrices(cusp1,cusp2)  
 		    ## A and B are the matrices whose associated paths 
                     ## connect cusp1 to cusp2 and cusp2 to cusp1 (respectively)
                     coset_reps = coset_reps + [A,B]   
