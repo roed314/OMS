@@ -110,28 +110,28 @@ def basic_hecke_matrix(a,ell):
 
 @cached_function
 def prep_hecke_individual(ell,N,M,m):
-    ans=[[] for a in range(len(M.mats))]
+    ans=[[] for a in range(len(M.coset_reps()))]
     for a in range(ell):
         gama=basic_hecke_matrix(a,ell)
-        t=gama*M.mats[M.symbol_generator_indices[m]]
+        t=gama*M.coset_reps(M.generator_indices(m))
         v=unimod_matrices_from_infty(t[0,0],t[1,0])+unimod_matrices_to_infty(t[0,1],t[1,1])
         for b in range(len(v)):
             A=v[b]
-            i=M.P1.index(A[1,0],A[1,1])
-            j=M.P1_to_mats[i]
-            B=M.mats[j]
+            i=M.P1().index(A[1,0],A[1,1])
+            j=M.P1_to_mats(i)
+            B=M.coset_reps(j)
             C=invert(A[0,0],A[0,1],A[1,0],A[1,1])
             gaminv=B*C
             ans[j]=ans[j]+[gaminv*gama]
     if N%ell<>0:
         gama=basic_hecke_matrix(Infinity,ell)
-        t=gama*M.mats[M.symbol_generator_indices[m]]
+        t=gama*M.coset_reps(M.generator_indices(m))
         v=unimod_matrices_from_infty(t[0,0],t[1,0])+unimod_matrices_to_infty(t[0,1],t[1,1])
         for b in range(len(v)):
             A=v[b]
-            i=M.P1.index(A[1,0],A[1,1])
-            j=M.P1_to_mats[i]
-            B=M.mats[j]
+            i=M.P1().index(A[1,0],A[1,1])
+            j=M.P1_to_mats(i)
+            B=M.coset_reps(j)
             C=invert(A[0,0],A[0,1],A[1,0],A[1,1])
             gaminv=B*C
             ans[j]=ans[j]+[gaminv*gama]
@@ -141,7 +141,7 @@ def prep_hecke_individual(ell,N,M,m):
 @cached_function
 def prep_hecke(ell,N,M):
     ans=[]
-    for m in range(len(M.symbol_generator_indices)):
+    for m in range(len(M.generator_indices())):
         ans=ans+[prep_hecke_individual(ell,N,M,m)]
     return ans
             
@@ -164,7 +164,7 @@ class modsym(SageObject):
         return repr(self.data)
 
     def ngens(self):
-        return len(self.manin.symbol_generator_indices)
+        return len(self.manin.generator_indices())
 
     def __add__(self,right):
         assert self.level==right.level, "the levels are different"
@@ -216,20 +216,20 @@ class modsym(SageObject):
 
     def compute_full_data_from_gen_data(self):
         ans=[]
-        for m in range(len(self.manin.mats)):
+        for m in range(len(self.manin.coset_reps())):
             v=self.manin.coset_relations[m]
             t=self.data[0].zero()
             for k in range(len(v)):
                 j=v[k][2]
-                r=self.manin.symbol_generator_indices.index(j)
+                r=self.manin.generator_indices().index(j)
                 t=t+self.data[r].act_right(v[k][1]).scale(v[k][0])
             ans=ans+[t]
         self.full_data=ans
     
     def eval_sl2(self,A):
-        i=self.manin.P1.index(A[1,0],A[1,1])
-        j=self.manin.P1_to_mats[i]
-        B=self.manin.mats[j]
+        i=self.manin.P1().index(A[1,0],A[1,1])
+        j=self.manin.P1_to_mats(i)
+        B=self.manin.coset_reps(j)
         C=invert(A[0,0],A[0,1],A[1,0],A[1,1])
         gaminv=B*C
         if self.full_data<>0:
@@ -239,7 +239,7 @@ class modsym(SageObject):
             t=self.data[0].zero()
             for k in range(len(v)):
                 m=v[k][2]
-                r=self.manin.symbol_generator_indices.index(m)
+                r=self.manin.generator_indices().index(m)
                 t=t+self.data[r].act_right(v[k][1]*gaminv).scale(v[k][0])
             return t
 
@@ -260,8 +260,8 @@ class modsym(SageObject):
     def act_right(self,gamma):
         v=[]
         for j in range(0,len(self.data)):
-            rj=self.manin.symbol_generator_indices[j]
-            v=v+[self.eval(gamma*self.manin.mats[rj]).act_right(gamma)]
+            rj=self.manin.generator_indices(j)
+            v=v+[self.eval(gamma*self.manin.coset_reps()[rj]).act_right(gamma)]
 
         C=type(self)        
         return C(self.level,v,self.manin).normalize()
@@ -293,18 +293,18 @@ class modsym(SageObject):
             self.normalize_full_data()
         psi=self.zero()
         v=prep_hecke(ell,self.level,self.manin)
-        for m in range(len(self.manin.symbol_generator_indices)):
-            for j in range(len(self.manin.mats)):
+        for m in range(len(self.manin.generator_indices())):
+            for j in range(len(self.manin.coset_reps())):
                 for r in range(len(v[m][j])):
                     psi.data[m]=psi.data[m]+self.full_data[j].act_right(v[m][j][r])
         return psi.normalize()
 
     def grab_relations(self):
         v=[]
-        for r in range(len(self.manin.symbol_generator_indices)):
+        for r in range(len(self.manin.generator_indices())):
             for j in range(len(self.manin.coset_relations)):
                 R=self.manin.coset_relations[j]
-                if (len(R)==1) and (R[0][2]==self.manin.symbol_generator_indices[r]):
+                if (len(R)==1) and (R[0][2]==self.manin.generator_indices(r)):
                     if R[0][0]<>-1 or R[0][1]<>Id:
                         v=v+[R]
         return v
@@ -315,7 +315,7 @@ class modsym(SageObject):
         for j in range(2,len(list)):
             R=list[j]
             index=R[0][2]
-            rj=self.manin.symbol_generator_indices.index(index)
+            rj=self.manin.generator_indices().index(index)
             t=t+self.data[rj].act_right(R[0][1]).scale(R[0][0])
         return self.data[0]-self.data[0].act_right(Matrix(2,2,[1,1,0,1]))+t
 
@@ -331,9 +331,9 @@ def eisen_gamma0p(p,M):
     assert M.act_right(Matrix(2,2,[1,0,p,1]))==M, "not a good element to use"
     manin=manin_relations(p)
     v=[]
-    for j in range(0,len(manin.symbol_generator_indices)):
-        rj=manin.symbol_generator_indices[j]
-        A=manin.mats[rj]
+    for j in range(0,len(manin.generator_indices())):
+        rj=manin.generator_indices(j)
+        A=manin.coset_reps(rj)
         a=A[0,0]
         b=A[0,1]
         c=A[1,0]

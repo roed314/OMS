@@ -303,7 +303,7 @@ class manin_relations(SageObject):
 	v = zero_vector(len(coset_reps))
         for r in range(len(coset_reps)):  
             v[P.index(coset_reps[r][1,0], coset_reps[r][1,1])] = r
-        self.__P1_to_coset_reps = v  
+        self.__P1_to_mats = v  
 
         self.__gens = gens            
 	## This is a list of indices of the (geometric) coset representatives 
@@ -346,12 +346,15 @@ class manin_relations(SageObject):
 	"""
 	return self.__N
 
-    def coset_reps(self):
+    def coset_reps(self,n=None):
 	r"""
-	Returns the list of coset_reps created out of the constructed fundamental 
+	Returns the list (or individual) coset_reps created out of the constructed fundamental 
         domain for Gamma_0(N)
 	"""
-	return deep_copy(self.__mats)
+        if n is None:
+            return deepcopy(self.__mats)
+        else:
+            return deepcopy(self.__mats[n])
 
 
     def P1(self):
@@ -360,53 +363,71 @@ class manin_relations(SageObject):
         """
         return deepcopy(self.__P)
 
-    def P1_to_mats(self):
+    def P1_to_mats(self,n=None):
         r"""
-        Returns the translation table between the Sage and geometric 
+        Returns the translation table (or individual element) between the Sage and geometric 
 	descriptions of `P^1(Z/NZ)`.
         """
-        return deepcopy(self.__P1_to_mats)
+        if n is None:
+            return deepcopy(self.__P1_to_mats)
+        else:
+            return deepcopy(self.__P1_to_mats[n])
 
-    def symbol_generator_indices(self):
+    def generator_indices(self,n=None):
         r"""
         Returns a list of indices of the (geometric) coset representatives 
 	whose values (on the associated degree zero divisors) determine the 
 	modular symbol.
         """
-        return deepcopy(self.__gens)
+        if n is None:
+            return deepcopy(self.__gens)
+        else:
+            return deepcopy(self.__gens[n])
 
-    def two_torsion_indices(self):
+    def two_torsion_indices(self,n=None):
         r"""
         Returns a list of indices pointing to the coset generators whose 
 	paths are identified by some 2-torsion element (which switches the 
 	path orientation).
         """
-        return deepcopy(self.__twotor)
+        if n is None:
+            return deepcopy(self.__twotor)
+        else:
+            return deepcopy(self.__twotor[n])
 
-    def two_torsion_relation_matrices(self):
+    def two_torsion_relation_matrices(self,n=None):
         r"""
         Returns a list of (2-torsion in `PSL_2(Z)`) matrices in `\Gamma_0(N)` 
         that give the orientation identification in the paths indexed by 
 	two_torsion_indices().
         """
-        return deepcopy(self.__twotorrels)
+        if n is None:
+            return deepcopy(self.__twotorrels)
+        else:
+            return deepcopy(self.__twotorrels[n])
 
-    def three_torsion_indices(self):
+    def three_torsion_indices(self,n=None):
         r"""
         Returns a list of indices pointing to (geometric) coset 
 	representatives that form one side of an ideal triangle with an 
 	interior fixed point of a 3-torsion element of `\Gamma_0(N)`.
         """
-        return deepcopy(self.__threetor)
+        if n is None:
+            return deepcopy(self.__threetor)
+        else:
+            return deepcopy(self.__threetor[n])
 
-    def three_torsion_relation_matrices(self):
+    def three_torsion_relation_matrices(self,n=None):
         r"""
         A list of (3-torsion in `PSL_2(Z)`) matrices in `\Gamma_0(N)` that 
         give the interior fixed point indexed by three_torsion_indices().
         """
-        return deepcopy(self.__threetorrels)
+        if n is None:
+            return deepcopy(self.__threetor)
+        else:
+            return deepcopy(self.__threetor[n])
 
-    def coset_relations(self):
+    def coset_relations(self,n=None):
         r"""
         Returns a list of lists of triples `(d, A, i)`, one for each coset 
 	representative of `\Gamma_0(N)` (ordered to correspond to the 
@@ -418,7 +439,10 @@ class manin_relations(SageObject):
         where the index `i` must appear in self.gens, and the slash gives 
 	the matrix action.
         """
-        return deepcopy(self.__rels)
+        if n is None:
+            return deepcopy(self.__rels)
+        else:
+            return deepcopy(self.__rels[n])
 
     def form_list_of_cusps(self):
         r"""
@@ -449,7 +473,7 @@ class manin_relations(SageObject):
 
         ## Initialize some lists
 
-        C = [-1,"?",0]     
+        C = [QQ(-1),"?",QQ(0)]     
 
 	## Initialize the list of cusps at the bottom of the fund. domain.
         ## The ? denotes that it has not yet been checked if more cusps need 
@@ -487,7 +511,7 @@ class manin_relations(SageObject):
                     cusp2 = C[s+1]
 
                     ## Makes the unimodular transform for the path from cusp2 
-		    ##to cusp1
+		    ## to cusp1
                     
 		    b1 = cusp1.denominator()
                     b2 = cusp2.denominator()
