@@ -701,12 +701,13 @@ class modsym(SageObject):
         
         return psi
 
+##  These two procedures are used to check that the symbol really does satisfy the Manin relations loop (for debugging)
     def grab_relations(self):
         v=[]
-        for r in range(len(self.manin.generator_indices())):
-            for j in range(len(self.manin.coset_relations)):
-                R=self.manin.coset_relations[j]
-                if (len(R)==1) and (R[0][2]==self.manin.generator_indices(r)):
+        for r in range(self.ngens()):
+            for j in range(self.ncoset_reps()):
+                R=self.manin().coset_relations[j]
+                if (len(R)==1) and (R[0][2]==self.manin().generator_indices(r)):
                     if R[0][0]<>-1 or R[0][1]<>Id:
                         v=v+[R]
         return v
@@ -717,37 +718,7 @@ class modsym(SageObject):
         for j in range(2,len(list)):
             R=list[j]
             index=R[0][2]
-            rj=self.manin.generator_indices().index(index)
-            t=t+self.data[rj].act_right(R[0][1]).scale(R[0][0])
-        return self.data[0]-self.data[0].act_right(Matrix(2,2,[1,1,0,1]))+t
-
-def zero_to_ratl(r,p):
-    """returns a Gamma_0(p) matrix which takes 0 to r"""
-    c=numerator(r)
-    d=denominator(r)
-    assert d%p<>0, "not Gamma_0(p)-equivalent to 0"
-    g,x,y=xgcd(d,-p*c)
-    return Matrix(2,2,[x,c,p*y,d])
-    
-def eisen_gamma0p(p,M):
-    assert M.act_right(Matrix(2,2,[1,0,p,1]))==M, "not a good element to use"
-    manin=manin_relations(p)
-    v=[]
-    for j in range(0,len(manin.generator_indices())):
-        rj=manin.generator_indices(j)
-        A=manin.coset_reps(rj)
-        a=A[0,0]
-        b=A[0,1]
-        c=A[1,0]
-        d=A[1,1]
-        t=M.zero()
-        if d%p<>0:
-            gam1=zero_to_ratl(b/d,p)
-            t=M.act_right(gam1**(-1))
-        if c%p<>0:
-            gam2=zero_to_ratl(a/c,p)
-            t=t-M.act_right(gam2**(-1))
-        v=v+[t]
-    return modsym(p,v,manin)    
-        
+            rj=self.manin().generator_indices().index(index)
+            t=t+self.data(rj).act_right(R[0][1]).scale(R[0][0])
+        return self.data(0)-self.data(0).act_right(Matrix(2,2,[1,1,0,1]))+t
 
