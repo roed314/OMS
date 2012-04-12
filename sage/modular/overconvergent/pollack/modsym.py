@@ -162,7 +162,7 @@ def prep_hecke_individual(ell,M,m):
                B = M.coset_reps(j)                    ##  B is that coset rep
                C = invert(A[0,0],A[0,1],A[1,0],A[1,1])   ##  C equals A^(-1).  This is much faster than just inverting thru SAGE
                gaminv = B * C                              ##  gaminv = B*A^(-1)
-               ans[j] = ans[j] + [gaminv*gama]             ##  The matrix gaminv * gama is added to our list in the j-th slot (as described above)
+               ans[j] = ans[j] + [gaminv * gama]             ##  The matrix gaminv * gama is added to our list in the j-th slot (as described above)
 
     return ans
 
@@ -191,74 +191,276 @@ def prep_hecke(ell,M):
 ##  Define the modsym class ##
 ##############################
 
+##  This class represents V-valued modular symbols on Gamma_0(N) where M satisfies:
+##      1) V is a Z-module
+##      2) V has an action by some collections of matrices large enough that it contains
+##         a congruence subgroup and the matrices [1,a,0,q] for all primes q and, 
+##         [q,0,0,1] for q not dividing N
+##
+##  A modular symbol contains the info of the Manin Relations (say M) for Gamma_0(N).  
+##  A symbol phi is stored by its values on our chosen generators -- i.e. those listed 
+##  in M.generator_indices().  
+
 class modsym(SageObject):
-    def __init__(self,level,data,manin,full_data=None):
-        self.level = level
-        self.data = data
-        self.manin = manin
-        if full_data<>None:
+    def __init__(self,data,manin,full_data=None):
+        r"""
+        
+        INPUT:
+           data -- the list of values of the modular symbol on our specified generator set
+           manin -- Manin Relations
+           full_data -- the list of values of the modular symbol on all coset representatives
+
+        OUTPUT:
+            none
+
+        EXAMPLES:
+
+        """
+        self.__manin = manin  
+        self.data = data      
+        if full_data!=None:
             self.full_data=full_data
         else:
             self.full_data=0
             
+    def manin(self):
+        r"""
+        
+        INPUT:
+            none
+
+        OUTPUT:
+            The manin relations defining the symbol.  
+
+        EXAMPLES:
+
+        """
+        return deepcopy(self.__manin)
+
+    def data(self,n=None):
+        r"""
+        Returns the list of values of self on our generating set or simply the n-th value if n is specified.
+        
+        INPUT:
+            n -- integer
+
+        OUTPUT:
+            The list of values of self on our generating set or simply the n-th value if n is specified.
+
+        EXAMPLES:
+
+        """
+        if n is None:
+	        return deepcopy(self.data)
+        else:
+	        return deepcopy(self.data[n])
+
+    def full_data(self,n=None):
+        r"""
+        Returns the value of self on all coset reps (or simply on the n-th coset rep if n is specified).
+
+        INPUT:
+            n -- integer
+
+        OUTPUT:
+            The list of values of self on all coset reps or simply the n-th value if n is specified.
+
+        EXAMPLES:
+
+        """
+        if n is None:
+	        return deepcopy(self.full_data)
+        else:
+	        return deepcopy(self.full_data[n])
+
     def __repr__(self):
-        return repr(self.data)
+        r"""
+        
+        INPUT:
+            none
+
+        OUTPUT:
+            The representation of self.data.  
+
+        EXAMPLES:
+
+        """
+        return repr(self.data())
 
     def ngens(self):
-        return len(self.manin.generator_indices())
+        r"""
+        Returns the number of generators defining self.
+        
+        INPUT:
+            none
+
+        OUTPUT:
+            The number of generators defining our modular symbols.  
+
+        EXAMPLES:
+
+        """
+        return len(self.manin().generator_indices())
+
+    def ncoset_reps(self):
+        r"""
+        Returns the number of coset representatives defining the full_data of phi.
+        
+        INPUT:
+            none
+
+        OUTPUT:
+            The number of coset representatives stored in the manin relations.  (Just the size of P^1(Z/NZ))
+
+        EXAMPLES:
+
+        """
+        return len(self.manin().coset_reps())
 
     def __add__(self,right):
-        assert self.level==right.level, "the levels are different"
-        v=[]
-        for j in range(0,len(self.data)):
-            v=v+[self.data[j]+right.data[j]]
-        if self.full_data<>0 and right.full_data<>0:
-            w=[]
-            for j in range(0,len(self.full_data)):
-                w=w+[self.full_data[j]+right.full_data[j]]
+        r"""
+        Returns the sum of self and right.
+
+        INPUT:
+            right -- a modular symbol of the same level 
+
+        OUTPUT:
+            the sum of self and right
+
+        EXAMPLES:
+
+        """
+        v = []  ## This list will store the values of the modular symbol on a generating set.
+        ## This loop runs thru each of the values of the modular symbol and adds them together.
+        for j in range(0,self.ngens()):
+            v = v + [self.data(j)+right.data(j)]
+        ## If both of the symbols already have their values computed on all coset reps then these
+        ## these values are added together as well.
+        if self.full_data!=0 and right.full_data!=0:
+            w = []  ## This list will store the values of the modular symbol on all coset reps.
+            for j in range(0,self.ncoset_reps()):
+                w = w + [self.full_data(j) + right.full_data(j)]
         else:
-            w=0
+            w = 0
             
-        C=type(self)
-        return C(self.level,v,self.manin,w).normalize()
+        C = type(self)
+        return C(v,self.manin(),w) ##  Coercing into C keeps track of which kind of modular symbol we are working with
 
     def normalize(self):
-        for j in range(len(self.data)):
-            self.data[j]=self.data[j].normalize()
-        return self
+        r"""
+        Normalizes all of the values of the symbol self.
+
+        INPUT:
+            none
+
+        OUTPUT:
+            none
+
+        EXAMPLES:
+
+        """
+        for j in range(self.ngens()):
+            self.data[j].normalize()
+
+        if self.full_data!=0 
+            for j in range(0,self.ncoset_reps()):
+                self.full_data[j].normalize()
 
     def scale(self,left):
-        v=[]
-        for j in range(0,len(self.data)):
-            v=v+[self.data[j].scale(left)]
-        if self.full_data<>0:
-            w=[]
-            for j in range(0,len(self.full_data)):
-                w=w+[self.full_data[j].scale(left)]
-        else:
-            w=0
+        r"""
+        Returns left * self
 
-        C=type(self)
-        return C(self.level,v,self.manin,w)
+        INPUT:
+            left -- a scalar
+
+        OUTPUT:
+            left * self
+
+        EXAMPLES:
+
+        """
+        v = []    ##  This will be the list of values of the answer.
+        for j in range(0,self.ngens()):
+            v = v + [self.data(j).scale(left)]
+        if self.full_data!=0:
+            w=[]
+            for j in range(0,self.ncoset_reps()):
+                w = w + [self.full_data(j).scale(left)]
+        else:
+            w = 0
+
+        C = type(self)
+        return C(v,self.manin(),w) ##  Coercing into C keeps track of which kind of modular symbol we are working with
         
     def __sub__(self,right):
-        return self+right.scale(-1)
+        r"""
+        Returns self minus right
+
+        INPUT:
+            right -- a modular symbol of the same level 
+
+        OUTPUT:
+            self minus right
+
+        EXAMPLES:
+
+        """
+        return self + right.scale(-1)
 
     def __cmp__(self,right):
         return cmp((self.level,self.data),(right.level,right.data))
 
     def zero_elt(self):
-        return self.data[0].zero()
+        r"""
+        Returns the zero element of the space where self takes values.
+
+        INPUT:
+            none
+
+        OUTPUT:
+            zero element in the space where self takes values
+
+        EXAMPLES:
+
+        """
+
+        return self.data(0).zero()
 
     def zero(self):
-        v=[self.zero_elt() for i in range(0,len(self.data))]
-        C=type(self)
-        return C(self.level,v,self.manin)
+        r"""
+        Returns the modular symbol all of whose values are zero (thought of in the space where self takes values)
+
+        INPUT:
+            none
+
+        OUTPUT:
+            zero modular symbol
+
+        EXAMPLES:
+
+        """
+        v = [self.zero_elt() for i in range(0,self.ngens())]
+        C = type(self)
+        return C(v,self.manin)
 
     def compute_full_data_from_gen_data(self):
-        ans=[]
-        for m in range(len(self.manin.coset_reps())):
-            v=self.manin.coset_relations[m]
+        r"""
+        Computes (and stores) the values of self on all coset representatives
+        from its values on our generating set.
+
+        INPUT:
+            none
+
+        OUTPUT:
+            none
+
+        EXAMPLES:
+
+        """
+        ans = []
+        ## This loop runs through all coset reps
+        for m in range(self.ncoset_reps()):
+            v=self.manin().coset_relations(m)
             t=self.data[0].zero()
             for k in range(len(v)):
                 j=v[k][2]
