@@ -495,14 +495,14 @@ class modsym(SageObject):
         b = A[0,1]
         c = A[1,0]
         d = A[1,1]
-        i = self.manin.P1().index(c,d)   ##  Finds the index in the SAGE P1 of the bottom row of A
-        m = self.manin.P1_to_mats(i)     ##  Converts this index to the index in our list of coset reps
-        B = self.manin.coset_reps(m)     ##  B is the corresponding coset rep -- so B and A are Gamma_0(N) equivalent
+        i = self.manin().P1().index(c,d)   ##  Finds the index in the SAGE P1 of the bottom row of A
+        m = self.manin().P1_to_mats(i)     ##  Converts this index to the index in our list of coset reps
+        B = self.manin().coset_reps(m)     ##  B is the corresponding coset rep -- so B and A are Gamma_0(N) equivalent
         C = invert(a,b,c,d)      ##  C = A^(-1)
         gaminv=B*C               ##  So A = gam B  (where gaminv = gam^(-1))
         ## Checks if the value of self on all coset reps is already precomputed
         if self.full_data!=0: 
-            return self.full_data[m].act_right(gaminv)   ##  Here we have self([A]) = self([gam B]) = self([B])|gam^(-1) 
+            return self.full_data(m).act_right(gaminv)   ##  Here we have self([A]) = self([gam B]) = self([B])|gam^(-1) 
                                                          ##     = self(m-th coset rep)|gamivn
         else:
             ##  We need to compute the value of self on the j-th coset rep from the values of self on our generators
@@ -555,7 +555,7 @@ class modsym(SageObject):
         r"""
         Returns self | gamma.
         
-        This action is define by (self | gamma)(D) = self(gamma D)|gamma
+        This action is defined by (self | gamma)(D) = self(gamma D)|gamma
 
     	For this to work gamma must normalize Gamma_0(N) and be able to act on the values of self.
     	However, it can also be used to define Hecke operators.  Even if each individual self | gamma is not 
@@ -574,7 +574,7 @@ class modsym(SageObject):
         v = []  ## This will be the data defining self | gamma
         ##  This loop rungs over all generators
         for j in range(0,self.ngens()):
-            rj = self.manin.generator_indices(j)   ## rj is the index of the coset rep corresponding to j-th gen
+            rj = self.manin().generator_indices(j)   ## rj is the index of the coset rep corresponding to j-th gen
             ## The value self(gamma*(rj-th coset rep))| gamma is added to our list
     	    v = v + [self.eval(gamma*self.manin().coset_reps(rj)).act_right(gamma)]  
         
@@ -585,10 +585,39 @@ class modsym(SageObject):
         return ans
     
     def plus_part(self):
-        return self.act_right(Matrix(2,2,[1,0,0,-1]))+self
+        r"""
+        Returns the plus part of self -- i.e. self + self | [1,0,0,-1].
+        
+        Note that we haven't divided by 2.  Is this a problem?
+        
+
+        INPUT:
+            none
+
+        OUTPUT:
+	    self | [1,0,0,-1] + self
+	    
+        EXAMPLES:
+        """
+        return self.act_right(Matrix(2,2,[1,0,0,-1])) + self
 
     def minus_part(self):
-        return self.act_right(Matrix(2,2,[1,0,0,-1]))-self
+        r"""
+        Returns the minus part of self -- i.e. self - self | [1,0,0,-1].
+        
+        Note that we haven't divided by 2.  Is this a problem?
+        
+
+        INPUT:
+            none
+
+        OUTPUT:
+	    self | [1,0,0,-1] - self
+	    
+	    
+        EXAMPLES:
+        """
+        return self.act_right(Matrix(2,2,[1,0,0,-1])) - self
 
     def normalize_full_data(self):
         if (self.full_data != 0):
@@ -611,7 +640,7 @@ class modsym(SageObject):
             self.normalize_full_data()
         psi=self.zero()
         v=prep_hecke(ell,self.manin)
-        for m in range(len(self.manin.generator_indices())):
+        for m in range(len(self.manin().generator_indices())):
             for j in range(len(self.manin.coset_reps())):
                 for r in range(len(v[m][j])):
                     psi.data[m]=psi.data[m]+self.full_data[j].act_right(v[m][j][r])
