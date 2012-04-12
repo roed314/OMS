@@ -1,7 +1,5 @@
 from sage.modular.modsym.manin_symbols import ManinSymbol, ManinSymbolList_gamma0
 
-## test edit
-
 @cached_function
 def invert(a,b,c,d):
     """
@@ -546,21 +544,45 @@ class modsym(SageObject):
         ## This loops compute self({b/d}-{infty}) by adding up the values of self on elements of v1
         for j in range(0,len(v1)):
             ans = ans + self.eval_sl2(v1[j])
+
         ## This loops subtracts away the value self({a/c}-{infty}) from ans by subtracting away the values of self on elements of v2
         ## and so in the end ans becomes self({b/d}-{a/c}) = self({A(0)} - {A(infty)}
         for j in range(0,len(v2)):
             ans = ans - self.eval_sl2(v2[j])
         return ans
  
-## This function has problems -- acting by gamma won't result in a modular symbol.  Is this ever used?               
-#    def act_right(self,gamma):
-#        v=[]
-#        for j in range(0,len(self.data)):
-#            rj=self.manin.generator_indices(j)
-#            v=v+[self.eval(gamma*self.manin.coset_reps()[rj]).act_right(gamma)]
-#
-#        C=type(self)        
-#        return C(self.level,v,self.manin).normalize()
+    def act_right(self,gamma):
+        r"""
+        Returns self | gamma.
+        
+        This action is define by (self | gamma)(D) = self(gamma D)|gamma
+
+    	For this to work gamma must normalize Gamma_0(N) and be able to act on the values of self.
+    	However, it can also be used to define Hecke operators.  Even if each individual self | gamma is not 
+    	really defined on Gamma_0(N), the sum over acting by the appropriate double coset reps will be defined
+    	over Gamma_0(N)
+
+        INPUT:
+            gamma = 2 x 2 matrix which acts on the values of self
+
+        OUTPUT:
+	    self | gamma
+	    
+        EXAMPLES:
+
+        """
+        v = []  ## This will be the data defining self | gamma
+        ##  This loop rungs over all generators
+        for j in range(0,self.ngens()):
+            rj = self.manin.generator_indices(j)   ## rj is the index of the coset rep corresponding to j-th gen
+            ## The value self(gamma*(rj-th coset rep))| gamma is added to our list
+    	    v = v + [self.eval(gamma*self.manin().coset_reps(rj)).act_right(gamma)]  
+        
+        C = type(self)        
+        ans = C(v,self.manin)
+        ans.normalize()
+        
+        return ans
     
     def plus_part(self):
         return self.act_right(Matrix(2,2,[1,0,0,-1]))+self
