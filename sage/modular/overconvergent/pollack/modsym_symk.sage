@@ -76,7 +76,7 @@ class modsym_symk(modsym):
 	assert ap%p<>0, "Not ordinary!"
 
 	# makes alpha the non-unit root of Hecke poly
-        R = Qp(p,M)['y'] 
+        R = pAdicField(p,M)['y'] 
 	y = R.gen()
 	f = y**2-ap*y+p
 	v = f.roots()
@@ -121,7 +121,7 @@ class modsym_symk(modsym):
             g = self.manin.gens[j]
             if (self.manin.twotor.count(g)==0) and (self.manin.threetor.count(g)==0):
 	        #not two or three torsion
-	        v = v+[self.data[j].lift_to_dist(p,M)]
+	        v = v + [self.data[j].lift_to_dist(p,M)]
 	    else:
 		if (self.manin.twotor.count(g)<>0):
 	            #case of two torsion (See [PS] section 4.1)
@@ -134,7 +134,7 @@ class modsym_symk(modsym):
 		    rj = self.manin.threetor.index(g)
 		    gam = self.manin.threetorrels[rj]
 		    mu = self.data[j].lift_to_dist(p,M)
-		    v = v+[(mu.scale(2)-mu.act_right(gam)-mu.act_right(gam^2)).scale(ZZ(1)/ZZ(3))]
+		    v = v+[(mu.scale(2)-mu.act_right(gam)-mu.act_right(gam**2)).scale(ZZ(1)/ZZ(3))]
 	
         t = v[0].zero()
 		
@@ -145,7 +145,7 @@ class modsym_symk(modsym):
 	    if len(R) == 1:
 		if R[0][0] == 1:
                     rj = self.manin.gens.index(j)
-	            t = t+self.data[rj].lift_to_dist(p,M)
+	            t = t + self.data[rj].lift_to_dist(p,M)
 		else:
 		    if R[0][1]<>Id:
 		    #rules out extra three torsion terms
@@ -169,55 +169,58 @@ class modsym_symk(modsym):
 		Phi=self.lift_to_OMS(p,M)
 		s=-Phi.valuation()
 		if s>0:
-			if verbose:
-				print "Scaling by ",p,"^",s
-			Phi=Phi.scale(p^(-Phi.valuation()))
+		    if verbose:
+		        print "Scaling by ",p,"^",s
+		    Phi=Phi.scale(p^(-Phi.valuation()))
 		Phi=Phi.normalize()
 		if verbose:
-			print "Applying Hecke"
+		    print "Applying Hecke"
 		Phi=Phi.hecke(p).scale(1/ap)
 		if verbose:
-			print "Killing eisenstein part"
+		    print "Killing eisenstein part"
 		if (ap%(p^M))<>1:
-			Phi=(Phi-Phi.hecke(p)).scale(1/(1-ap))
-			e=(1-ap).valuation(p)
-			if e>0:
-				Phi=Phi.change_precision(M-e)
-				print "change precision to",M-e
+		    Phi=(Phi-Phi.hecke(p)).scale(1/(1-ap))
+		    e=(1-ap).valuation(p)
+		    if e>0:
+	                Phi=Phi.change_precision(M-e)
+			print "change precision to",M-e
 		else:
-			q=2
+		    q=2
+		    v=self.is_Tq_eigen(q,p,M)
+		    assert v[0],"not eigen at q"
+		    aq=v[1]
+		    while (q<>p) and (aq-q^(k+1)-1)%(p^M)==0:
+		        q=next_prime(q)
 			v=self.is_Tq_eigen(q,p,M)
 			assert v[0],"not eigen at q"
 			aq=v[1]
-			while (q<>p) and (aq-q^(k+1)-1)%(p^M)==0:
-				q=next_prime(q)
-				v=self.is_Tq_eigen(q,p,M)
-				assert v[0],"not eigen at q"
-				aq=v[1]
-			Phi=(Phi.scale(q^(k+1)+1)-Phi.hecke(q)).scale(1/(q^(k+1)+1-aq))
-			e=(q^(k+1)+1-aq).valuation(p)
-			if e>0:
-				Phi=Phi.change_precision(M-e)
-				print "change precision to",M-e
+		    Phi=(Phi.scale(q^(k+1)+1)-Phi.hecke(q)).scale(1/(q^(k+1)+1-aq))
+		    e=(q^(k+1)+1-aq).valuation(p)
+		    if e>0:
+			Phi=Phi.change_precision(M-e)
+			print "change precision to",M-e
 		if verbose:
-			print "Iterating U_p"
+		    print "Iterating U_p"
 		Psi=Phi.hecke(p).scale(1/ap)
 		err=(Psi-Phi).valuation()
 		Phi=Psi
 		while err<Infinity:
-			if (Phi.valuation()>=s) and (s>0):
-				Phi=Phi.scale(1/p^s)
-				Phi=Phi.change_precision(Phi.num_moments()-s).normalize()
-				print "unscaling by p^",s
-				s=Infinity
-			Psi=Phi.hecke(p).scale(1/ap)
-			err=(Psi-Phi).valuation()
-			if verbose:
-				print "error is zero modulo p^",err
-			Phi=Psi
+		    if (Phi.valuation()>=s) and (s>0):
+	                Phi=Phi.scale(1/p^s)
+			Phi=Phi.change_precision(Phi.num_moments()-s).normalize()
+			print "unscaling by p^",s
+			s=Infinity
+		    Psi=Phi.hecke(p).scale(1/ap)
+		    err=(Psi-Phi).valuation()
+		    if verbose:
+	                print "error is zero modulo p^",err
+		    Phi=Psi
 		return Phi.normalize()
 
-	"""self is a modular symbol taking values in Sym^k(K^2), where K is a finite extension of Q, psi is a map from the K to Qp and the below function 'map' applies psi to all polynomial coefficients and then lifts them to QQ"""
+	### self is a modular symbol taking values in Sym^k(K^2), where 
+	### K is a finite extension of Q, psi is a map from the K to Qp and 
+	### the below function 'map' applies psi to all polynomial 
+	### coefficients and then lifts them to QQ"""
 
 
     def map(self,psi):
@@ -238,15 +241,15 @@ class modsym_symk(modsym):
 	R = pAdicField(p,M+10)['x']
 	x = R.gen()
 	v = R(f).roots()
-	if len(v)==0:
+	if len(v) == 0:
 	    print "No coercion possible -- no prime over p has degree 1"
 	    return []
 	else:
 	    ans = []
 	    for j in range(len(v)):
-		root=v[j][0]
-		psi=K.hom([root],pAdicField(p,M))
-		ans=ans+[[self.map(psi),psi]]
+		root = v[j][0]
+		psi = K.hom([root],pAdicField(p,M))
+		ans = ans+[[self.map(psi),psi]]
 	return ans
 
     def form_modsym_from_elliptic_curve(E):
@@ -263,15 +266,15 @@ class modsym_symk(modsym):
 	    rj = manin.gens[j]
 	    g = manin.mats[rj]
             a,b,c,d = g.list()
-	    if c<>0:
+	    if c != 0:
 		a1 = L.modular_symbol(a/c,1)+L.modular_symbol(a/c,-1)
 	    else:
 		a1 = L.modular_symbol(oo,1)+L.modular_symbol(oo,-1)
-	    if d<>0:
+	    if d != 0:
 		a2 = L.modular_symbol(b/d,1)+L.modular_symbol(b/d,-1)
 	    else:
 		a2 = L.modular_symbol(oo,1)+L.modular_symbol(oo,-1)
-	    v = v+[symk(0,R(a1))-symk(0,R(a2))]
+	    v = v + [symk(0,R(a1)) - symk(0,R(a2))]
 	return modsym_symk(N,v,manin)
 
     def form_modsym_from_decomposition(A):
