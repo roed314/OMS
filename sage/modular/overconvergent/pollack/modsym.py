@@ -193,7 +193,7 @@ def prep_hecke(ell,M):
 
 ##  This class represents V-valued modular symbols on Gamma_0(N) where M satisfies:
 ##      1) V is a Z-module
-##      2) V has an action by some collections of matrices large enough that it contains
+##      2) V has a RIGHT action by some collections of matrices large enough that it contains
 ##         a congruence subgroup and the matrices [1,a,0,q] for all primes q and, 
 ##         [q,0,0,1] for q not dividing N
 ##
@@ -446,7 +446,8 @@ class modsym(SageObject):
     def compute_full_data_from_gen_data(self):
         r"""
         Computes (and stores) the values of self on all coset representatives
-        from its values on our generating set.
+        from its values on our generating set.  (Useful to have this precomputed
+        before doing larger computations -- like hecke.)
 
         INPUT:
             none
@@ -457,57 +458,107 @@ class modsym(SageObject):
         EXAMPLES:
 
         """
-        ans = []
+        ans = []   ## This will be the list contained all values of phi on coset reps
         ## This loop runs through all coset reps
         for m in range(self.ncoset_reps()):
-            v=self.manin().coset_relations(m)
-            t=self.data[0].zero()
+            v = self.manin().coset_relations(m)  ##  This data is a list with each element of the form (c,A,j) where c is a scalar
+                                                 ##  A is in Gamma_0(N) and j is an index of a generator.  The value of our modular symbol
+                                                 ##  self on the m-th coset rep is given by the sum of c * self(j-th coset rep)|A as we run over
+                                                 ##  all tuples in v
+
+            t = self.zero_elt()  ## this will denote the value of self on the m-th coset rep
+            ## This loops runs thru each tuple in v and adds up the appropriate values of self
             for k in range(len(v)):
-                j=v[k][2]
-                r=self.manin.generator_indices().index(j)
-                t=t+self.data[r].act_right(v[k][1]).scale(v[k][0])
-            ans=ans+[t]
-        self.full_data=ans
+                j = v[k][2]    ##  we need to examine the generator of index j (in the list of coset reps)
+                A = v[k][1]    ##  This is the Gamma_0(N) matrix A as in the comment above
+                c = v[k][0]    ##  This is the constant c as in the comment above
+                r = self.manin().generator_indices().index(j)    ##  so the j-th coset rep corresponds to the r-th generator (in our list of gens)
+                t = t + self.data(r).act_right(A).scale(c)
+            ans = ans + [t]   ## the value of self on the m-th coset rep is added to our list
+ 
+       self.full_data = ans   ## This data is now recorded in the modular symbol
     
     def eval_sl2(self,A):
-        i=self.manin.P1().index(A[1,0],A[1,1])
-        j=self.manin.P1_to_mats(i)
-        B=self.manin.coset_reps(j)
-        C=invert(A[0,0],A[0,1],A[1,0],A[1,1])
-        gaminv=B*C
-        if self.full_data<>0:
-            return self.full_data[j].act_right(gaminv)
+        r"""
+        Returns the value of self on the (unimodular) divisor corresponding to A -- i.e. on the divisor {A(0)} - {A(infty)} 
+
+        INPUT:
+            A an element of SL_2(Z) 
+
+        OUTPUT:
+            The value of self on the divisor corresponding to A -- i.e. on the divisor {A(0)} - {A(infty)} 
+
+        EXAMPLES:
+
+        """
+        a = A[0,0]
+        b = A[0,1]
+        c = A[1,0]
+        d = A[1,1]
+        i = self.manin.P1().index(c,d)   ##  Finds the index in the SAGE P1 of the bottom row of A
+        m = self.manin.P1_to_mats(i)     ##  Converts this index to the index in our list of coset reps
+        B = self.manin.coset_reps(m)     ##  B is the corresponding coset rep -- so B and A are Gamma_0(N) equivalent
+        C = invert(a,b,c,d)      ##  C = A^(-1)
+        gaminv=B*C               ##  So A = gam B  (where gaminv = gam^(-1))
+        ## Checks if the value of self on all coset reps is already precomputed
+        if self.full_data!=0: 
+            return self.full_data[m].act_right(gaminv)   ##  Here we have self([A]) = self([gam B]) = self([B])|gam^(-1) 
+                                                         ##     = self(m-th coset rep)|gamivn
         else:
-            v=self.manin.coset_relations[j]
-            t=self.data[0].zero()
+            ##  We need to compute the value of self on the j-th coset rep from the values of self on our generators
+            v = self.manin().coset_relations(m)    ##  This data is a list with each element of the form (c,A,j) where c is a scalar
+                                                   ##  A is in Gamma_0(N) and j is an index of a generator.  The value of our modular symbol
+                                                   ##  self on the m-th coset rep is given by the sum of c * self(j-th coset rep)|A as we run over
+                                                   ##  all tuples in v
+
+            t = self.zero_elt()    ## this will denote the value of self on the m-th coset rep acted on by gaminv
+            ## This loops runs thru each tuple in v and adds up the appropriate values of self
             for k in range(len(v)):
-                m=v[k][2]
-                r=self.manin.generator_indices().index(m)
-                t=t+self.data[r].act_right(v[k][1]*gaminv).scale(v[k][0])
+                j = v[k][2]    ##  we need to examine the generator of index j (in the list of coset reps)
+                A = v[k][1]    ##  This is the Gamma_0(N) matrix A as in the comment above
+                c = v[k][0]    ##  This is the constant c as in the comment above
+                r = self.manin().generator_indices().index(j)    ##  so the j-th coset rep corresponds to the r-th generator (in our list of gens)
+                t = t + self.data(r).act_right(A*gaminv).scale(c)
             return t
 
     def eval(self,A):
-        a=A[0,0]
-        b=A[0,1]
-        c=A[1,0]
-        d=A[1,1]
-        v1=unimod_matrices_to_infty(b,d)
-        v2=unimod_matrices_to_infty(a,c)
-        ans=self.zero_elt()
-        for j in range(0,len(v1)):
-            ans=ans+self.eval_sl2(v1[j])
-        for j in range(0,len(v2)):
-            ans=ans-self.eval_sl2(v2[j])
-        return ans
-                
-    def act_right(self,gamma):
-        v=[]
-        for j in range(0,len(self.data)):
-            rj=self.manin.generator_indices(j)
-            v=v+[self.eval(gamma*self.manin.coset_reps()[rj]).act_right(gamma)]
+        r"""
+        Returns the value of self on the divisor corresponding to A -- i.e. on the divisor {A(0)} - {A(infty)} 
 
-        C=type(self)        
-        return C(self.level,v,self.manin).normalize()
+        INPUT:
+            A = any 2x2 integral matrix  (not necessarily unimodular)
+
+        OUTPUT:
+            The value of self on the divisor corresponding to A -- i.e. on the divisor {A(0)} - {A(infty)} 
+
+        EXAMPLES:
+
+        """
+        a = A[0,0]
+        b = A[0,1]
+        c = A[1,0]
+        d = A[1,1]
+        v1 = unimod_matrices_to_infty(b,d)   ## Creates a list of unimodular matrices whose divisors add up to {b/d} - {infty}
+        v2 = unimod_matrices_to_infty(a,c)   ## Creates a list of unimodular matrices whose divisors add up to {a/c} - {infty}
+        ans = self.zero_elt()   ## This will denote the value of self on A
+        ## This loops compute self({b/d}-{infty}) by adding up the values of self on elements of v1
+        for j in range(0,len(v1)):
+            ans = ans + self.eval_sl2(v1[j])
+        ## This loops subtracts away the value self({a/c}-{infty}) from ans by subtracting away the values of self on elements of v2
+        ## and so in the end ans becomes self({b/d}-{a/c}) = self({A(0)} - {A(infty)}
+        for j in range(0,len(v2)):
+            ans = ans - self.eval_sl2(v2[j])
+        return ans
+ 
+## This function has problems -- acting by gamma won't result in a modular symbol.  Is this ever used?               
+#    def act_right(self,gamma):
+#        v=[]
+#        for j in range(0,len(self.data)):
+#            rj=self.manin.generator_indices(j)
+#            v=v+[self.eval(gamma*self.manin.coset_reps()[rj]).act_right(gamma)]
+#
+#        C=type(self)        
+#        return C(self.level,v,self.manin).normalize()
     
     def plus_part(self):
         return self.act_right(Matrix(2,2,[1,0,0,-1]))+self

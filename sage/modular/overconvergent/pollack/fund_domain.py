@@ -333,7 +333,7 @@ class manin_relations(SageObject):
 	## representative of Gamma_0(N) (ordered to correspond to the 
 	## representatives of self.coset_reps) expressing the value of a 
         ## modular symbol on the associated unimodular path as a sum of terms 
-        ##    d * (value on the i-th representative) | A
+        ##    d * (value on the i-th coset rep) | A
         ## where the index i must appear in self.gens, and the slash gives the
 	##  matrix action.
 
