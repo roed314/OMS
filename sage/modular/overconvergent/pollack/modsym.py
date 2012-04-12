@@ -167,6 +167,7 @@ def prep_hecke_individual(ell,M,m):
     return ans
 
 @cached_function
+def prep_hecke(ell,M):
     """
     Carries out prep_hecke_individual for each generator index and puts all of the answers in a long list.
 
@@ -179,8 +180,6 @@ def prep_hecke_individual(ell,M,m):
 
     EXAMPLES:
     """
-
-def prep_hecke(ell,M):
     ans = []
     for m in range(len(M.generator_indices())):
         ans = ans + [prep_hecke_individual(ell,M,m)]
@@ -217,11 +216,11 @@ class modsym(SageObject):
 
         """
         self.__manin = manin  
-        self.data = data      
+        self._data = data      
         if full_data!=None:
-            self.full_data=full_data
+            self._full_data = full_data
         else:
-            self.full_data=0
+            self._full_data = 0
             
     def manin(self):
         r"""
@@ -251,9 +250,9 @@ class modsym(SageObject):
 
         """
         if n is None:
-	        return deepcopy(self.data)
+	        return deepcopy(self._data)
         else:
-	        return deepcopy(self.data[n])
+	        return deepcopy(self._data[n])
 
     def full_data(self,n=None):
         r"""
@@ -269,9 +268,9 @@ class modsym(SageObject):
 
         """
         if n is None:
-	        return deepcopy(self.full_data)
+	        return deepcopy(self._full_data)
         else:
-	        return deepcopy(self.full_data[n])
+	        return deepcopy(self._full_data[n])
 
     def __repr__(self):
         r"""
@@ -336,7 +335,7 @@ class modsym(SageObject):
             v = v + [self.data(j)+right.data(j)]
         ## If both of the symbols already have their values computed on all coset reps then these
         ## these values are added together as well.
-        if self.full_data!=0 and right.full_data!=0:
+        if self.full_data()!=0 and right.full_data()!=0:
             w = []  ## This list will store the values of the modular symbol on all coset reps.
             for j in range(0,self.ncoset_reps()):
                 w = w + [self.full_data(j) + right.full_data(j)]
@@ -360,11 +359,11 @@ class modsym(SageObject):
 
         """
         for j in range(self.ngens()):
-            self.data[j].normalize()
+            self._data[j].normalize()
 
-        if self.full_data!=0 
+        if self.full_data()!=0:
             for j in range(self.ncoset_reps()):
-                self.full_data[j].normalize()
+                self._full_data[j].normalize()
 
     def scale(self,left):
         r"""
@@ -382,7 +381,7 @@ class modsym(SageObject):
         v = []    ##  This will be the list of values of the answer.
         for j in range(0,self.ngens()):
             v = v + [self.data(j).scale(left)]
-        if self.full_data!=0:
+        if self.full_data()!=0:
             w=[]
             for j in range(0,self.ncoset_reps()):
                 w = w + [self.full_data(j).scale(left)]
@@ -408,7 +407,7 @@ class modsym(SageObject):
         return self + right.scale(-1)
 
     def __cmp__(self,right):
-        return cmp((self.level,self.data),(right.level,right.data))
+        return cmp((self.level,self.data()),(right.level,right.data()))
 
     def zero_elt(self):
         r"""
@@ -441,7 +440,7 @@ class modsym(SageObject):
         """
         v = [self.zero_elt() for i in range(0,self.ngens())]
         C = type(self)
-        return C(v,self.manin)
+        return C(v,self.manin())
 
     def compute_full_data_from_gen_data(self):
         r"""
@@ -476,7 +475,7 @@ class modsym(SageObject):
                 t = t + self.data(r).act_right(A).scale(c)
             ans = ans + [t]   ## the value of self on the m-th coset rep is added to our list
  
-       self.full_data = ans   ## This data is now recorded in the modular symbol
+        self._full_data = ans   ## This data is now recorded in the modular symbol
     
     def eval_sl2(self,A):
         r"""
@@ -501,7 +500,7 @@ class modsym(SageObject):
         C = invert(a,b,c,d)      ##  C = A^(-1)
         gaminv=B*C               ##  So A = gam B  (where gaminv = gam^(-1))
         ## Checks if the value of self on all coset reps is already precomputed
-        if self.full_data!=0: 
+        if self.full_data()!=0: 
             return self.full_data(m).act_right(gaminv)   ##  Here we have self([A]) = self([gam B]) = self([B])|gam^(-1) 
                                                          ##     = self(m-th coset rep)|gamivn
         else:
@@ -579,7 +578,7 @@ class modsym(SageObject):
     	    v = v + [self.eval(gamma*self.manin().coset_reps(rj)).act_right(gamma)]  
         
         C = type(self)        
-        ans = C(v,self.manin)
+        ans = C(v,self.manin())
         ans.normalize()
         
         return ans
@@ -633,8 +632,8 @@ class modsym(SageObject):
         EXAMPLES:
         """
         if (self.full_data() != 0):
-            for j in range(ncoset_reps()):
-                self.full_data[j].normalize()
+            for j in range(self.ncoset_reps()):
+                self._full_data[j].normalize()
 
     def hecke_from_defn(self,ell):
         r"""
@@ -680,7 +679,7 @@ class modsym(SageObject):
 
         """         
         ## The values of self on all coset reps are computed and normalized if this hasn't been done yet.
-        if self.full_data==0:
+        if self.full_data()==0:
             self.compute_full_data_from_gen_data()
             self.normalize_full_data()
             
@@ -695,7 +694,7 @@ class modsym(SageObject):
         for m in range(self.ngens()):
             for j in range(self.ncoset_reps()):
                 for r in range(len(v[m][j])):
-                    psi.data[m] = psi.data(m) + self.full_data(j).act_right(v[m][j][r])
+                    psi._data[m] = psi.data(m) + self.full_data(j).act_right(v[m][j][r])
         
         psi.normalize()
         
