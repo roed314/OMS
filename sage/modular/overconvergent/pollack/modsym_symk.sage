@@ -1,133 +1,151 @@
 class modsym_symk(modsym):
-	def ms(self):
-		"""demotes to a regular modular symbol"""
-		return modsym(self.level,self.data,self.manin)
+    def ms(self):
+	"""demotes to a regular modular symbol"""
+	return modsym(self.level,self.data,self.manin)
 	
-	def weight(self):
-		"""returns the weight of any value of self"""
-		return self.data[0].weight
+    def weight(self):
+	"""returns the weight of any value of self"""
+	return self.data[0].weight
 
-	def base_ring(self):
-		return self.data[0].base_ring
+    def base_ring(self):
+	return self.data[0].base_ring
 
-	def valuation(self,p):
-		"""returns the valuation of self at p -- i.e. the exponent of the largest power of p which divides all of the coefficients of all values of self"""
-		v=self.data
-		return min([v[j].valuation(p) for j in range(0,len(v))])
+    def valuation(self,p):
+	"""returns the valuation of self at p -- i.e. the exponent of the largest power of p which divides all of the coefficients of all values of self"""
+	v=self.data
+	return min([v[j].valuation(p) for j in range(0,len(v))])
 
-	def p_stabilize(self,p,alpha):
-		"""p-stablizes self to form an eigensymbol for U_p with eigenvalue alpha"""
-		N=self.level
-		assert N%p<>0, "The level isn't prime to p"
+    def p_stabilize(self,p,alpha):
+	"""
+        p-stablizes self to form an eigensymbol for U_p with eigenvalue alpha
+        """
+	N = self.level
+	assert N%p<>0, "The level isn't prime to p"
 
-		pp=Matrix(ZZ,[[p,0],[0,1]])
-		manin=manin_relations(N*p)
-		v=[]
-		for j in range(0,len(manin.gens)):
-			rj=manin.gens[j]
-			v=v+[self.eval(manin.mats[rj])-self.eval(pp*manin.mats[rj]).act_right(pp).scale(1/alpha)]
-		return modsym_symk(N*p,v,manin)
+	pp = Matrix(ZZ,[[p,0],[0,1]])
+	manin = manin_relations(N*p)
+	v = []
+	for j in range(0,len(manin.gens)):
+	    rj=manin.gens[j]
+	    v=v+[self.eval(manin.mats[rj])-self.eval(pp*manin.mats[rj]).act_right(pp).scale(1/alpha)]
+	return modsym_symk(N*p,v,manin)
 
 
-	def p_stabilize_ordinary(self,p,ap,M):
-		"""returns the unique p-ordinary p-stabilization of self"""
-		N=self.level
-		k=self.data[0].weight
-		assert N%p<>0, "The level isn't prime to p"
-		assert ap%p<>0, "Not ordinary!"
+    def p_stabilize_ordinary(self,p,ap,M):
+	"""
+        returns the unique p-ordinary p-stabilization of self
+        """
+	N=self.level
+	k=self.data[0].weight
+	assert N%p<>0, "The level isn't prime to p"
+	assert ap%p<>0, "Not ordinary!"
 
-		"""makes alpha the unit root of Hecke poly"""
-		R=PolynomialRing(pAdicField(p,M),'y') 
-		y=R.gen()
-		f=y^2-ap*y+p^(k+1)
-		v=f.roots()
-		if Integer(v[0][0])%p<>0:
-			alpha=Integer(v[0][0])
+	###makes alpha the unit root of Hecke poly
+	R=PolynomialRing(pAdicField(p,M),'y') 
+	y=R.gen()
+	f=y^2-ap*y+p^(k+1)
+	v=f.roots()
+	if Integer(v[0][0])%p<>0:
+            alpha=Integer(v[0][0])
+	else:
+            alpha=Integer(v[1][0])
+
+	if self.full_data == 0:
+            self.compute_full_data_from_gen_data()
+
+	return self.p_stabilize(p,alpha)
+
+    def p_stabilize_critical(self,p,ap,M):
+	"""
+	"""
+	N=self.level
+	assert N%p<>0, "The level isn't prime to p"
+	assert ap%p<>0, "Not ordinary!"
+
+	"""makes alpha the non-unit root of Hecke poly"""
+	R=PolynomialRing(Qp(p,M),'y') 
+	y=R.gen()
+	f=y**2-ap*y+p
+	v=f.roots()
+	if Integer(v[0][0])%3==0:
+	    alpha=Integer(v[0][0])
+	else:
+	    alpha=Integer(v[1][0])
+
+	if self.full_data == 0:
+            self.compute_full_data_from_gen_data()
+
+	return self.p_stabilize(p,alpha)
+
+    def is_Tq_eigen(self,q,p,M):
+	"""
+	determines of self is an eigenvector for T_q modulo p^M
+	"""
+	selfq=self.hecke(q)
+	r = 0
+	while (self.data[r].coef(0)==0) and (r<=self.ngens()):
+            r=r+1
+	
+        if r>self.ngens():
+        #all coefficients of Y^k are zero which I think forces it 
+	#not to be eigen
+            return False
+	else:	
+	    c=selfq.data[r].coef(0)/self.data[r].coef(0)
+	    val=(selfq-self.scale(c)).valuation(p)
+	    if val>=M:
+	        return True,c
+	    else:
+		return False
+
+    def lift_to_OMS(self,p,M):
+	"""
+        returns a (p-adic) overconvergent modular symbols with M moments 
+        which lifts self up to an Eisenstein error
+        """
+	v = []
+	# this loop runs through each generator and lifts the value of 
+	# self on that generator to D
+	
+        for j in range(1,len(self.manin.gens)):
+            g=self.manin.gens[j]
+            if (self.manin.twotor.count(g)==0) and (self.manin.threetor.count(g)==0):
+	        #not two or three torsion
+	        v=v+[self.data[j].lift_to_dist(p,M)]
+	    else:
+		if (self.manin.twotor.count(g)<>0):
+	            #case of two torsion (See [PS] section 4.1)
+		    rj=self.manin.twotor.index(g)
+		    gam=self.manin.twotorrels[rj]
+		    mu=self.data[j].lift_to_dist(p,M)
+		    v=v+[(mu.act_right(gam)-mu).scale(1/2)]
 		else:
-			alpha=Integer(v[1][0])
-
-		if self.full_data == 0:
-			self.compute_full_data_from_gen_data()
-
-		return self.p_stabilize(p,alpha)
-
-	def p_stabilize_critical(self,p,ap,M):
-		N=self.level
-		assert N%p<>0, "The level isn't prime to p"
-		assert ap%p<>0, "Not ordinary!"
-
-		"""makes alpha the non-unit root of Hecke poly"""
-		R=PolynomialRing(Qp(p,M),'y') 
-		y=R.gen()
-		f=y**2-ap*y+p
-		v=f.roots()
-		if Integer(v[0][0])%3==0:
-			alpha=Integer(v[0][0])
+		    #case of three torsion (See [PS] section 4.1)	
+		    rj=self.manin.threetor.index(g)
+		    gam=self.manin.threetorrels[rj]
+		    mu=self.data[j].lift_to_dist(p,M)
+		    v=v+[(mu.scale(2)-mu.act_right(gam)-mu.act_right(gam^2)).scale(1/3)]
+	
+        t=v[0].zero()
+		
+        # this loops adds up around the boundary of fundamental domain 
+        # except the two verticle lines
+	for j in range(2,len(self.manin.rels)):
+	    R=self.manin.rels[j]
+	    if len(R)==1:
+		if R[0][0]==1:
+                    rj=self.manin.gens.index(j)
+	            t=t+self.data[rj].lift_to_dist(p,M)
 		else:
-			alpha=Integer(v[1][0])
+		    if R[0][1]<>Id:
+		    #rules out extra three torsion terms
+		        index=R[0][2]
+			rj=self.manin.gens.index(index)
+                        t=t+self.data[rj].lift_to_dist(p,M).act_right(R[0][1]).scale(R[0][0])
+	mu=t.solve_diff_eqn()
+	v=[mu]+v
 
-		if self.full_data == 0:
-			self.compute_full_data_from_gen_data()
-
-		return self.p_stabilize(p,alpha)
-
-	def is_Tq_eigen(self,q,p,M):
-		"""determines of self is an eigenvector for T_q modulo p^M"""
-		selfq=self.hecke(q)
-		r=0
-		while (self.data[r].coef(0)==0) and (r<=self.ngens()):
-			r=r+1
-		if r>self.ngens():
-			#all coefficients of Y^k are zero which I think forces it not to be eigen
-			return False
-		else:	
-			c=selfq.data[r].coef(0)/self.data[r].coef(0)
-			val=(selfq-self.scale(c)).valuation(p)
-			if val>=M:
-				return True,c
-			else:
-				return False
-
-	def lift_to_OMS(self,p,M):
-		"""returns a (p-adic) overconvergent modular symbols with M moments which lifts self up to an Eisenstein error"""
-		v=[]
-		#this loop runs through each generator and lifts the value of self on that generator to D
-		for j in range(1,len(self.manin.gens)):
-			g=self.manin.gens[j]
-			if (self.manin.twotor.count(g)==0) and (self.manin.threetor.count(g)==0):
-				#not two or three torsion
-				v=v+[self.data[j].lift_to_dist(p,M)]
-			else:
-				if (self.manin.twotor.count(g)<>0):
-					#case of two torsion (See [PS] section 4.1)
-					rj=self.manin.twotor.index(g)
-					gam=self.manin.twotorrels[rj]
-					mu=self.data[j].lift_to_dist(p,M)
-					v=v+[(mu.act_right(gam)-mu).scale(1/2)]
-				else:
-					#case of three torsion (See [PS] section 4.1)	
-					rj=self.manin.threetor.index(g)
-					gam=self.manin.threetorrels[rj]
-					mu=self.data[j].lift_to_dist(p,M)
-					v=v+[(mu.scale(2)-mu.act_right(gam)-mu.act_right(gam^2)).scale(1/3)]
-		t=v[0].zero()
-		#this loops adds up around the boundary of fundamental domain except the two verticle lines
-		for j in range(2,len(self.manin.rels)):
-			R=self.manin.rels[j]
-			if len(R)==1:
-				if R[0][0]==1:
-					rj=self.manin.gens.index(j)
-					t=t+self.data[rj].lift_to_dist(p,M)
-				else:
-					if R[0][1]<>Id:
-					#rules out extra three torsion terms
-						index=R[0][2]
-						rj=self.manin.gens.index(index)
-						t=t+self.data[rj].lift_to_dist(p,M).act_right(R[0][1]).scale(R[0][0])
-		mu=t.solve_diff_eqn()
-		v=[mu]+v
-
-		return modsym_dist(self.level,v,self.manin)	
+	return modsym_dist(self.level,v,self.manin)	
 
 	def lift_to_OMS_eigen(self,p,M,verbose=True):
 		"""returns Hecke-eigensymbol OMS lifting phi -- phi must be a p-ordinary eigensymbol"""
