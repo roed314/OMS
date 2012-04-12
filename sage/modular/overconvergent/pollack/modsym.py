@@ -363,7 +363,7 @@ class modsym(SageObject):
             self.data[j].normalize()
 
         if self.full_data!=0 
-            for j in range(0,self.ncoset_reps()):
+            for j in range(self.ncoset_reps()):
                 self.full_data[j].normalize()
 
     def scale(self,left):
@@ -603,7 +603,7 @@ class modsym(SageObject):
 
     def minus_part(self):
         r"""
-        Returns the minus part of self -- i.e. self - self | [1,0,0,-1].
+        Returns the minus part of self -- i.e. self | [1,0,0,-1] - self
         
         Note that we haven't divided by 2.  Is this a problem?
         
@@ -620,31 +620,86 @@ class modsym(SageObject):
         return self.act_right(Matrix(2,2,[1,0,0,-1])) - self
 
     def normalize_full_data(self):
-        if (self.full_data != 0):
-            for j in range(len(self.full_data)):
-                self.full_data[j]=self.full_data[j].normalize()
+        r"""
+        Normalizes the values of self on all coset reps (if they are already computed)
+        
+        INPUT:
+            none
 
-    def hecke2(self,ell):
-        if self.full_data==0:
+        OUTPUT:
+	    none
+	    
+	    
+        EXAMPLES:
+        """
+        if (self.full_data() != 0):
+            for j in range(ncoset_reps()):
+                self.full_data[j].normalize()
+
+    def hecke_from_defn(self,ell):
+        r"""
+    	Computes self | T_ell directly from the definition of acting by double coset reps
+	
+        That is, it computes sum_a self | [1,a,0,ell] + self | [ell,0,0,1] where the last
+        term occurs only if the level is prime to ell.
+        
+        INPUT:
+            ell = prime
+
+        OUTPUT:
+    	    self | T_ell
+	    
+	    
+        EXAMPLES:
+        """
+        ## If needed, precomputes the value of self on all coset reps
+        if self.full_data() == 0:
             self.compute_full_data_from_gen_data()
-        psi=self.zero()
+            
+        psi = self.zero()
         for a in range(0,ell): 
-            psi=psi+self.act_right(Matrix(ZZ,[[1,a],[0,ell]]))
-        if self.level%ell<>0:
-            psi=psi+self.act_right(Matrix(ZZ,[[ell,0],[0,1]]))
-        return psi.normalize()
+            psi = psi + self.act_right(Matrix(ZZ,[[1,a],[0,ell]]))
+        if self.level()%ell<>0:
+            psi = psi + self.act_right(Matrix(ZZ,[[ell,0],[0,1]]))
+        
+        psi.normalize()
+        
+        return psi
 
     def hecke(self,ell):
+        r"""
+        Returns self | T_ell by making use of the precomputations in prep_hecke
+        
+        INPUT:
+            ell = prime
+
+        OUTPUT:
+            self | T_ell
+            
+        EXAMPLES:
+
+        """         
+        ## The values of self on all coset reps are computed and normalized if this hasn't been done yet.
         if self.full_data==0:
             self.compute_full_data_from_gen_data()
             self.normalize_full_data()
-        psi=self.zero()
-        v=prep_hecke(ell,self.manin)
-        for m in range(len(self.manin().generator_indices())):
-            for j in range(len(self.manin.coset_reps())):
+            
+        psi = self.zero()   ## psi will denote self | T_ell
+        v = prep_hecke(ell,self.manin())  ## v is a long list of lists of lists with the property that the value
+                                          ## of self | T_ell on the m-th generator is given by
+                                          ## 
+                                          ## sum_j sum_r self(j-th coset rep) | v[m][j][r]
+                                          ## 
+                                          ## where j runs thru all coset reps and r runs thru all entries of v[m][j]
+        ## This loop computes (self | T_ell)(m-th generator)
+        for m in range(self.ngens()):
+            for j in range(self.ncoset_reps()):
                 for r in range(len(v[m][j])):
-                    psi.data[m]=psi.data[m]+self.full_data[j].act_right(v[m][j][r])
-        return psi.normalize()
+                    psi.data[m] = psi.data(m) + self.full_data(j).act_right(v[m][j][r])
+        
+        psi.normalize()
+        
+        return psi
 
     def grab_relations(self):
         v=[]
