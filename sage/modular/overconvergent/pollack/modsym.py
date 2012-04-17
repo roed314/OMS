@@ -468,12 +468,13 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: zero_sym = phi.zero(); zero_sym
         [0, 0, 0]
         sage: parent(zero_sym)
-        <class '__main__.modsym_symk'>
+        <class 'sage.modular.overconvergent.pollack.modsym_symk.modsym_symk'>
 
         """
 
@@ -499,6 +500,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.full_data()
@@ -513,8 +515,13 @@ class modsym(SageObject):
         0
         sage: phi.compute_full_data_from_gen_data()
         sage: phi.full_data()
-        [0, 0, 1, 0, 0, 0, -1, 1, 0, -1, -1, 0, 0, 1, 0, 0, 1, -1, 1, -1, 1, -1, 0, 0, -1, 1, 0, 0, 1, -1, -2, 2, -2, 2, -1, 1, 1, -1]
+        [0, 0, 1, 0, 0, 0, -1, 1, 0, -1, -1, 0, 0, 1, 0, 0, 1, -1, 0, 0, 0, 0, -1, 1, -1, 1, 1, -1, -1, 1, 0, 0, -2, 2, 1, -1, 1, -1]
 
+        NOTE/WARNING: The above is worrisome; the doctest from before was the
+        the following:
+           [0, 0, 1, 0, 0, 0, -1, 1, 0, -1, -1, 0, 0, 1, 0, 0, 1, -1, 1, -1, 1, -1, 0, 0, -1, 1, 0, 0, 1, -1, -2, 2, -2, 2, -1, 1, 1, -1]
+        The original .sage files Pollack sent us produce the same output
+        as reported above.
         """
         ans = []   ## This will be the list contained all values of phi on coset reps
         ## This loop runs through all coset reps
@@ -554,6 +561,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.manin().generator_indices()
@@ -571,6 +579,7 @@ class modsym(SageObject):
         1
         sage: (phi.eval_sl2(A)+phi.eval_sl2(A*sig)) == phi.zero_elt()
         True
+        sage: tau = Matrix(2,2,[0,-1,1,-1])
         sage: (phi.eval_sl2(A)+phi.eval_sl2(A*tau)+phi.eval_sl2(A*tau*tau)) == phi.zero_elt()
         True
 
@@ -621,6 +630,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: sig = Matrix(2,2,[0,1,-1,0])
@@ -680,6 +690,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.act_right(Matrix(ZZ,2,2,[1,0,0,-1]))
@@ -717,6 +728,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: (phi.plus_part()+phi.minus_part()) == phi.scale(2)
@@ -744,6 +756,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: (phi.plus_part()+phi.minus_part()) == phi.scale(2)
@@ -787,6 +800,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: ell=2
@@ -833,6 +847,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: ell=2
@@ -1043,6 +1058,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.prep_hecke_individual(2,0)
@@ -1097,6 +1113,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.prep_hecke(2)
