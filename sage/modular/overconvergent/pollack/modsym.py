@@ -153,6 +153,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.full_data()
@@ -171,7 +172,12 @@ class modsym(SageObject):
         0
         sage: phi.compute_full_data_from_gen_data()
         sage: phi.full_data()
+        [0, 0, 1, 0, 0, 0, -1, 1, 0, -1, -1, 0, 0, 1, 0, 0, 1, -1, 0, 0, 0, 0, -1, 1, -1, 1, 1, -1, -1, 1, 0, 0, -2, 2, 1, -1, 1, -1]
+
+        WARNING: Original version was:
         [0, 0, 1, 0, 0, 0, -1, 1, 0, -1, -1, 0, 0, 1, 0, 0, 1, -1, 1, -1, 1, -1, 0, 0, -1, 1, 0, 0, 1, -1, -2, 2, -2, 2, -1, 1, 1, -1]
+
+        
         sage: phi.full_data(0)
         0
         sage: phi.full_data(3)
@@ -254,6 +260,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.ncoset_reps()
@@ -1065,6 +1072,15 @@ class modsym(SageObject):
         [[[1 0]
         [0 2], [1 1]
         [0 2], [2 0]
+        [0 1]], [], [], [], [], [], [], [], [], [], [], [[ 1 -1]
+        [ 0  2]]]        
+
+        The output the original version of this file claimed is the
+        following, but this disagrees with what we get, and with the
+        .sage version (which agree with each other)::
+        [[[1 0]
+        [0 2], [1 1]
+        [0 2], [2 0]
         [0 1]], [], [], [], [], [], [[ 1 -1]
         [ 0  2]], [], [], [], [], []]
 
@@ -1117,6 +1133,37 @@ class modsym(SageObject):
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.prep_hecke(2)
+        [[[[1 0]
+        [0 2], [1 1]
+        [0 2], [2 0]
+        [0 1]], [], [], [], [], [], [], [], [], [], [], [[ 1 -1]
+        [ 0  2]]], [[[1 2]
+        [0 2], [1 1]
+        [0 2], [2 1]
+        [0 1]], [[ 1 -2]
+        [ 0  2], [ 1 -1]
+        [ 0  2], [ 2 -1]
+        [ 0  1]], [], [[-4 -2]
+        [11  5], [-8 -3]
+        [22  8]], [], [], [], [], [], [[1 0]
+        [0 2]], [[-5 -2]
+        [11  4], [-1  1]
+        [ 0 -2]], []], [[[1 2]
+        [0 2], [1 1]
+        [0 2], [2 1]
+        [0 1]], [[1 0]
+        [0 2], [ 1 -1]
+        [ 0  2], [2 0]
+        [0 1]], [], [], [[-6 -4]
+        [11  7]], [[-7 -4]
+        [11  6], [-1  1]
+        [ 0 -2], [-2  0]
+        [ 0 -1]], [], [], [[-1  0]
+        [ 0 -2]], [[1 0]
+        [0 2]], [], [[-5 -2]
+        [11  4]]]]
+
+        WARNING: changed from this (which disagreed with .sage file):
         [[[[1 0]
         [0 2], [1 1]
         [0 2], [2 0]
