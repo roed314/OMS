@@ -3,9 +3,9 @@ from sage.structure.element cimport ModuleElement
 from sage.categories.action cimport Action
 from sage.rings.padics.pow_computer cimport PowComputer_long
 
-cdef extern from "../../../ext/multi_modular.h":
-    ctypedef unsigned long mod_int
-    mod_int MOD_INT_MAX
+#cdef extern from "../../../ext/multi_modular.h":
+#    ctypedef unsigned long mod_int
+#    mod_int MOD_INT_MAX
 
 
 

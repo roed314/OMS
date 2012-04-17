@@ -19,6 +19,11 @@ from sage.rings.padics.padic_capped_relative_element cimport pAdicCappedRelative
 from sage.rings.padics.padic_fixed_mod_element cimport pAdicFixedModElement
 from sage.rings.integer cimport Integer
 
+cdef extern from "zn_poly/zn_poly.h":
+    pass
+from sage.libs.flint.zmod_poly cimport *, zmod_poly_t
+from sage.libs.flint.long_extras cimport *
+
 M2Z = MatrixSpace(ZZ,2,2)
 cdef long overflow = 1 << (4*sizeof(long)-1)
 cdef long underflow = -overflow
@@ -437,10 +442,10 @@ cdef class WeightKAction_vector(WeightKAction):
         scale = (b+d*y)/(a+c*y)
         t = (a+c*y)**k # will already have precision M
         cdef Matrix B = matrix(ZpM,M,M)
-        cdef long r, c
-        for c in range(M):
-            for r in range(M):
-                B.set_unsafe(r, c, t[r])
+        cdef long row, col
+        for col in range(M):
+            for row in range(M):
+                B.set_unsafe(row, col, t[row])
             t *= scale
         return B
 
@@ -486,8 +491,8 @@ cdef class WeightKAction_long(WeightKAction):
         b = mymod(_b, pM)
         c = mymod(_c, pM)
         d = mymod(_d, pM)
-        cdef double pMinv = p
-        pMinv = ~pMinv
+        cdef double pMinv = pM
+        pMinv = 1.0 / pMinv
         zmod_poly_init2_precomp(t, pM, pMinv, M)
         zmod_poly_init2_precomp(scale, pM, pMinv, M)
         zmod_poly_init2_precomp(xM, pM, pMinv, M+1)
@@ -512,6 +517,7 @@ cdef class WeightKAction_long(WeightKAction):
         cdef Dist_long v = <Dist_long?>_v
         cdef Dist_long ans = v._new_c()
         cdef long M = v.prec
+        cdef long pM = self._p**M
         cdef SimpleMat B = <SimpleMat>self.acting_matrix(g, M)
         cdef long row, col, entry = 0
         for col in range(M):
@@ -519,7 +525,8 @@ cdef class WeightKAction_long(WeightKAction):
             for row in range(M):
                 ans.moments[col] += mymod(B._mat[entry] * v.moments[row], pM)
                 entry += 1
-                
+        ans.prec = M
+        return ans
 
 #@cached_function
 #def eta(Dk, i, M):

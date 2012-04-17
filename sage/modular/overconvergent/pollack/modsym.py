@@ -1,6 +1,10 @@
 from sage.modular.modsym.manin_symbols import ManinSymbol, ManinSymbolList_gamma0
 from sage.structure.sage_object import SageObject
-     
+from sage.rings.arith import convergents
+from sage.matrix.all import Matrix
+from sage.rings.all import ZZ, QQ
+
+
 ##############################
 ##  Define the modsym class ##
 ##############################
@@ -53,6 +57,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: M = phi.manin()
@@ -80,6 +85,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.data()
@@ -122,6 +128,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.level()
@@ -193,6 +200,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]        
 
@@ -215,11 +223,13 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.ngens()
         3
         sage: E = EllipticCurve('37a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [0, 1, 0, 0, 0, -1, 1, 0, 0]
         sage: phi.ngens()
@@ -272,8 +282,8 @@ class modsym(SageObject):
 
         ::
 
-        sage: E = EllipticCurve('37a')
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi + phi
@@ -333,6 +343,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi.scale(2)
@@ -370,6 +381,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi - phi
@@ -396,6 +408,7 @@ class modsym(SageObject):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: phi == phi
@@ -425,15 +438,16 @@ class modsym(SageObject):
         ::
         
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve 
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]
         sage: z=phi.zero_elt(); z
         0
         sage: parent(z)
-        <class '__main__.symk'>
-        sage: z.weight()
+        <class 'sage.modular.overconvergent.pollack.symk.symk'>
+        sage: z.weight
         0
-        sage: z.poly()
+        sage: z.poly
         0        
         """
         return self.data(0).zero()
