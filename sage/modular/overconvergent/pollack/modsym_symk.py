@@ -2,7 +2,7 @@ from sage.rings.arith import binomial
 from sage.rings.padics.all import pAdicField
 from sage.rings.integer_ring import ZZ
 from sage.matrix.all import Matrix
-from sage.modular.overconvergent.pollack import modsym
+from sage.modular.overconvergent.pollack.modsym import modsym
 
 
 class modsym_symk(modsym):
@@ -38,7 +38,7 @@ class modsym_symk(modsym):
 
         """
         return modsym(self.data(),self.manin())
-        
+    
     def weight(self):
         r"""
         Returns the weight of any value of self.
