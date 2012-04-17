@@ -58,8 +58,9 @@ def logp(p,z,M):
 	-1/5*z^5 + 1/4*z^4 - 1/3*z^3 + 1/2*z^2 - z          
     """
     ans = 0
+    one = ZZ(1)
     for j in range(1,M):
-        ans=ans+((-1)**j)/j*(z**j)
+        ans=ans+((-one)**j)/j*(z**j)
     return ans
 
 # @cached_function
