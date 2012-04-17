@@ -1859,7 +1859,8 @@ class BTQuotient(SageObject, UniqueRepresentation):
         p=self._p
         A,B,C = f
         D = B**2 - 4*A*C
-        K.<delta> = QuadraticField(D)
+        K = QuadraticField(D,names='delta')
+        delta = K.gens()
         D0 = K.discriminant()
         cond = ZZ((D/D0).sqrt())
 

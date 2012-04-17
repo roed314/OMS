@@ -149,7 +149,7 @@ def find_good_monomial(f):
 def find_relations(X,dmax,prec,generators,h=0):
     genus=len(X)
     p=X[0].parent()._X.prime()
-    K.<g>=Qq(p^2,prec)
+    K=Qq(p**2,prec,names='g')
     g=K.gen()
     max_num_monomials=binomial(genus+dmax-1,dmax)
 
