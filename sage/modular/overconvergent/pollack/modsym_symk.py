@@ -2,6 +2,7 @@ from sage.rings.arith import binomial
 from sage.rings.padics.all import pAdicField
 from sage.rings.integer_ring import ZZ
 from sage.matrix.all import Matrix
+from sage.modsym import *
 
 class modsym_symk(modsym):
 
