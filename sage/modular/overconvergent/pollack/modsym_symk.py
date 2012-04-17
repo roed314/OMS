@@ -164,6 +164,9 @@ class modsym_symk(modsym):
         sage: alpha^2 - E.ap(3)*alpha + 3
         O(3^100)
         sage: alpha=ZZ(alpha)
+
+        ###none of these work###
+        
         sage: phi_alpha.hecke(2)-phi_alpha.scale(E.ap(2))
         [0, 0, 0, 0, 0, 0, 0, 0, 0]
         sage: (phi_alpha.hecke(3)-phi_alpha.scale(alpha)).valuation(3)
@@ -210,6 +213,7 @@ class modsym_symk(modsym):
         ::
 
         sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi
         [-1/5, 3/2, -1/2]        
         sage: phi_ord = phi.p_stabilize_ordinary(3,E.ap(3),10); phi_ord
@@ -235,7 +239,7 @@ class modsym_symk(modsym):
 
         """
         N = self.level()
-        k = self.data(0).weight()
+        k = self.data(0).weight
         assert N%p!=0, "The level isn't prime to p"
         assert (ap%p)!=0, "Not ordinary!"
 
