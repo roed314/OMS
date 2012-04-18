@@ -17,6 +17,7 @@ from warnings import warn
 
 from module_list import ext_modules
 import sage.ext.gen_interpreters
+import warnings
 
 #########################################################
 ### Configuration
@@ -643,7 +644,7 @@ class DependencyTree:
                 # an exception. 
                 if not found_include:
                     msg = 'could not find dependency %s included in %s.'%(path, filename)
-                    if is_cython_file(filename):
+                    if is_cython_file(path):
                         raise IOError, msg
                     else:
                         warnings.warn(msg+' I will assume it is a system C/C++ header.')
@@ -894,6 +895,7 @@ code = setup(name = 'sage',
                      'sage.functions',
 
                      'sage.geometry',
+                     'sage.geometry.polyhedron',
                      'sage.geometry.triangulation',
 
                      'sage.games',
@@ -903,6 +905,7 @@ code = setup(name = 'sage',
                      'sage.graphs',
                      'sage.graphs.base',
                      'sage.graphs.modular_decomposition',
+                     'sage.graphs.graph_decompositions',
                      'sage.graphs.graph_decompositions',
                      
                      'sage.groups',
@@ -926,6 +929,7 @@ code = setup(name = 'sage',
                      'sage.libs.mwrank',
                      'sage.libs.ntl',
                      'sage.libs.flint',
+                     'sage.libs.lrcalc',
                      'sage.libs.pari',
                      'sage.libs.singular',
                      'sage.libs.symmetrica',
@@ -953,6 +957,7 @@ code = setup(name = 'sage',
                      'sage.modular.btquotients',
                      'sage.modular.overconvergent',
                      'sage.modular.overconvergent.pollack',
+                     'sage.modular.local_comp',
                      
                      'sage.monoids',
 
@@ -969,6 +974,7 @@ code = setup(name = 'sage',
 
                      'sage.rings',
                      'sage.rings.finite_rings',
+                     'sage.rings.function_field',
                      'sage.rings.number_field',
                      'sage.rings.padics',
                      'sage.rings.polynomial',
