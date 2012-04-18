@@ -452,14 +452,14 @@ cdef class WeightKAction(Action):
 
 cdef class WeightKAction_vector(WeightKAction):
     cpdef _compute_acting_matrix(self, g, M):
-        t = verbose("Starting")
+        tim = verbose("Starting")
         a, b, c, d = self._tuplegen(g)
         self._check_mat(a, b, c, d)
         k = self._k
         ZpM = Zmod(self._p**M)
         R = PowerSeriesRing(ZpM, 'y', default_prec = M)
         y = R.gen()
-        t = verbose("Checked, made R",t)
+        tim = verbose("Checked, made R",tim)
         # special case for small precision, large weight
         scale = (b+d*y)/(a+c*y)
         t = (a+c*y)**k # will already have precision M
@@ -467,12 +467,12 @@ cdef class WeightKAction_vector(WeightKAction):
             t *= self._character(a, b, c, d)
         cdef Matrix B = matrix(ZpM,M,M)
         cdef long row, col
-        t = verbose("Made matrix",t)
+        tim = verbose("Made matrix",tim)
         for col in range(M):
             for row in range(M):
                 B.set_unsafe(row, col, t[row])
             t *= scale
-        verbose("Finished loop")
+        verbose("Finished loop",tim)
         return B
 
     cpdef _call_(self, _v, g):
