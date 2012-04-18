@@ -22,7 +22,7 @@ class modsym_symk(modsym):
         INPUT:
         
             - ``phi`` - modsym_symk
-
+            
         OUTPUT:
 
         The same modular symbol phi but now simply thought of as a modsym type.
@@ -42,7 +42,7 @@ class modsym_symk(modsym):
         [-1/5, 3/2, -1/2]
         sage: type(psi)
         <class 'sage.modular.overconvergent.pollack.modsym.modsym'>
-
+        
         """
         return modsym(self.data(),self.manin())
     
@@ -94,9 +94,9 @@ class modsym_symk(modsym):
         [-1/5, 3/2, -1/2]
         sage: phi.base_ring()
         Rational Field
-
+        
         """
-        return self.data(0).base_ring()
+        return self.data(0).base_ring
 
     def valuation(self,p):
         r"""
@@ -142,15 +142,16 @@ class modsym_symk(modsym):
         INPUT:
             - ``p`` -- prime not dividing the level of self.
             - ``alpha`` -- eigenvalue for `U_p` 
-
+            
         OUTPUT:
-
+        
         A modular symbol with the same Hecke-eigenvalues as self away from `p` and eigenvalue `alpha` at `p`.
-
+        
         EXAMPLES:
  
         ::
 
+        sage: E = EllipticCurve('11a')
         sage: p = 3
         sage: M = 100
         sage: R = pAdicField(p,M)['y'] 
@@ -165,15 +166,6 @@ class modsym_symk(modsym):
         O(3^100)
         sage: alpha=ZZ(alpha)
 
-        ###none of these work###
-        
-        sage: phi_alpha.hecke(2)-phi_alpha.scale(E.ap(2))
-        [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        sage: (phi_alpha.hecke(3)-phi_alpha.scale(alpha)).valuation(3)
-        101
-        sage: phi_alpha.hecke(5)-phi_alpha.scale(E.ap(5))
-        [0, 0, 0, 0, 0, 0, 0, 0, 0]
-
         """
         N = self.level()
         assert N % p != 0, "The level isn't prime to p"
@@ -181,9 +173,9 @@ class modsym_symk(modsym):
         pp = Matrix(ZZ,[[p,0],[0,1]])
 
         manin = manin_relations(N*p)
-
+        
         v = [] ## this list will contain the data of the p-stabilized symbol of level N*p
-
+        
         ##  This loop runs through each generator at level Np and computes the value of the
         ##  p-stabilized symbol on each generator.  Here the following formula is being used:
         ##
@@ -237,13 +229,13 @@ class modsym_symk(modsym):
         sage: alpha=ZZ(alpha)
         sage: (phi_ord.hecke(3) - phi_ord.scale(alpha)).valuation(3)
         11
-
+        
         """
-        N = self.level()
+#        N = self.level()
         k = self.data(0).weight
-        assert N%p!=0, "The level isn't prime to p"
+#        assert N%p!=0, "The level isn't prime to p"
         assert (ap%p)!=0, "Not ordinary!"
-
+        
         # Makes alpha the unit root of the Hecke polynomial x^2-a_p*x+p^(k+1)
         R = pAdicField(p,M)['y'] 
         y = R.gen()
@@ -371,10 +363,10 @@ class modsym_symk(modsym):
     def lift_to_OMS(self,p,M):
         r"""
         Returns a (`p`-adic) overconvergent modular symbol with `M` moments which lifts self up to an Eisenstein error
-
+        
         Here the Eisenstein error is a symbol whose system of Hecke eigenvalues equals `ell+1` for `T_ell` when `ell`
         does not divide `Np` and 1 for `U_q` when `q` divides `Np`.
-
+        
         INPUT:
             - ``p`` -- prime
             - ``M`` -- integer equal to the number of moments
@@ -389,44 +381,46 @@ class modsym_symk(modsym):
         v = []
 
         ##  This loop runs through each generator and lifts the value of self on that generator to D        
-        for j in range(1,len(self.ngens())):
-            g = self.manin.gens[j]
-            if (self.manin.twotor.count(g)==0) and (self.manin.threetor.count(g)==0):
+        for j in range(1, self.ngens()):
+            g = self.manin().gens()[j]
+            if (self.manin().two_torsion_indices().count(g)==0) and (self.manin().three_torsion_indices().count(g)==0):
                 #not two or three torsion
-                v = v + [self.data[j].lift_to_dist(p,M)]
+                v = v + [self.data()[j].lift_to_dist(p,M)]
             else:
-                if (self.manin.twotor.count(g)<>0):
+                if (self.manin().two_torsion_indices().count(g)<>0):
                     #case of two torsion (See [PS] section 4.1)
-                    rj = self.manin.twotor.index(g)
-                    gam = self.manin.twotorrels[rj]
+                    rj = self.manin().two_torsion_indices().index(g)
+                    gam = self.manin().twotorrels[rj]
                     mu = self.data[j].lift_to_dist(p,M)
                     v = v+ [(mu.act_right(gam)-mu).scale(ZZ(1)/ZZ(2))]
                 else:
                     #case of three torsion (See [PS] section 4.1)       
-                    rj = self.manin.threetor.index(g)
-                    gam = self.manin.threetorrels[rj]
-                    mu = self.data[j].lift_to_dist(p,M)
+                    rj = self.manin().three_torsion_indices().index(g)
+                    gam = self.manin().three_torsion_relation_matrices()[rj]
+                    mu = self.data()[j].lift_to_dist(p,M)
                     v = v+[(mu.scale(2)-mu.act_right(gam)-mu.act_right(gam**2)).scale(ZZ(1)/ZZ(3))]
         
         t = v[0].zero()
                 
         # this loops adds up around the boundary of fundamental domain 
         # except the two vertical lines
-        for j in range(2,len(self.manin.rels)):
-            R = self.manin.rels[j]
+        Id=Matrix(2,2,[1,0,0,1])        
+        for j in range(2,len(self.manin().coset_relations())):
+            R = self.manin().coset_relations()[j]
             if len(R) == 1:
                 if R[0][0] == 1:
-                    rj = self.manin.gens.index(j)
-                    t = t + self.data[rj].lift_to_dist(p,M)
+                    rj = self.manin().gens().index(j)
+                    t = t + self.data()[rj].lift_to_dist(p,M)
                 else:
                     if R[0][1]<>Id:
                     #rules out extra three torsion terms
                         index = R[0][2]
-                        rj = self.manin.gens.index(index)
-                        t = t+self.data[rj].lift_to_dist(p,M).act_right(R[0][1]).scale(R[0][0])
+                        rj = self.manin().gens().index(index)
+                        t = t+self.data()[rj].lift_to_dist(p,M).act_right(R[0][1]).scale(R[0][0])
         mu = t.solve_diff_eqn()
         v = [mu] + v
-        return modsym_dist(self.level,v,self.manin)     
+        import modsym_dist 
+        return modsym_dist.modsym_dist(v,self.manin())     
 
     def lift_to_OMS_eigen(self,p,M,verbose=True):
         r"""
@@ -447,25 +441,31 @@ class modsym_symk(modsym):
         ap = v[1]
         k = self.weight()
         Phi = self.lift_to_OMS(p,M)
+        #print "Phi = ", Phi
         s = -Phi.valuation()
+        print "s = ", s
         if s > 0:
             if verbose:
                 print "Scaling by ",p,"^",s
             Phi = Phi.scale(p**(-Phi.valuation()))
         Phi = Phi.normalize()
+        print "Phi = ", Phi
         if verbose:
             print "Applying Hecke"
-        Phi = Phi.hecke(p).scale(1/ap)
+        ###first bug here###
+        Phi = Phi.hecke(p).scale(ZZ(1)/ap)
+        print "Phi = ", Phi
         if verbose:
             print "Killing eisenstein part"
         if (ap%(p**M))<>1:
             Phi = (Phi-Phi.hecke(p)).scale(1/(1-ap))
+            print "Phi = ", Phi
             e = (1-ap).valuation(p)
             if e > 0:
                 Phi = Phi.change_precision(M-e)
                 print "change precision to",M-e
         else:
-            q = 2
+            q = ZZ(2)
             v = self.is_Tq_eigen(q,p,M)
             assert v[0],"not eigen at q"
             aq = v[1]
@@ -482,15 +482,17 @@ class modsym_symk(modsym):
         if verbose:
             print "Iterating U_p"
         Psi = Phi.hecke(p).scale(1/ap)
+        print "Psi = ", Psi
         err = (Psi-Phi).valuation()
+        print "err = ", err
         Phi = Psi
         while err < Infinity:
             if (Phi.valuation()>=s) and (s>0):
-                Phi = Phi.scale(1/p**s)
+                Phi = Phi.scale(ZZ(1)/p**s)
                 Phi = Phi.change_precision(Phi.num_moments()-s).normalize()
                 print "unscaling by p^",s
                 s = Infinity
-            Psi = Phi.hecke(p).scale(1/ap)
+            Psi = Phi.hecke(p).scale(ZZ(1)/ap)
             err = (Psi-Phi).valuation()
             if verbose:
                 print "error is zero modulo p^",err
@@ -516,8 +518,8 @@ class modsym_symk(modsym):
         EXAMPLES:
 
         """
-        v = [self.data[j].map(psi) for j in range(len(self.data))]
-        return modsym_symk(self.level,v,self.manin)
+        v = [self.data(j).map(psi) for j in range(len(self.data()))]
+        return modsym_symk(v,self.manin())
 
     def coerce_to_Qp(self,p,M):
         r"""
@@ -549,47 +551,6 @@ class modsym_symk(modsym):
                 psi = K.hom([root],pAdicField(p,M))
                 ans = ans+[[self.map(psi),psi]]
         return ans
-
-    def form_modsym_from_decomposition(A):
-        r"""
-        `A` is a piece of the result from a command like 
-        ModularSymbols(---).decomposition()
-        
-        INPUT:
-            - ``A`` -- 
-
-        OUTPUT:
-
-        EXAMPLES:
-
-        """
-        M = A.ambient_module()
-        N = A.level()
-        k = A.weight()
-        manin = manin_relations(N)
-        w = A.dual_eigenvector()
-        K = w.parent().base_field()
-        v = []
-        R = PolynomialRing(K,2,names='X,Y')
-        X,Y = R.gens()
-        for j in range(0,len(manin.gens)):
-            rj = manin.gens[j]
-            g = manin.mats[rj]
-            a,b,c,d = g.list()
-            ans = 0
-            if c<>0:
-                r1 = a/c
-            else:
-                r1 = oo
-            if d<>0:
-                r2 = b/d
-            else:
-                r2 = oo
-            for j in range(k-1):
-                coef = w.dot_product(M.modular_symbol([j,r1,r2]).element())
-                ans = ans+X**j*Y**(k-2-j)*binomial(k-2,j)*coef
-            v = v+[symk(k-2,ans,K)]
-        return modsym_symk(N,v,manin)
 
     def lift(self,p,ap):
         """
@@ -648,5 +609,48 @@ def form_modsym_from_elliptic_curve(E):
         else:
             a2 = L.modular_symbol(oo,1)+L.modular_symbol(oo,-1)
         v = v + [symk(0,R(a1)) - symk(0,R(a2))]
+    print "manin = ", manin
+    return modsym_symk(v,manin)
+
+
+def form_modsym_from_decomposition(A):
+    r"""
+    `A` is a piece of the result from a command like 
+    ModularSymbols(---).decomposition()
+
+    INPUT:
+        - ``A`` -- 
+
+    OUTPUT:
+
+    EXAMPLES:
+
+    """
+    M = A.ambient_module()
+    N = A.level()
+    k = A.weight()
+    manin = manin_relations(N)
+    w = A.dual_eigenvector()
+    K = w.parent().base_field()
+    v = []
+    R = PolynomialRing(K,2,names='X,Y')
+    X,Y = R.gens()
+    for j in range(len(manin._manin_relations__gens)):
+        rj = manin._manin_relations__gens[j]
+        g = manin._manin_relations__mats[rj]
+        a,b,c,d = g.list()
+        ans = 0
+        if c<>0:
+            r1 = ZZ(a)/ZZ(c)
+        else:
+            r1 = oo
+        if d<>0:
+            r2 = ZZ(b)/ZZ(d)
+        else:
+            r2 = oo
+        for j in range(k-1):
+            coef = w.dot_product(M.modular_symbol([j,r1,r2]).element())
+            ans = ans+X**j*Y**(ZZ(k-2-j))*binomial(ZZ(k-2),ZZ(j))*coef
+        v = v+[symk(ZZ(k-2),ans,K)]
     return modsym_symk(v,manin)
 
