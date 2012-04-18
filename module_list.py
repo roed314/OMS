@@ -1148,15 +1148,8 @@ ext_modules = [
               sources = ['sage/modular/modsym/p1list.pyx'],
               libraries = ['gmp']),
 
-    Extension('sage.modular.overconvergent.pollack.dist', # should get removed eventually
+    Extension('sage.modular.overconvergent.pollack.dist',
               sources = ['sage/modular/overconvergent/pollack/dist.pyx'],
-              libraries = ['flint','gmp','zn_poly'],
-              extra_compile_args=['-std=c99', '-D_XPG6'],
-              include_dirs = [SAGE_INC + 'FLINT/'],
-              depends = flint_depends),
-
-    Extension('sage.modular.pollack_stevens.dist',
-              sources = ['sage/modular/pollack_stevens/dist.pyx'],
               libraries = ['flint','gmp','zn_poly'],
               extra_compile_args=['-std=c99', '-D_XPG6'],
               include_dirs = [SAGE_INC + 'FLINT/'],
