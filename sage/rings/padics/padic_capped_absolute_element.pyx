@@ -1372,7 +1372,7 @@ cdef class pAdicCappedAbsoluteElement(pAdicBaseGenericElement):
         else:
             return self
 
-    def valuation(self):
+    def valuation(self, p=None):
         """
         Returns the valuation of ``self``, ie the largest power of `p`
         dividing ``self``.
@@ -1402,7 +1402,8 @@ cdef class pAdicCappedAbsoluteElement(pAdicBaseGenericElement):
         """
         # We override this, rather than using the valuation in
         # padic_generic_element, for speed reasons.
-        
+        if p is not None and p != self.prime_pow.prime:
+            raise ValueError("p must be the same as the prime")
         cdef Integer ans
         ans = PY_NEW(Integer)
         mpz_set_ui(ans.value, self.valuation_c())

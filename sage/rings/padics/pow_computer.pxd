@@ -21,3 +21,7 @@ cdef class PowComputer_base(PowComputer_class):
     cdef mpz_t* small_powers
     cdef mpz_t top_power
     cdef object __weakref__
+
+cdef class PowComputer_long(PowComputer_class):
+    cdef long* small_powers
+    cdef object __weakref__

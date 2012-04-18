@@ -503,7 +503,42 @@ cdef class PowComputer_base(PowComputer_class):
             return &(self.top_power)
         mpz_pow_ui(self.temp_m, self.prime.value, n)
         return &(self.temp_m)
-        
+
+cdef class PowComputer_long(PowComputer_class):
+    def __cinit__(self, Integer prime, long cache_limit, long prec_cap, long ram_prec_cap, bint in_field, poly=None, shift_seed=None):
+        self._initialized = 0
+        sig_on()
+        self.small_powers = <long*>sage_malloc(sizeof(mpz_t) * (cache_limit + 1))
+        sig_off()
+        if self.small_powers == NULL:
+            raise MemoryError("out of memory allocating power storing")
+        mpz_init(self.temp_m)
+
+        cdef Py_ssize_t i
+        self.small_powers[0] = 1
+        if cache_limit > 0:
+            self.small_powers[1] = mpz_get_si(prime.value)
+        for i from 2 <= i <= cache_limit:
+            self.small_powers[i] = self.small_powers[i-1] * self.small_powers[1]
+        (<PowComputer_class>self)._initialized = 1
+
+    def __dealloc__(self):
+        cdef Py_ssize_t i
+        if (<PowComputer_class>self)._initialized:
+            sage_free(self.small_powers)
+            mpz_clear(self.temp_m)
+
+    cdef mpz_t* pow_mpz_t_top(self):
+        mpz_set_si(self.temp_m, self.small_powers[self.prec_cap])
+        return &self.temp_m
+
+    cdef mpz_t* pow_mpz_t_tmp(self, long n):
+        if n <= self.cache_limit:
+            mpz_set_si(self.temp_m, self.small_powers[n])
+        else:
+            mpz_pow_ui(self.temp_m, self.prime.value, n)
+        return &(self.temp_m)
+
 pow_comp_cache = {}
 cdef PowComputer_base PowComputer_c(Integer m, Integer cache_limit, Integer prec_cap, in_field):
     """
