@@ -28,6 +28,7 @@ class PSModularSymbols_constructor(UniqueFactory):
             coefficients = Distributions(k, p, prec_cap, base_ring, character)
         else:
             # TODO: require other stuff to be None
+            pass
         return (group, coefficients, sign)
 
     def create_object(self, version, key):
