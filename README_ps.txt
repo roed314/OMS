@@ -17,7 +17,8 @@
                       #define ulong unsigned long
 		      #endif
 
-## The following will not work, since dist.pyx uses a relative link.
+TWO possible step 4's:
+
 # 4. Make symlinks:
      sage -sh
      cd $SAGE_ROOT/devel/sage-main/sage/modular/
@@ -26,14 +27,14 @@
      cd $SAGE_ROOT/devel/sage-main/sage/modular/overconvergent/
      ln -s /path/to/OMS/sage/modular/overconvergent/pollack .
 
-## Instead, you can do the following and develop in place
+## ALTERNATIVE: you can do the following and develop in place
 # 4'. Copy files from your clone
 
 #     The following should work fine (notice the trailing slash after OMS):
       sage -sh
       cp -r /path/to/OMS/ $SAGE_ROOT/devel/sage-main/
 
-#     But if you're worried about overwriting things you can do the following instead:
+#  But if you're worried about overwriting things you can do the following instead:
       sage -sh
       cd $SAGE_ROOT/devel/sage-main/
       cp -r /path/to/OMS/.git .git
