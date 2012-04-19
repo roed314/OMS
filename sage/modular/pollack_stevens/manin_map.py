@@ -452,7 +452,7 @@ class ManinMap(object):
 
         """
         ans = []
-        for m in range(len(self._manin.generator_indices()))
+        for m in range(len(self._manin.generator_indices())):
             ans = ans + [self._prep_hecke_individual(ell, m)]
         return ans
 
