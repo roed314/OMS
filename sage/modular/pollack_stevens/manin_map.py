@@ -1,5 +1,5 @@
 """
-Manin Maps.
+Manin Maps
 
 This is a class that represents maps from a set of right coset
 representatives to a coefficient module.  This is a basic building
