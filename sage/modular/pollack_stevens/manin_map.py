@@ -456,13 +456,4 @@ class ManinMap(object):
             ans = ans + [self._prep_hecke_individual(ell, m)]
         return ans
 
-    def _grab_relations(self):
-        v = []
-        for r in range(len(self._manin.coset_reps())):
-            for j in range(self._manin.coset_reps()):
-                R = self._manin.coset_relations[j]
-                if (len(R) == 1) and (R[0][2] == self._manin().generator_indices(r)):
-                    if R[0][0] <> -1 or R[0][1] <> Id:
-                        v = v + [R]
-        return v
 
