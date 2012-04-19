@@ -1,24 +1,17 @@
 # HG changeset patch
 # User David Roe <roed.math@gmail.com>
 # Date 1334787052 25200
-# Node ID c116b3cc5cb5af9564784efddac0d8abffdb3e9f
-# Parent  79ac47ef6a96f22f071bf07b4d3887248794f3d5
+# Node ID bac999790dfc264d5f5f6b4c0d69f2a9142dfbc1
+# Parent  7d8ac0ee679de0e5eeba4966fe280f5f65295472
 [mq]: modlist.tmp
 
 diff --git a/module_list.py b/module_list.py
 --- a/module_list.py
 +++ b/module_list.py
-@@ -1148,6 +1148,20 @@
+@@ -1148,6 +1148,13 @@
                sources = ['sage/modular/modsym/p1list.pyx'],
                libraries = ['gmp']),
  
-+    Extension('sage.modular.overconvergent.pollack.dist', # should get removed eventually
-+              sources = ['sage/modular/overconvergent/pollack/dist.pyx'],
-+              libraries = ['flint','gmp','zn_poly'],
-+              extra_compile_args=['-std=c99', '-D_XPG6'],
-+              include_dirs = [SAGE_INC + 'FLINT/'],
-+              depends = flint_depends),
-+
 +    Extension('sage.modular.pollack_stevens.dist',
 +              sources = ['sage/modular/pollack_stevens/dist.pyx'],
 +              libraries = ['flint','gmp','zn_poly'],
