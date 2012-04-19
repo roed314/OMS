@@ -1,7 +1,7 @@
 # HG changeset patch
 # User David Roe <roed.math@gmail.com>
 # Date 1334787052 25200
-# Node ID bac999790dfc264d5f5f6b4c0d69f2a9142dfbc1
+# Node ID b2a578ebfce7bf7215b58bc52686d599172c2f0c
 # Parent  7d8ac0ee679de0e5eeba4966fe280f5f65295472
 [mq]: modlist.tmp
 
@@ -129,6 +129,15 @@ diff --git a/sage/rings/padics/pow_computer.pyx b/sage/rings/padics/pow_computer
 diff --git a/setup.py b/setup.py
 --- a/setup.py
 +++ b/setup.py
+@@ -740,7 +740,7 @@
+             cplus = ''
+ 
+         # call cython, abort if it failed
+-        cmd = "python `which cython` %s --old-style-globals --disable-function-redefinition --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I%s -o %s %s"%(cplus, os.getcwd(), outfile, f)
++        cmd = "python `which cython` %s --old-style-globals --disable-function-redefinition --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I'%s/sage/sage/ext/' -I%s -o %s %s"%(cplus, SAGE_DEVEL, os.getcwd(), outfile, f)
+         r = run_command(cmd)
+         if r:
+             return r
 @@ -954,7 +954,10 @@
                       'sage.modular.modsym',
                       'sage.modular.quatalg',
