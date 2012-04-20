@@ -341,10 +341,24 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         r"""
         Only holds on to `M` moments of each value of self
         """
-        pass
+        sd = self._dict
+        for val in sd.itervalues():
+            val.reduce_precision(M)
+        return self
     
     def precision_absolute(self):
-        pass
+        r"""
+        Returns the number of moments of each value of self
+        """
+        return self.precision_cap()
     
     def specialize(self):
-        pass
+        r"""
+        Returns the underlying classical symbol of weight `k` -- i.e.,
+        applies the canonical map `D_k --> Sym^k` to all values of
+        self
+        """
+        sd = self._dict
+        for val in sd.itervalues():
+            val.specialize()
+        return self

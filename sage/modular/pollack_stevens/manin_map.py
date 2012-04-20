@@ -256,7 +256,7 @@ class ManinMap(object):
         B = self._manin.equivalent_rep(A)
         gaminv = B * A._invert_unit()
         return self[B] * gaminv
-
+    
     def __call__(self, A):
         a = A[t00]
         b = A[t01]
