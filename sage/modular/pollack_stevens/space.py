@@ -63,6 +63,17 @@ class PSModularSymbolSpace(Module):
         act = PSModSymAction(self)
         self._populate_coercion_lists_(action_list=[act])
 
+    def coefficient_module(self):
+        r"""
+        Returns the coefficient module of self.
+
+        EXAMPLES:
+
+        ::
+
+        """
+        return self._coefficients
+
     def ngens(self):
         r"""
         Returns the number of generators defining self.
@@ -145,4 +156,67 @@ class PSModularSymbolSpace(Module):
                     if R[0][0] <> -1 or R[0][1] <> Id:
                         v = v + [R]
         return v
+
+    def zero_elt(self):
+        r"""
+        Returns the zero element of the space where self takes values.
+
+        INPUT:
+            none
+
+        OUTPUT:
+
+        The zero element in the space where self takes values
+
+        EXAMPLES:
+
+        ::
+
+        sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
+        sage: phi = form_modsym_from_elliptic_curve(E); phi
+        [-1/5, 3/2, -1/2]
+        sage: z=phi.zero_elt(); z
+        0
+        sage: parent(z)
+        <class 'sage.modular.overconvergent.pollack.symk.symk'>
+        sage: z.weight
+        0
+        sage: z.poly
+        0
+        """
+        return self.coefficient_module().zero()
+
+    def zero(self):
+        r"""
+        Returns the modular symbol all of whose values are zero.
+
+        INPUT:
+            none
+
+        OUTPUT:
+
+        The zero modular symbol of self.
+
+        EXAMPLES:
+
+        ::
+
+        sage: E = EllipticCurve('11a')
+        sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
+        sage: phi = form_modsym_from_elliptic_curve(E); phi
+        [-1/5, 3/2, -1/2]
+        sage: zero_sym = phi.zero(); zero_sym
+        [0, 0, 0]
+        sage: parent(zero_sym)
+        <class 'sage.modular.overconvergent.pollack.modsym_symk.modsym_symk'>
+
+        """
+
+        dd = {}
+        for rep in self._manin_relations.coset_reps():
+            dd[rep] = self.zero_elt()
+        #v = [self.zero_elt() for i in range(0, self.ngens())]
+        #return C(v, self._manin_relations)
+        return PSModularSymbolElement(dd, self)
 
