@@ -327,10 +327,20 @@ class ManinMap(object):
         D = {}
         sd = self._dict
         # we should eventually replace the for loop with a call to apply_many
-        for ky, val in sd.iteritems():
+        for ky in sd:
             D[ky] = self(gamma*ky) * gamma
         return self.__class__(self._codomain, self._manin, D, check=False)
 
+    def normalize(self):
+        r"""
+        Normalizes every value of self -- e.g., reduces each value's
+        `j`-th moment modulo `p^(N-j)`
+        """
+        sd = self._dict
+        for val in sd.itervalues():
+            val.normalize()
+        return self
+ 
     def _prep_hecke_on_gen(self, ell, m):
         """
         This function does some precomputations needed to compute T_ell.
@@ -420,7 +430,7 @@ class ManinMap(object):
                    ans[j].append(gaminv * gama)
 
         return ans
-
+    
     def prep_hecke(self, ell):
         """
         Carries out prep_hecke_individual for each generator index and puts all of the answers in a long list.
