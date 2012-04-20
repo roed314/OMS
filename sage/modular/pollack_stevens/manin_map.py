@@ -213,7 +213,7 @@ class ManinMap(object):
         r"""
         Computes the values of self on all coset reps from its values on our generating set.
         """
-        for B in self._manin.coset_reps():
+        for B in self._manin.reps():
             if not self._dict.has_key(B):
                 self._dict[B] = self._compute_image_from_gens(B)
 

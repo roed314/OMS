@@ -1,16 +1,17 @@
 from sage.structure.element import ModuleElement
 from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2
+from sage.rings.integer_ring import ZZ
 from manin_map import ManinMap
 import operator
 
 from sage.categories.action import Action
 
-M2Z = MatrixSpace_ZZ_2x2()
+from fund_domain import M2ZSpace, M2Z
 minusproj = M2Z([1,0,0,-1])
 
 class PSModSymAction(Action):
-    def __init__(self, MSspace):
-        Action.__init__(self, M2Z, MSspace, False, operator.mul)
+    def __init__(self, actor, MSspace):
+        Action.__init__(self, actor, MSspace, False, operator.mul)
 
     def _call_(self, sym, g):
         return sym.__class__(sym._map * g, sym.parent(), construct=True)
@@ -23,10 +24,32 @@ class PSModularSymbolElement(ModuleElement):
         else:
             self._map = ManinMap(parent._coefficients, parent._manin_relations, map_data)
 
+    def _repr_(self):
+        return "A modular symbol with values in %s"%(self.parent().coefficient_module())
+
+    def dict(self):
+        D = {}
+        for g in self.parent().source().gens():
+            D[g] = self._map[g]
+        return D
+
+    def values(self):
+        return [self._map[g] for g in self.parent().source().gens()]
+
+    def __cmp__(self, other):
+        gens = self.parent().source().gens()
+        for g in gens:
+            c = cmp(self._map[g], other._map[g])
+            if c: return c
+        return 0
+
     def _add_(self, right):
         return self.__class__(self._map + right._map, self.parent(), construct=True)
 
     def _lmul_(self, right):
+        return self.__class__(self._map * right, self.parent(), construct=True)
+
+    def _rmul_(self, right):
         return self.__class__(self._map * right, self.parent(), construct=True)
 
     def _sub_(self, right):
@@ -110,36 +133,18 @@ class PSModularSymbolElement(ModuleElement):
 
             sage: E = EllipticCurve('11a')
             sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
-            sage: phi = form_modsym_from_elliptic_curve(E); phi
+            sage: phi = form_modsym_from_elliptic_curve(E); phi.values()
             [-1/5, 3/2, -1/2]
-            sage: ell=2
-            sage: phi.hecke(ell) == phi.scale(E.ap(ell))
+            sage: phi.hecke(2) == phi * E.ap(2)
             True
-            sage: ell=3
-            sage: phi.hecke(ell) == phi.scale(E.ap(ell))
+            sage: phi.hecke(3) == phi * E.ap(3)
             True
-            sage: ell=5
-            sage: phi.hecke(ell) == phi.scale(E.ap(ell))
+            sage: phi.hecke(5) == phi * E.ap(5)
             True
-            sage: ell=101
-            sage: phi.hecke(ell) == phi.scale(E.ap(ell))
+            sage: phi.hecke(101) == phi * E.ap(101)
             True
 
-            sage: E = EllipticCurve('11a')
-            sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
-            sage: phi = form_modsym_from_elliptic_curve(E); phi
-            [-1/5, 3/2, -1/2]
-            sage: ell = 2
-            sage: phi.hecke_from_defn(ell) == phi.scale(E.ap(ell))
-            True
-            sage: ell = 3
-            sage: phi.hecke_from_defn(ell) == phi.scale(E.ap(ell))
-            True
-            sage: ell=5
-            sage: phi.hecke_from_defn(ell) == phi.scale(E.ap(ell))
-            True
-            sage: ell=101
-            sage: phi.hecke_from_defn(ell) == phi.scale(E.ap(ell))
+            sage: all([phi.hecke(p, algorithm='naive') == phi * E.ap(p) for p in [2,3,5,101]])
             True
         """
         return self.__class__(self._map.hecke(ell, algorithm), self.parent(), construct=True)
@@ -164,7 +169,7 @@ class PSModularSymbolElement(ModuleElement):
 
         sage: E = EllipticCurve('11a')
         sage: from sage.modular.overconvergent.pollack.modsym_symk import form_modsym_from_elliptic_curve
-        sage: phi = form_modsym_from_elliptic_curve(E); phi
+        sage: phi = form_modsym_from_elliptic_curve(E); phi.values()
         [-1/5, 3/2, -1/2]
         sage: phi.valuation(2)
         -1
@@ -175,8 +180,7 @@ class PSModularSymbolElement(ModuleElement):
         sage: phi.valuation(7)
         0
         """
-        sd = self._map._dict
-        return min([val.valuation(p) for val in sd.itervalues()])
+        return min([val for val in self._map])
 
     def change_ring(self,R):
         r"""

@@ -86,7 +86,10 @@ class Distributions(Module):
         Parent.__init__(self, base)
         self._k = k
         self._p = p
-        self._prec_cap = prec_cap
+        if prec_cap is None:
+            self._prec_cap = k + 1
+        else:
+            self._prec_cap = prec_cap
         act = WeightKAction(self, character, tuplegen, act_on_left)
         self._act = act
         self._populate_coercion_lists_(action_list=[iScale(self, act_on_left), act])
@@ -100,10 +103,27 @@ class Distributions(Module):
             'Space of 5-adic distributions with k=0 action and precision cap 10'
             sage: Distributions(0, 5, 10)
             Space of 5-adic distributions with k=0 action and precision cap 10
+
+            sage: Distributions(0)
+            Sym^0 Q^2
         """
-        # TODO: maybe account for character, etc. 
-        return "Space of %s-adic distributions with k=%s action and precision cap %s"%(
-            self._p, self._k, self._prec_cap)
+        # TODO: maybe account for character, etc.
+        if self._p is None:
+            if self.base_ring() is QQ:
+                V = 'Q^2'
+            elif self.base_ring() is ZZ:
+                V = 'Z^2'
+            elif isinstance(self.base_ring(), pAdicGeneric) and self.base_ring().degree() == 1:
+                if self.base_ring().is_field():
+                    V = 'Q_%s^2'%(self._p)
+                else:
+                    V = 'Z_%s^2'%(self._p)
+            else:
+                V = '(%s)^2'%(self.base_ring())
+            return "Sym^%s %s"%(self._k, V)
+        else:
+            return "Space of %s-adic distributions with k=%s action and precision cap %s"%(
+                self._p, self._k, self._prec_cap)
 
     @cached_method
     def approx_module(self, M=None):
