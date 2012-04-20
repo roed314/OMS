@@ -61,3 +61,10 @@ If changes_to_sagelib.patch changes, do this:
      hg qimport /path/to/changes_to_sagelib.patch
      hg qpush
      sage -br
+
+# 6. Testing.
+
+# In some versions of sage if you use the symlink approach, when you
+# test you must pass --force_lib.
+     
+     sage -t --force_lib 
