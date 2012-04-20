@@ -215,7 +215,7 @@ class PSModularSymbolElement(ModuleElement):
         0
         """
         sd = self._map._dict
-        return min([val.valuation(p) for  ky,val in sd.iteritems()])
+        return min([val.valuation(p) for val in sd.itervalues()])
 
     def change_ring(self,R):
         r"""
