@@ -75,6 +75,13 @@ class PSModularSymbolSpace(Module):
         actions = [PSModSymAction(ZZ, self), PSModSymAction(M2ZSpace, self)]
         self._populate_coercion_lists_(action_list=actions)
 
+    def _repr_(self):
+        r"""
+        Returns print representation.
+        """
+        s = "Space of overconvergent modular symbols for %s with sign %s and values in %s"%(self.group(), self.sign(), self.coefficient_module())
+        return s
+
     def source(self):
         return self._manin_relations
 
@@ -185,14 +192,30 @@ class PSModularSymbolSpace(Module):
         return self._manin_relations.level()
 
     def _grab_relations(self):
+        r"""
 
-        # Should this return a dictionary as opposed to a list?
+
+        EXAMPLES::
+
+            sage: D = Distributions(4, 3)
+            sage: M = PSModularSymbolSpace(Gamma1(13), D)
+            sage: M._grab_relations()
+            [[(1, [1 0]
+            [0 1], 0)], [(-1, [-1 -1]
+            [ 0 -1], 0)], [(1, [1 0]
+            [0 1], 2)], [(1, [1 0]
+                [0 1], 3)], [(1, [1 0]
+                    [0 1], 4)], [(1, [1 0]
+                        [0 1], 5)]]
+
+        """
+
         v = []
-        for r in range(len(self._manin_relations.reps())):
-            for j in range(self._manin_relations.reps()):
-                R = self._manin_relations[j]
+        for r in range(len(self._manin_relations.gens())):
+            for j in range(len(self._manin_relations.reps())):
+                R = self._manin_relations.relations(j)
                 if (len(R) == 1) and (R[0][2] == self._manin_relations.indices(r)):
-                    if R[0][0] <> -1 or R[0][1] <> Id:
+                    if R[0][0] <> -1 or R[0][1] <> M2ZSpace.one():
                         v = v + [R]
         return v
 
@@ -230,10 +253,11 @@ class PSModularSymbolSpace(Module):
 
         EXAMPLES::
 
-          #  sage: D = Distributions(4,2)
-          #  sage: M = PSModularSymbolSpace(Gamma1(6), D)
-          #  sage: M.zero()
-          #  0
+            sage: D = Distributions(4,2)
+            sage: M = PSModularSymbolSpace(Gamma1(6), D)
+            sage: M.zero()
+            A modular symbol with values in Space of 2-adic distributions with
+            k=4 action and precision cap 20
 
         """
 
