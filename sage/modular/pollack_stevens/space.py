@@ -223,3 +223,39 @@ class PSModularSymbolSpace(Module):
         #return C(v, self._manin_relations)
         return PSModularSymbolElement(dd, self)
 
+    def precision_cap(self):
+        r"""
+        Returns the number of moments of each value of self
+
+        EXAMPLES:
+
+        ::
+
+        """
+	return self._coefficient_module()._prec_cap
+
+    def weight(self):
+        r"""
+        Returns the weight of self
+
+        EXAMPLES:
+
+        ::
+
+        """
+
+	return self._coefficient_module()._k
+
+    def prime(self):
+        r"""
+        Returns the prime of self
+
+        EXAMPLES:
+
+        ::
+
+        """
+
+	return self._coefficient_module()._p
+
+
