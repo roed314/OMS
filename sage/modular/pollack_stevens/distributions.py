@@ -86,7 +86,10 @@ class Distributions(Module):
         Parent.__init__(self, base)
         self._k = k
         self._p = p
-        self._prec_cap = prec_cap
+        if prec_cap is None:
+            self._prec_cap = k + 1
+        else:
+            self._prec_cap = prec_cap
         act = WeightKAction(self, character, tuplegen, act_on_left)
         self._act = act
         self._populate_coercion_lists_(action_list=[iScale(self, act_on_left), act])
