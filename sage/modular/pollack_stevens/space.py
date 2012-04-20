@@ -258,4 +258,38 @@ class PSModularSymbolSpace(Module):
 
 	return self._coefficient_module()._p
 
+    def random_OMS(self,N,p,k,M):
+        r"""
+        Returns a random OMS with tame level `N`, prime `p`, weight `k`, and
+        `M` moments --- requires no `2` or `3`-torsion
+        """
+        N = self.level()
+        p = self.prime()
+	manin = manin_relations(N*p)
+	v = []
+	for j in range(1,len(manin.gens)):
+	    g = manin.gens[j]
+	    if manin.twotor.count(g)==0:
+                v = v+[random_dist(p,k,M)]
+	    else:
+	        rj = manin.twotor.index(g)
+		gam = manin.twotorrels[rj]
+	   	mu = random_dist(p,k,M)
+		v = v+[(mu.act_right(gam)-mu).scale(ZZ(1)/ZZ(2))]
+	t = v[0].zero()
+	for j in range(2,len(manin.rels)):
+	    R = manin.rels[j]
+            if len(R) == 1:
+		if R[0][0] == 1:
+	            rj = manin.gens.index(j)
+		    t = t+v[rj-1]
+                else:
+	            index = R[0][2]
+	            rj = manin.gens.index(index)
+		    mu = v[rj-1]
+		    t = t+mu.act_right(R[0][1]).scale(R[0][0])
+	v = [mu.scale(-1)]+v
+	Phi = modsym_dist(v,manin)
+	return Phi
+
 
