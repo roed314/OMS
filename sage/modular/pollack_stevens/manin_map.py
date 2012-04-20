@@ -15,15 +15,15 @@ from distributions import Distributions
 from fund_domain import M2Z, t00, t10, t01, t11, Id
 
 def unimod_matrices_to_infty(r, s):
-    """
+    r"""
     Returns a list of matrices whose associated unimodular paths
-    connect 0 to r/s.  This is Manin's continued fraction trick, which
-    gives an expression {0,r/s} = {0,oo} + ... + {a,b} + ... + {*,r/s},
-    where each {a,b} is the image of {0,oo} under a matrix in SL_2(ZZ).
+    connect `0` to `r/s`.  This is Manin's continued fraction trick, which
+    gives an expression `{0,r/s} = {0,oo} + ... + {a,b} + ... + {*,r/s}`,
+    where each `{a,b}` is the image of `{0,oo}` under a matrix in `SL_2(ZZ)`.
 
     INPUT:
 
-    - `r`, `s` -- rational numbers
+    - ``r``, ``s`` -- rational numbers
 
     OUTPUT:
 
@@ -59,19 +59,19 @@ def unimod_matrices_to_infty(r, s):
 
 
 def unimod_matrices_from_infty(r, s):
-    """
+    r"""
     Returns a list of matrices whose associated unimodular paths
-    connect 0 to r/s.  This is Manin's continued fraction trick, which
-    gives an expression {oo,r/s} = {oo,0} + ... + {a,b} + ... + {*,r/s},
-    where each {a,b} is the image of {0,oo} under a matrix in SL_2(ZZ).
+    connect `0` to `r/s`.  This is Manin's continued fraction trick, which
+    gives an expression `{oo,r/s} = {oo,0} + ... + {a,b} + ... + {*,r/s}`,
+    where each `{a,b}` is the image of `{0,oo}` under a matrix in `SL_2(ZZ)`.
 
     INPUT:
 
-    - `r`, `s` -- rational numbers
+    - ``r``, ``s`` -- rational numbers
 
     OUTPUT:
 
-    - a list of SL_2(Z) matrices
+    - a list of `SL_2(Z)` matrices
 
     EXAMPLES:
 
@@ -102,17 +102,17 @@ def unimod_matrices_from_infty(r, s):
         return []
 
 def basic_hecke_matrix(a, ell):
-    """
-    Returns the matrix [1, a, 0, ell] (if a<ell) and [ell, 0, 0, 1] if a>=ell
+    r"""
+    Returns the matrix [1, a, 0, ell] (if `a < ell`) and [ell, 0, 0, 1] if `a \geq ell`
 
     INPUT:
 
-    - `a` -- an integer or Infinity
+    - ``a`` -- an integer or Infinity
     - ``ell`` -- a prime
 
     OUTPUT:
 
-    - a 2 x 2 matrix of determinant ell
+    - a 2 x 2 matrix of determinant `ell`
 
     EXAMPLES:
 
