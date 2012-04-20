@@ -67,6 +67,7 @@ def unimod_matrices_to_infty(r, s):
         # The matrix connecting two consecutive convergents is added on
     return v
 
+
 def unimod_matrices_from_infty(r, s):
     """
     Returns a list of matrices whose associated unimodular paths
