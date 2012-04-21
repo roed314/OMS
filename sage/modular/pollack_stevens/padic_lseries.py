@@ -35,6 +35,9 @@ class pAdicLseries(SageObject):
         self._precision = precision
         
     def __getitem__(self, n):
+        """
+        This needs more work to make sense for e.g., our higher dim examples
+        """
         try:
             return self.series[n]
         except IndexError:
@@ -91,9 +94,11 @@ class pAdicLseries(SageObject):
 
     def series(self, n, prec):
         r"""
-        Returns the `n`-th approximation to the `p`-adic `L`-series, as a
-        power series in `T` (corresponding to `\gamma-1` with `\gamma=1 + p`
-        as a generator of `1+p\ZZ_p`).
+        This should eventually return the `n`-th approximation to the
+        `p`-adic `L`-series, as a power series in `T` (corresponding to
+        `\gamma-1` with `\gamma=1 + p` as a generator of `1+p\ZZ_p`).
+
+        Right now it doesn't. Needs to take into account completions, etc.
         """
         p = self.prime()
         M = self.symb().precision_cap()
