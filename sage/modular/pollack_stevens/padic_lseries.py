@@ -88,7 +88,12 @@ class pAdicLseries(SageObject):
     def series(self, n, prec):
         r"""
         """
-        pass
+        p = self.prime()
+        M = self.symb.precision_cap()
+        K = pAdicField(p,M)
+        R = PowerSeriesRing(K,'T',prec)
+        T = R(R.gen(),prec)
+        return sum(self.series[i]*T**i for i in range(n)) + O(T**n)
 
     def eval_twisted_symbol_on_Da(self, a): # rename! should this be in modsym?
         """
