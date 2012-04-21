@@ -493,7 +493,7 @@ def form_modsym_from_elliptic_curve(E):
         sage: E = EllipticCurve('113a1')
         sage: symb = form_modsym_from_elliptic_curve(E)
         sage: symb
-        A modular symbol with values in Sym^0 Q^2
+        Modular symbol with values in Sym^0 Q^2
         sage: symb.values()
         [-1/2, 3/2, -2, 1/2, 0, 1, 2, -3/2, 0, -3/2, 0, -1/2, 0, 1, -2, 1/2, 0,
         0, 2, 0, 0]
