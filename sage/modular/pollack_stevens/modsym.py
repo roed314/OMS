@@ -347,8 +347,10 @@ class PSModularSymbolElement(ModuleElement):
         -2
         sage: phi_ord.Tq_eigenvalue(2,3,1000)
         -2
+
+        
         sage: phi_ord.Tq_eigenvalue(3,3,10)
-        -2136133753/1068066874
+        -95227/47611
         sage: phi_ord.Tq_eigenvalue(3,3,100)
         ...
         ValueError: not a scalar multiple
@@ -370,6 +372,7 @@ class PSModularSymbolElement(ModuleElement):
     
     def lift(self, algorithm = None, eigensymbol = None):
         r"""
+        
         """
         raise NotImplementedError
 

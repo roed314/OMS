@@ -185,7 +185,7 @@ class PSModularSymbolSpace(Module):
 
         OUTPUT:
 
-        The level `N` when self is of level `Gamma_0(N)`
+        - The level `N` when self is of level `Gamma_0(N)`
 
         EXAMPLES::
 
