@@ -291,6 +291,22 @@ class ManinMap(object):
         """
         Return scalar multiplication self*right, where right is in the
         base ring of the codomain.
+
+        EXAMPLES:
+
+        ::
+
+            sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
+            sage: D = Distributions(0, 5, 10)
+            sage: manin = sage.modular.pollack_stevens.fund_domain.ManinRelations(11)
+            sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
+            sage: f = ManinMap(D, manin, data)
+            sage: f(M2Z([1,0,0,1]))
+            (1, 2)
+            sage: f*2
+            Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: (f*2)(M2Z([1,0,0,1]))
+            (2, 4)
         
         """
         if isinstance(right, Matrix_integer_2x2):
