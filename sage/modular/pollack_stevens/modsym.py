@@ -349,7 +349,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                     raise ValueError("alpha must be a root of x^2 - a_p*x + p^(k+1)")
                 if self.hecke(p) != ap * self:
                     raise ValueError("alpha must be a root of x^2 - a_p*x + p^(k+1)")
-        V = self.parent().p_stabilize(p, new_base_ring)
+        V = self.parent()._p_stabilize_parent_space(p, new_base_ring)
         return self.__class__(self._map.p_stabilize(p, alpha, V), V, construct=True)
     
     def completions(self, p, M):

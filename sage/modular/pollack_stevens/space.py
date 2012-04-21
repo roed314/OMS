@@ -319,10 +319,11 @@ class PSModularSymbolSpace(Module):
         """
         return self.coefficient_module()._p
 
-    def p_stabilize(self, p, new_base_ring):
+    def _p_stabilize_parent_space(self, p, new_base_ring):
         r"""
-        Returns the space of modular symbols of level p * N, with
-        changed base ring.
+        Returns the space of Pollack-Stevens modular symbols of level
+        p * N, with changed base ring.  This is used internally when
+        constructing the p-stabilization of a modular symbol.
 
         INPUT:
 
@@ -338,13 +339,13 @@ class PSModularSymbolSpace(Module):
 
             sage: D = Distributions(2, 7)
             sage: M = PSModularSymbolSpace(Gamma(13), D)
-            sage: M.p_stabilize(7)
+            sage: M._p_stabilize_parent_space(7, M.base_ring())
             Space of overconvergent modular symbols for Congruence Subgroup
             Gamma(91) with sign 0 and values in Space of 7-adic distributions
             with k=2 action and precision cap 3
             sage: D = Distributions(4, 17)
             sage: M = PSModularSymbolSpace(Gamma1(3), D)
-            sage: M.p_stabilize(17, 15)
+            sage: M._p_stabilize_parent_space(17, 15)
             Space of overconvergent modular symbols for Congruence Subgroup
             Gamma1(51) with sign 0 and values in Space of 17-adic distributions
             with k=4 action and precision cap 15
@@ -370,25 +371,27 @@ class PSModularSymbolSpace(Module):
 
     def _an_element_(self):
         r"""
-        Returns an element of self
+        Returns a "typical" element of self; in this case the constant map sending every element
+        to an element of the coefficient module.
 
-        EXAMPLES:
+        EXAMPLES::
+        
             sage: D = Distributions(4)
             sage: M = PSModularSymbolSpace(Gamma(6), D)
-            sage: M.an_element()
+            sage: x = M.an_element(); x
             Modular symbol with values in Sym^4 Q^2
+            sage: x.values()
+            [(2, 1), (2, 1), (2, 1)]
             sage: D = Distributions(2, 11)
             sage: M = PSModularSymbolSpace(Gamma0(2), D)
             sage: M.an_element()
             Modular symbol with values in Space of 11-adic distributions with
             k=2 action and precision cap 3
-
         """
-
-        D = {}
-        for g in self.source().gens():
-            D[g] = self.coefficient_module().an_element()
-        return self(D)
+        g = self.source().gens()
+        c = self.coefficient_module().an_element()
+        # constant map that sends every gen of self to c
+        return self(dict(zip(g, [c]*len(g))))
 
     def random_element(self, M):
         r"""
