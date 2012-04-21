@@ -9,6 +9,7 @@ from sage.structure.factory import UniqueFactory
 from distributions import Distributions
 from sage.modular.dirichlet import DirichletCharacter
 from sage.modular.arithgroup.all import Gamma0
+from sage.modular.arithgroup.arithgroup_element import ArithmeticSubgroupElement
 from sage.rings.arith import binomial
 from sage.rings.integer import Integer
 from sage.rings.integer_ring import ZZ
@@ -448,26 +449,43 @@ class PSModularSymbolSpace(Module):
 
 def cusps_from_mat(g):
     r"""
-    Returns the cusps associated to an element of a congruence subgroup.
+    Returns the cusps associated to an element of a congruence
+    subgroup.
 
     INPUT:
 
-    - ``g`` -- the matrix associated to an element of a congruence subgroup
+    - `g` -- an element of a congruence subgroup or a matrix
 
     OUTPUT:
 
-    - The cusps associated to ``g``
+    - The cusps associated to `g`.
 
     EXAMPLES::
+    
         sage: from sage.modular.pollack_stevens.space import cusps_from_mat
-        sage: g = SL2Z.one().matrix()
+        sage: g = SL2Z.one()
         sage: cusps_from_mat(g)
         (+Infinity, 0)
+
+    You can also just give the matrix of g::
+
+        sage: type(g)
+        <class 'sage.modular.arithgroup.arithgroup_element.ArithmeticSubgroupElement'>
+        sage: cusps_from_mat(g.matrix())
+        (+Infinity, 0)
+
+
+    Another example::
+    
         sage: from sage.modular.pollack_stevens.space import cusps_from_mat
-        sage: g = GammaH(3, [2]).generators()[1].matrix()
+        sage: g = GammaH(3, [2]).generators()[1].matrix(); g
+        [-1  1]
+        [-3  2]        
         sage: cusps_from_mat(g)
         (1/3, 1/2)
     """
+    if isinstance(g, ArithmeticSubgroupElement):
+        g = g.matrix()
     a, b, c, d = g.list()
     if c: ac = a/c
     else: ac = oo
@@ -475,36 +493,36 @@ def cusps_from_mat(g):
     else: bd = oo
     return ac, bd
 
-def form_modsym_from_elliptic_curve(E):
+def ps_modsym_from_elliptic_curve(E):
     r"""
-        Returns the PS modular symbol associated to an elliptic curve defined
-        over the rationals.
-        INPUT:
+    Returns the PS modular symbol associated to an elliptic curve
+    defined over the rationals.
+    
+    INPUT:
 
-        - ``E`` -- an elliptic curve defined over the rationals
+    - ``E`` -- an elliptic curve defined over the rationals
 
-        OUTPUT:
+    OUTPUT:
 
-        - the Pollack-Stevens modular symbol associated to ``E``
+    - the Pollack-Stevens modular symbol associated to ``E``
 
-        EXAMPLES::
+    EXAMPLES::
 
-        sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
         sage: E = EllipticCurve('113a1')
-        sage: symb = form_modsym_from_elliptic_curve(E)
+        sage: symb = ps_modsym_from_elliptic_curve(E)
         sage: symb
         Modular symbol with values in Sym^0 Q^2
         sage: symb.values()
         [-1/2, 3/2, -2, 1/2, 0, 1, 2, -3/2, 0, -3/2, 0, -1/2, 0, 1, -2, 1/2, 0,
         0, 2, 0, 0]
-        sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
+        
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
         sage: E = EllipticCurve([0,1])
-        sage: symb = form_modsym_from_elliptic_curve(E)
+        sage: symb = ps_modsym_from_elliptic_curve(E)
         sage: symb.values()
-        [-1/6, 7/12, 1, 1/6, -5/12, 1/3, -7/12, -1, -1/6, 5/12, 1/4, -1/6,
-        -5/12]
-
-        """
+        [-1/6, 7/12, 1, 1/6, -5/12, 1/3, -7/12, -1, -1/6, 5/12, 1/4, -1/6, -5/12]
+    """
     if not (E.base_ring() is QQ):
         raise ValueError("The elliptic curve must be defined over the rationals.")
     N = E.conductor()
@@ -521,6 +539,9 @@ def form_modsym_from_elliptic_curve(E):
 
 def ps_modsym_from_simple_modsym_space(A):
     """
+    Returns some choice -- only well defined up a nonzero scalar (!)
+    -- of a Pollack-Stevens modular symbol that corresponds to A.
+    
     INPUT:
 
     - `A` -- nonzero simple Hecke equivariant new space of modular
@@ -528,9 +549,9 @@ def ps_modsym_from_simple_modsym_space(A):
 
     OUTPUT:
 
-    - corresponding Pollack-Stevens modular symbols; when dim(A)>1, we
-      make an arbitrary choice of defining polynomial for the codomain
-      field.  
+    - A choice of corresponding Pollack-Stevens modular symbols; when
+      dim(A)>1, we make an arbitrary choice of defining polynomial for
+      the codomain field.
     
     EXAMPLES::
 
@@ -591,6 +612,30 @@ def ps_modsym_from_simple_modsym_space(A):
         Modular symbol with values in Sym^10 Q^2
         sage: f.values()
         [(0, -10, 0, 125/2, 0, -105, 0, 125/2, 0, -10, 0), (0, 10, -90, 595/2, -805/2, 105/2, 805/2, -360, 90, 0, 0), (0, 0, 90, -360, 805/2, 105/2, -805/2, 595/2, -90, 10, 0)]
+
+
+    A consistency check with ps_modsym_from_simple_modsym_space::
+
+        sage: from sage.modular.pollack_stevens.space import (ps_modsym_from_elliptic_curve, ps_modsym_from_simple_modsym_space)
+        sage: E = EllipticCurve('11a')
+        sage: f_E = ps_modsym_from_elliptic_curve(E); f_E.values()
+        [-1/5, 3/2, -1/2]
+        sage: A = ModularSymbols(11, sign=1, weight=2).decomposition()[0]
+        sage: f_plus = ps_modsym_from_simple_modsym_space(A); f_plus.values()
+        [1, -5/2, -5/2]
+        sage: A = ModularSymbols(11, sign=-1, weight=2).decomposition()[0]
+        sage: f_minus = ps_modsym_from_simple_modsym_space(A); f_minus.values()
+        [0, 1, -1]
+
+    We find that a linear combination of the plus and minus parts
+    equals the Pollack-Stevens symbol attached to E.  This illustrates
+    how ps_modsym_from_simple_modsym_space is only well-defined up to
+    a nonzero scalar.
+    
+        sage: (-1/5)*vector(QQ, f_plus.values()) + vector(QQ, f_minus.values())
+        (-1/5, 3/2, -1/2)
+        sage: vector(QQ, f_E.values())
+        (-1/5, 3/2, -1/2)
 
     The next few examples all illustrate the ways in which exceptions are raised
     if A does not satisfy various constraints.
