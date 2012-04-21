@@ -187,7 +187,13 @@ class ManinMap(object):
                         ky = M2Z(ky)
                     self._dict[ky] = val
             else:
-                raise TypeError("unrecognized type for defining_data")
+                # constant function
+                try:
+                    c = codomain(defining_data)
+                except TypeError:
+                    raise TypeError("unrecognized type for defining_data")
+                g = manin_relations.gens()
+                self._dict = dict(zip(g, [c]*len(g)))
         else:
             self._dict = defining_data
 
