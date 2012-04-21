@@ -452,10 +452,12 @@ def cusps_from_mat(g):
     - The cusps associated to ``g``
 
     EXAMPLES::
+        sage: from sage.modular.pollack_stevens.space import cusps_from_mat
         sage: g = SL2Z.one().matrix()
         sage: cusps_from_mat(g)
         (+Infinity, 0)
-        sage: g = GammaH(3, [2]).generators()[1]
+        sage: from sage.modular.pollack_stevens.space import cusps_from_mat
+        sage: g = GammaH(3, [2]).generators()[1].matrix()
         sage: cusps_from_mat(g)
         (1/3, 1/2)
     """
@@ -480,6 +482,7 @@ def form_modsym_from_elliptic_curve(E):
 
         EXAMPLES::
 
+        sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
         sage: E = EllipticCurve('113a1')
         sage: symb = form_modsym_from_elliptic_curve(E)
         sage: symb
@@ -487,6 +490,7 @@ def form_modsym_from_elliptic_curve(E):
         sage: symb.values()
         [-1/2, 3/2, -2, 1/2, 0, 1, 2, -3/2, 0, -3/2, 0, -1/2, 0, 1, -2, 1/2, 0,
         0, 2, 0, 0]
+        sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
         sage: E = EllipticCurve([0,1])
         sage: symb = form_modsym_from_elliptic_curve(E)
         sage: symb.values()
@@ -494,9 +498,8 @@ def form_modsym_from_elliptic_curve(E):
         -5/12]
 
         """
-    if not E.base_ring() is QQ:
-        raise ValueError ("The elliptic curve must be defined over the
-        rationals.")
+    if not (E.base_ring() is QQ):
+        raise ValueError("The elliptic curve must be defined over the rationals.")
     N = E.conductor()
     V = PSModularSymbols(Gamma0(N), 2)
     D = V.coefficient_module()
