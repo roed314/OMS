@@ -203,6 +203,7 @@ def log_gamma_binomial(p,gamma,z,n,M):
     EXAMPLES:
 
         sage: R.<z> = QQ['z']
+        from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
         sage: log_gamma_binomial(5,1+5,z,2,4)
         [0, -3/205, 651/84050, -223/42025]
         sage: log_gamma_binomial(5,1+5,z,3,4)
