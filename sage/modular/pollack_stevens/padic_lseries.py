@@ -11,14 +11,14 @@ class pAdicLseries(SageObject):
     The `p`-adic `L`-series associated to an overconvergent eigensymbol.
     """
 
-    def __init__(self, symb, gam = None, quad_twist = 1, error = None):
+    def __init__(self, symb, gamma = None, quad_twist = 1, precision = None):
         r"""
 
         INPUT:
             - ``symb`` -- overconvergent eigensymbol
-            - ``gam`` -- topological generator of `1 + pZ_p1
+            - ``gamma`` -- topological generator of `1 + pZ_p1
             - ``quad_twist`` -- conductor of quadratic twist `\chi`, default 1
-            - ``error`` -- if None is specified, the correct error bound is computed and the answer is returned modulo
+            - ``precision`` -- if None is specified, the correct precision bound is computed and the answer is returned modulo
               that accuracy
 
         """
@@ -27,45 +27,41 @@ class pAdicLseries(SageObject):
 
         self._symb = symb
 
-        if gam == None:
-            gam = 1 + self._symb.parent().prime()
+        if gamma == None:
+            gamma = 1 + self._symb.parent().prime()
 
-        self._gam = gam
+        self._gamma = gamma
         self._quad_twist = quad_twist
-        self._error = error
+        self._precision = precision
 
-    def __getitem__(self,n):
+    def __getitem__(self, n):
         try:
             return self.series[n]
         except IndexError:
             p = self.prime()
             symb = self.symb()
             ap = symb.ap(p)
-            D = self._quad_twist
-            gam = self._gam
-            error = self._error
-
+            gamma = self._gamma
+            precision = self._precision
             S = QQ[['z']]
             z = S.gen()
             M = symb.precision_cap()
-            K = pAdicField(p,M)
+            K = pAdicField(p, M)
             dn = 0
             if n == 0:
-                err = M
+                precision = M
                 lb = [1] + [0 for a in range(M-1)]
             else:
-                lb = log_gamma_binomial(p,gam,z,n,2*M)
-                if error == None:
-                    err = min([j+lb[j].valuation(p) for j in range(M,len(lb))])
-                else:
-                    err = error
+                lb = log_gamma_binomial(p, gamma, z, n, 2*M)
+                if precision == None:
+                    precision = min([j + lb[j].valuation(p) for j in range(M, len(lb))])
                 lb = [lb[a] for a in range(M)]
 
             for j in range(len(lb)):
                 cjn = lb[j]
-                temp = sum((ZZ(K.teichmuller(a))**(-j))*self._basic_integral(a,j) for a in range(1,p))
+                temp = sum((ZZ(K.teichmuller(a))**(-j)) * self._basic_integral(a, j) for a in range(1, p))
                 dn = dn + cjn*temp
-            self.series[n] = dn + O(p**err)
+            self.series[n] = dn + O(p**precision)
             return self.series[n]
 
     def symb(self):
@@ -77,6 +73,12 @@ class pAdicLseries(SageObject):
         r"""
         """
         return self._symb.parent().prime()
+
+    def quadratic_twist(self)
+        r"""
+        """
+        return self._quad_twist
+
 
     def _repr_(self):
         r"""
@@ -90,10 +92,10 @@ class pAdicLseries(SageObject):
         """
         p = self.prime()
         M = self.symb.precision_cap()
-        K = pAdicField(p,M)
-        R = PowerSeriesRing(K,'T',prec)
-        T = R(R.gen(),prec)
-        return sum(self.series[i]*T**i for i in range(n)) + O(T**n)
+        K = pAdicField(p, M)
+        R = PowerSeriesRing(K, 'T', prec)
+        T = R(R.gen(), prec)
+        return sum(self.series[i] * T**i for i in range(n)) + O(T**n)
 
     def eval_twisted_symbol_on_Da(self, a): # rename! should this be in modsym?
         """
@@ -152,7 +154,7 @@ def log_gamma_binomial(p,gamma,z,n,M):
     INPUT:
 
         - ``p`` --  prime
-        - ``gam`` -- topological generator e.g., `1+p`
+        - ``gamma`` -- topological generator e.g., `1+p`
         - ``z`` -- variable
         - ``n`` -- nonnegative integer
         - ``M`` -- precision
