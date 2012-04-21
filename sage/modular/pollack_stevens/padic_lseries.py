@@ -1,17 +1,72 @@
-from sage.all import *
+from sage.rings.padics.all import pAdicField
+from sage.rings.all import ZZ, QQ
+from sage.rings.power_series_ring import PowerSeriesRing
+from sage.rings.big_oh import O
+from sage.rings.arith import binomial, gcd, kronecker
+
+from fund_domain import M2Z
 
 class pAdicLseries(SageObject):
     r"""
     The `p`-adic `L`-series associated to an overconvergent eigensymbol.
     """
 
-    def __init__(self, symb):
+    def __init__(self, symb, gam = None, quad_twist = 1, error = None):
         r"""
 
         INPUT:
             - ``symb`` -- overconvergent eigensymbol
+            - ``gam`` -- topological generator of `1 + pZ_p1
+            - ``quad_twist`` -- conductor of quadratic twist `\chi`, default 1
+            - ``error`` -- if None is specified, the correct error bound is computed and the answer is returned modulo
+              that accuracy
+              
         """
+        if symb.parent().prime() == None:
+            raise ValueError ("Not a p-adic overconvergent modular symbol.")
+
         self._symb = symb
+
+        if gam == None:
+            gam = self._symb.parent().prime()
+
+        self._gam = gam
+        self._quad_twist = quad_twist
+        self._error = error
+
+    def __get_item__(self,n):
+        try:
+            return self.series[n]
+        except IndexError:
+            p = self.prime()
+            symb = self.symb()
+            ap = symb.ap(p)
+            D = self._quad_twist
+            gam = self._gam
+            error = self._error
+
+            S = QQ[['z']]
+            z = S.gen()
+            M = symb.precision_cap()
+            K = pAdicField(p,M)
+            lb = log_gamma_binomial(p,gam,z,n,2*M)
+            dn = 0
+            
+            if n == 0:
+                err = M
+            else:
+                if error == None:
+                    err = min([j+lb[j].valuation(p) for j in range(M,len(lb))])
+                else:
+                    err = error
+                lb = [lb[a] for a in range(M)]
+
+            for j in range(len(lb)):
+                cjn = lb[j]
+                temp = sum((ZZ(K.teichmuller(a))**(-j))*self.basic_integral(a,j,D) for a in range(1,p))
+                dn = dn + cjn*temp
+            self.series[n] = dn + O(p**err)
+            return self.series[n]
 
     def symb(self):
         r"""
@@ -23,9 +78,6 @@ class pAdicLseries(SageObject):
         """
         return self._symb.parent().prime()
 
-    if self.prime() == none:
-        raise ValueError ("Not a p-adic overconvergent modular symbol.")
-
     def _repr_(self):
         r"""
         Return print representation.
@@ -33,12 +85,12 @@ class pAdicLseries(SageObject):
         s = "%s-adic L-series of $s"%(self.prime(), self.symb())
         return s
 
-    def series(self, n, quadratic_twist, prec):
+    def series(self, n, prec):
         r"""
         """
         pass
 
-    def twisted_symbol_on_Da(self, a, D): # rename! should this be in modsym?
+    def twisted_symbol_on_Da(self, a): # rename! should this be in modsym?
         """
         Returns `\Phi_{\chi}(\{a/p}-{\infty})` where `Phi` is the OMS
         corresponding to self and `\chi` is a character of conductor `D`
@@ -46,7 +98,6 @@ class pAdicLseries(SageObject):
 
         INPUT:
             - ``a`` -- integer in [0..p-1]
-            - ``D`` -- conductor of the quadratic twist `\chi`
 
         OUTPUT:
 
@@ -59,6 +110,7 @@ class pAdicLseries(SageObject):
         p = symb.parent().prime()
         twisted_dist = symb.parent().zero_element()
         m_map = symb._map
+        D = self._quad_twist
         for b in range(1, abs(D) + 1):
             if gcd(b, D) == 1:
                 M1 = M2Z([1, b / abs(D), 0, 1])
@@ -68,14 +120,12 @@ class pAdicLseries(SageObject):
                 #ans = ans + self.eval(M1 * M2Z[a, 1, p, 0])._right_action(M1)._lmul_(kronecker(D, b)).normalize()
         return PSModularSybmolElement(twisted_dist.normalize(), symb.parent())
 
-    def basic_integral(self, a, j, D=None):
+    def basic_integral(self, a, j):
         r"""
         Returns `\int_{a+pZ_p} (z-{a})^j d\Phi(0-infty)`
         -- see formula [Pollack-Stevens, sec 9.2]
 
         """
-        if D == None:
-            D = 1
         #check that a is between 0 and p - 1
         symb = self.symb()
         M = symb.precision_cap()
@@ -88,6 +138,7 @@ class pAdicLseries(SageObject):
         symb_twisted = twisted_symbol_on_Da(symb, a, D)
         return sum(binomial(j, r) * ((a - ZZ(K.teichmuller(a)))**(j - r)) *
                 (p**r) * self.phi_on_Da(a, D).moment(r) for r in range(j+1)) / ap
+    
 
 def log_gamma_binomial(p,gamma,z,n,M):
     r"""
