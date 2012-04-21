@@ -98,7 +98,8 @@ class pAdicLseries(SageObject):
         `p`-adic `L`-series, as a power series in `T` (corresponding to
         `\gamma-1` with `\gamma=1 + p` as a generator of `1+p\ZZ_p`).
 
-        Right now it doesn't. Needs to take into account completions, etc.
+        Right now it doesn't necessarily do so. It needs to take into account
+        completions, etc.
         """
         p = self.prime()
         M = self.symb().precision_cap()
