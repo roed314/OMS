@@ -63,11 +63,11 @@ class pAdicLseries(SageObject):
 
             for j in range(len(lb)):
                 cjn = lb[j]
-                temp = sum((ZZ(K.teichmuller(a))**(-j))*self.basic_integral(a,j,D) for a in range(1,p))
+                temp = sum((ZZ(K.teichmuller(a))**(-j))*self.basic_integral(a,j) for a in range(1,p))
                 dn = dn + cjn*temp
             self.series[n] = dn + O(p**err)
             return self.series[n]
-
+        
     def symb(self):
         r"""
         """
@@ -94,7 +94,7 @@ class pAdicLseries(SageObject):
         """
         Returns `\Phi_{\chi}(\{a/p}-{\infty})` where `Phi` is the OMS
         corresponding to self and `\chi` is a character of conductor `D`
-
+        
 
         INPUT:
             - ``a`` -- integer in [0..p-1]
@@ -104,7 +104,7 @@ class pAdicLseries(SageObject):
         `\Phi_{\chi}(\{a/p\}-\{\infty\})`
 
         EXAMPLES:
-
+        
         """
         symb = self.symb()
         p = symb.parent().prime()
@@ -135,7 +135,7 @@ class pAdicLseries(SageObject):
         ap = symb.ap(p)
         ap = ap * kronecker(D, p)
         K = Qp(p, M)
-        symb_twisted = twisted_symbol_on_Da(symb, a, D)
+        symb_twisted = twisted_symbol_on_Da(symb, a)
         return sum(binomial(j, r) * ((a - ZZ(K.teichmuller(a)))**(j - r)) *
                 (p**r) * self.phi_on_Da(a, D).moment(r) for r in range(j+1)) / ap
     
