@@ -227,7 +227,7 @@ class PSModularSymbolSpace(Module):
 
         OUTPUT:
 
-        The zero element in the space where self takes values
+        The zero element in the space where self takes values.
 
         EXAMPLES::
 
@@ -256,7 +256,7 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbolSpace(Gamma1(6), D)
             sage: M.zero()
             A modular symbol with values in Space of 2-adic distributions with
-            k=4 action and precision cap 20
+            k=4 action and precision cap 5
 
         """
 
@@ -269,14 +269,14 @@ class PSModularSymbolSpace(Module):
 
     def precision_cap(self):
         r"""
-        Returns the number of moments of each value of self
+        Returns the number of moments of each value of self.
 
         EXAMPLES::
 
             sage: D = Distributions(2, 5)
             sage: M = PSModularSymbolSpace(Gamma1(13), D)
             sage: M.precision_cap()
-            20
+            3
             sage: D = Distributions(3, 7, prec_cap=10)
             sage: M = PSModularSymbolSpace(Gamma0(7), D)
             sage: M.precision_cap()
@@ -287,7 +287,7 @@ class PSModularSymbolSpace(Module):
 
     def weight(self):
         r"""
-        Returns the weight of self
+        Returns the weight of self.
 
         EXAMPLES::
 
@@ -301,7 +301,7 @@ class PSModularSymbolSpace(Module):
 
     def prime(self):
         r"""
-        Returns the prime of self
+        Returns the prime of self.
 
         EXAMPLES:
             sage: D = Distributions(2, 11)
@@ -312,7 +312,37 @@ class PSModularSymbolSpace(Module):
         """
         return self.coefficient_module()._p
 
-    def p_stabilize(self, p, M, check=True):
+    def p_stabilize(self, p, M=None, check=True):
+        r"""
+        Returns the zero element of the space where self takes values.
+
+        INPUT:
+            - ``p`` -- prime number
+            - ``M`` -- number of moments
+
+        OUTPUT:
+
+        The space of modular symbols of level p * N, where N is the level of
+        self, with precision M.
+
+        EXAMPLES::
+
+            sage: D = Distributions(2, 7)
+            sage: M = PSModularSymbolSpace(Gamma(13), D)
+            sage: M.p_stabilize(7)
+            Space of overconvergent modular symbols for Congruence Subgroup
+            Gamma(91) with sign 0 and values in Space of 7-adic distributions
+            with k=2 action and precision cap 3
+            sage: D = Distributions(4, 17)
+            sage: M = PSModularSymbolSpace(Gamma1(3), D)
+            sage: M.p_stabilize(17, 15)
+            Space of overconvergent modular symbols for Congruence Subgroup
+            Gamma1(51) with sign 0 and values in Space of 17-adic distributions
+            with k=4 action and precision cap 15
+        """
+
+        if M == None:
+            M = self.precision_cap()
         N = self.level()
         if check and N % p == 0:
             raise ValueError("the level isn't prime to p")
@@ -329,6 +359,22 @@ class PSModularSymbolSpace(Module):
         return PSModularSymbols(G, coefficients=self.coefficient_module().lift(p, M), sign=self.sign())
 
     def _an_element_(self):
+        r"""
+        Returns an element of self
+
+        EXAMPLES:
+            sage: D = Distributions(4)
+            sage: M = PSModularSymbolSpace(Gamma(6), D)
+            sage: M.an_element()
+            A modular symbol with values in Sym^4 Q^2
+            sage: D = Distributions(2, 11)
+            sage: M = PSModularSymbolSpace(Gamma0(2), D)
+            sage: M.an_element()
+            A modular symbol with values in Space of 11-adic distributions with
+            k=2 action and precision cap 3
+
+        """
+
         D = {}
         for g in self.source().gens():
             D[g] = self.coefficient_module().an_element()
@@ -355,7 +401,7 @@ class PSModularSymbolSpace(Module):
         """
 
         if M > self.precision_cap():
-            raise PrecisionError ("Too many moments for self.")
+            raise PrecisionError ("Too many moments requested.")
 
         # Sorry, I messed this up.
         # Somebody who understands the details should take a careful look.

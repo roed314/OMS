@@ -93,13 +93,13 @@ class PSModularSymbolElement(ModuleElement):
         EXAMPLES:
 
         ::
-        
+
         sage: E = EllipticCurve('11a')
         sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi.values()
         [-1/5, 3/2, -1/2]
         sage: (phi.plus_part()+phi.minus_part()) == phi * 2
-        True   
+        True
         """
         return self - self * minusproj
 
@@ -381,7 +381,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
 class PSModularSymbolElement_dist(PSModularSymbolElement):
 
-    
+
     def reduce_precision(self, M):
         r"""
         Only holds on to `M` moments of each value of self
@@ -390,13 +390,13 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         for val in sd.itervalues():
             val.reduce_precision(M)
         return self
-    
+
     def precision_absolute(self):
         r"""
         Returns the number of moments of each value of self
         """
         return self.precision_cap()
-    
+
     def specialize(self):
         r"""
         Returns the underlying classical symbol of weight `k` -- i.e.,
