@@ -151,7 +151,7 @@ class pAdicLseries(SageObject):
         """
         symb = self.symb()
         p = symb.parent().prime()
-        twisted_dist = symb.parent().zero_element()
+        twisted_dist = symb.parent().coefficient_module().zero_element()
         m_map = symb._map
         D = self._quadratic_twist
         for b in range(1, abs(D) + 1):
