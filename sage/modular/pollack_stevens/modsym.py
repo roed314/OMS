@@ -144,7 +144,7 @@ class PSModularSymbolElement(ModuleElement):
 
         OUTPUT:
 
-        self + self | [1,0,0,-1]
+        - self + self | [1,0,0,-1]
 
         EXAMPLES:
 
@@ -167,7 +167,7 @@ class PSModularSymbolElement(ModuleElement):
 
         OUTPUT:
 
-        self - self | [1,0,0,-1]
+        - self - self | [1,0,0,-1]
 
         EXAMPLES:
 
@@ -434,10 +434,13 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         NOTE: This only returns all completions when `p` splits completely in `K`
 
         INPUT:
-            - ``p`` -- prime
-            - ``M`` -- precision
+
+        - ``p`` -- prime
+        - ``M`` -- precision
 
         OUTPUT:
+
+        - 
 
         EXAMPLES:
         """
