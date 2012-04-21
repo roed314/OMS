@@ -242,6 +242,8 @@ class ManinMap(object):
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 5-adic distributions with k=0 action and precision cap 10
             sage: f(M2Z([1,0,0,1]))
             (1, 2)
+            sage: f+f
+            Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 5-adic distributions with k=0 action and precision cap 10
             sage: (f+f)(M2Z([1,0,0,1]))
             (2, 4)
         """
@@ -262,17 +264,19 @@ class ManinMap(object):
 
         ::
 
-        sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
-        sage: D = Distributions(0, 5, 10); D
-        Space of 5-adic distributions with k=0 action and precision cap 10
-        sage: manin = sage.modular.pollack_stevens.fund_domain.ManinRelations(11)
-        sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
-        sage: f = ManinMap(D, manin, data); f
-        Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 5-adic distributions with k=0 action and precision cap 10
-        sage: f(M2Z([1,0,0,1]))
-        (1, 2)
-        sage: (f-f)(M2Z([1,0,0,1]))
-        (0, 0)
+            sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
+            sage: D = Distributions(0, 5, 10); D
+            Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: manin = sage.modular.pollack_stevens.fund_domain.ManinRelations(11) 
+            sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
+            sage: f = ManinMap(D, manin, data); f
+            Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: f(M2Z([1,0,0,1]))
+            (1, 2)
+            sage: f-f
+            Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: (f-f)(M2Z([1,0,0,1]))
+            (0, 0)
         
         """
         D = {}
@@ -287,6 +291,7 @@ class ManinMap(object):
         """
         Return scalar multiplication self*right, where right is in the
         base ring of the codomain.
+        
         """
         if isinstance(right, Matrix_integer_2x2):
             return self._right_action(right)
@@ -297,6 +302,22 @@ class ManinMap(object):
         return self.__class__(self._codomain, self._manin, D, check=False)
 
     def __repr__(self):
+        """
+        Returns print representation of self.
+
+        EXAMPLES:
+
+        ::
+ 
+            sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
+            sage: D = Distributions(0, 5, 10); D
+            Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: manin = sage.modular.pollack_stevens.fund_domain.ManinRelations(11)
+            sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
+            sage: f = ManinMap(D, manin, data)
+            sage: f.__repr__()
+            'Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 5-adic distributions with k=0 action and precision cap 10'
+        """
         return "Map from the set of right cosets of Gamma0(%s) in SL_2(Z) to %s"%(
             self._manin.level(), self._codomain)
 
@@ -346,6 +367,24 @@ class ManinMap(object):
         return self[B] * gaminv
 
     def __call__(self, A):
+        """
+        Evaluates self at A.
+
+        EXAMPLES:
+
+        ::
+
+            sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
+            sage: D = Distributions(0, 5, 10); D
+            Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: manin = sage.modular.pollack_stevens.fund_domain.ManinRelations(11)
+            sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
+            sage: f = ManinMap(D, manin, data); f
+            Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: f(M2Z([1,0,0,1]))
+            (1, 2)   
+        
+        """
         a = A[t00]
         b = A[t01]
         c = A[t10]
