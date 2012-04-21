@@ -8,7 +8,7 @@ and right action of matrices.
 
 
 """
-from sage.rings.arith.spaceimport convergents
+from sage.rings.arith.space import convergents
 from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2, Matrix_integer_2x2
 
 from distributions import Distributions
