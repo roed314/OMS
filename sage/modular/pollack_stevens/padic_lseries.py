@@ -6,6 +6,8 @@ from sage.rings.arith import binomial, gcd, kronecker
 
 from fund_domain import M2Z
 
+from sage.structure.sage_object import SageObject
+
 class pAdicLseries(SageObject):
     r"""
     The `p`-adic `L`-series associated to an overconvergent eigensymbol.
@@ -36,7 +38,7 @@ class pAdicLseries(SageObject):
 
     def __getitem__(self, n):
         """
-        This needs more work to make sense for e.g., our higher dim examples
+        Returns the `n`-th coefficient of the `p`-adic `L`-series
         """
         try:
             return self.series[n]
@@ -94,12 +96,10 @@ class pAdicLseries(SageObject):
 
     def series(self, n, prec):
         r"""
-        This should eventually return the `n`-th approximation to the
-        `p`-adic `L`-series, as a power series in `T` (corresponding to
-        `\gamma-1` with `\gamma=1 + p` as a generator of `1+p\ZZ_p`).
+        Returns the `n`-th approximation to the `p`-adic `L`-series
+        associated to self, as a power series in `T` (corresponding to
+        `\gamma-1` with `\gamma= 1 + p` as a generator of `1+p\ZZ_p`).
 
-        Right now it doesn't necessarily do so. It needs to take into account
-        completions, etc.
         """
         p = self.prime()
         M = self.symb().precision_cap()
@@ -133,8 +133,6 @@ class pAdicLseries(SageObject):
             alpha = v0
             eps = eps * (1 - 1/alpha)**2
         return eps
-
-
 
     def eval_twisted_symbol_on_Da(self, a): # rename! should this be in modsym?
         """
@@ -205,11 +203,12 @@ def log_gamma_binomial(p,gamma,z,n,M):
     EXAMPLES:
 
         sage: R.<z> = QQ['z']
-        sage: loggam_binom(5,1+5,z,2,4)
+        from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
+        sage: log_gamma_binomial(5,1+5,z,2,4)
         [0, -3/205, 651/84050, -223/42025]
-        sage: loggam_binom(5,1+5,z,3,4)
+        sage: log_gamma_binomial(5,1+5,z,3,4)
         [0, 2/205, -223/42025, 95228/25845375]
     """
-    L = sum([ZZ(-1)**j / j*(gamma-1)**j for j in range (1,M)]) #log_p(1+z)
+    L = sum([ZZ(-1)**j / j*z**j for j in range (1,M)]) #log_p(1+z)
     loggam = L / (L(gamma - 1))                  #log_{gamma}(1+z)= log_p(1+z)/log_p(gamma)
     return z.parent()(binomial(loggam,n)).truncate(M).list()

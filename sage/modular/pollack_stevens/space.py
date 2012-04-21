@@ -447,6 +447,27 @@ class PSModularSymbolSpace(Module):
         return modsym_dist(D, self)
 
 def cusps_from_mat(g):
+    r"""
+    Returns the cusps associated to an element of a congruence subgroup.
+
+    INPUT:
+
+    - ``g`` -- the matrix associated to an element of a congruence subgroup
+
+    OUTPUT:
+
+    - The cusps associated to ``g``
+
+    EXAMPLES::
+        sage: from sage.modular.pollack_stevens.space import cusps_from_mat
+        sage: g = SL2Z.one().matrix()
+        sage: cusps_from_mat(g)
+        (+Infinity, 0)
+        sage: from sage.modular.pollack_stevens.space import cusps_from_mat
+        sage: g = GammaH(3, [2]).generators()[1].matrix()
+        sage: cusps_from_mat(g)
+        (1/3, 1/2)
+    """
     a, b, c, d = g.list()
     if c: ac = a/c
     else: ac = oo
@@ -455,6 +476,37 @@ def cusps_from_mat(g):
     return ac, bd
 
 def form_modsym_from_elliptic_curve(E):
+    r"""
+        Returns the PS modular symbol associated to an elliptic curve defined
+        over the rationals.
+        INPUT:
+
+        - ``E`` -- an elliptic curve defined over the rationals
+
+        OUTPUT:
+
+        - the Pollack-Stevens modular symbol associated to ``E``
+
+        EXAMPLES::
+
+        sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
+        sage: E = EllipticCurve('113a1')
+        sage: symb = form_modsym_from_elliptic_curve(E)
+        sage: symb
+        A modular symbol with values in Sym^0 Q^2
+        sage: symb.values()
+        [-1/2, 3/2, -2, 1/2, 0, 1, 2, -3/2, 0, -3/2, 0, -1/2, 0, 1, -2, 1/2, 0,
+        0, 2, 0, 0]
+        sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
+        sage: E = EllipticCurve([0,1])
+        sage: symb = form_modsym_from_elliptic_curve(E)
+        sage: symb.values()
+        [-1/6, 7/12, 1, 1/6, -5/12, 1/3, -7/12, -1, -1/6, 5/12, 1/4, -1/6,
+        -5/12]
+
+        """
+    if not (E.base_ring() is QQ):
+        raise ValueError("The elliptic curve must be defined over the rationals.")
     N = E.conductor()
     V = PSModularSymbols(Gamma0(N), 2)
     D = V.coefficient_module()
