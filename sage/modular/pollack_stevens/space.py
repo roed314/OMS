@@ -121,7 +121,7 @@ class PSModularSymbolSpace(Module):
         EXAMPLES::
 
             sage: D = Distributions(3, 17)
-            sage: M = PSModularSymbolSpace(Gamma0(5), D)
+            sage: M = PSModularSymbolSpace(Gamma(5), D)
             sage: M.sign()
             0
             sage: D = Distributions(4)
@@ -232,10 +232,9 @@ class PSModularSymbolSpace(Module):
         EXAMPLES::
 
             sage: D = Distributions(2)
-            sage: M = PSModularSymbolSpace(Gamma0(3), D)
+            sage: M = PSModularSymbolSpace(Gamma(3), D)
             sage: M.zero_element()
             (0, 0, 0)
-
         """
         return self.coefficient_module().zero_element()
 
@@ -259,13 +258,12 @@ class PSModularSymbolSpace(Module):
             k=4 action and precision cap 5
 
         """
-
-        dd = {}
+        D = {}
         for rep in self._manin_relations.reps():
-            dd[rep] = self.zero_element()
+            D[rep] = self.zero_element()
         #v = [self.zero_elt() for i in range(0, self.ngens())]
         #return C(v, self._manin_relations)
-        return self(dd)
+        return self(D)
 
     def precision_cap(self):
         r"""
@@ -283,6 +281,7 @@ class PSModularSymbolSpace(Module):
             10
 
         """
+
         return self.coefficient_module()._prec_cap
 
     def weight(self):
@@ -305,7 +304,7 @@ class PSModularSymbolSpace(Module):
 
         EXAMPLES:
             sage: D = Distributions(2, 11)
-            sage: M = PSModularSymbolSpace(Gamma0(2), D)
+            sage: M = PSModularSymbolSpace(Gamma(2), D)
             sage: M.prime()
             11
 
@@ -410,15 +409,15 @@ class PSModularSymbolSpace(Module):
         if p == None:
             p = 1
         manin = ManinRelations(N * p)
-        dd = {}
+        D = {}
         for g in manin.gens()[1:]:
             mu = self.coefficient_module().random_element(M)
             if g in manin.reps_with_two_torsion:
                 rj = manin.indices_with_two_torsion[g]
                 gam = manin.two_torsion[rj]
-                dd[g] = mu.act_right(gam)._sub_(mu)._lmul_(ZZ(1) / ZZ(2))
+                D[g] = mu.act_right(gam)._sub_(mu)._lmul_(ZZ(1) / ZZ(2))
             else:
-                dd[g] = mu
+                D[g] = mu
         #t = self.zero()
         print "gens", manin.gens()
         for j in range(2, len(manin.relations())):
@@ -429,16 +428,16 @@ class PSModularSymbolSpace(Module):
                     print "j=", j
                     print "indices(j)", manin.indices(j)
                     rj = manin.gens()[j -1] #manin.indices(j - 1)]
-                    #t = t + dd[rj]
+                    #t = t + D[rj]
                     # Should t do something?
                 else:
                     index = R[0][2]
                     rj = manin.gens()[index - 1]
-                    mu = dd[rj]
+                    mu = D[rj]
                     #t = t + mu.act_right(R[0][1])._lmul_(R[0][0])
                     # Should t do something?
-        dd[manin.gens()[0]] = mu._lmul_(-1)
-        return modsym_dist(dd, self)
+        D[manin.gens()[0]] = mu._lmul_(-1)
+        return modsym_dist(D, self)
 
 def cusps_from_mat(g):
     a, b, c, d = g.list()
