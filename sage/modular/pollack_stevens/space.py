@@ -193,9 +193,7 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbolSpace(Gamma1(14), D)
             sage: M.level()
             14
-
         """
-
         return self._manin_relations.level()
 
     def _grab_relations(self):
@@ -214,9 +212,7 @@ class PSModularSymbolSpace(Module):
                 [0 1], 3)], [(1, [1 0]
                     [0 1], 4)], [(1, [1 0]
                         [0 1], 5)]]
-
         """
-
         v = []
         for r in range(len(self._manin_relations.gens())):
             for j in range(len(self._manin_relations.reps())):
@@ -225,26 +221,6 @@ class PSModularSymbolSpace(Module):
                     if R[0][0] <> -1 or R[0][1] <> M2ZSpace.one():
                         v = v + [R]
         return v
-
-    def zero_element(self):
-        r"""
-        Returns the modular symbol all of whose values are zero.
-
-        OUTPUT:
-
-        - The zero modular symbol of self.
-
-        EXAMPLES::
-
-            sage: D = Distributions(4,2)
-            sage: M = PSModularSymbolSpace(Gamma1(6), D)
-            sage: z = M.zero(); z
-            Modular symbol with values in Space of 2-adic distributions with
-            k=4 action and precision cap 5
-            sage: z.values()
-            [(0, 0, 0, 0, 0), (0, 0, 0, 0, 0), (0, 0, 0, 0, 0)]
-        """
-        return self._constant_symbol(self.coefficient_module().zero_element())
 
     def precision_cap(self):
         r"""
@@ -369,27 +345,13 @@ class PSModularSymbolSpace(Module):
             [(2, 1), (2, 1), (2, 1)]
             sage: D = Distributions(2, 11)
             sage: M = PSModularSymbolSpace(Gamma0(2), D)
-            sage: M.an_element()
-            Modular symbol with values in Space of 11-adic distributions with
-            k=2 action and precision cap 3
+            sage: x = M.an_element(); x.values()
+            [(2, 1), (2, 1)]
+            sage: x in M
+            True
         """
-        return self._constant_symbol(self.coefficient_module().an_element())
+        return self(self.coefficient_module().an_element())
 
-    def _constant_symbol(self, c):
-        """
-        Return the constant map that sends every gen of self to c.
-
-        INPUT:
-
-        - `c` -- element of the coefficient module
-
-        EXAMPLES::
-
-            sage: ?
-        """
-        g = self.source().gens()
-        return self(dict(zip(g, [c]*len(g))))
-    
     def random_element(self, M):
         r"""
         Returns a random OMS with tame level `N`, prime `p`, weight
