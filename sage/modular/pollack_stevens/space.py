@@ -319,18 +319,20 @@ class PSModularSymbolSpace(Module):
         """
         return self.coefficient_module()._p
 
-    def p_stabilize(self, p, M=None, check=True):
+    def p_stabilize(self, p, new_base_ring):
         r"""
-        Returns the zero element of the space where self takes values.
+        Returns the space of modular symbols of level p * N, with
+        changed base ring.
 
         INPUT:
-            - ``p`` -- prime number
-            - ``M`` -- number of moments
+
+        - ``p`` -- prime number
+        - ``new_base_ring`` -- the base ring of the result
 
         OUTPUT:
 
-        The space of modular symbols of level p * N, where N is the level of
-        self, with precision M.
+        - The space of modular symbols of level p * N, where N is the level of
+          self, with precision M.
 
         EXAMPLES::
 
@@ -348,10 +350,8 @@ class PSModularSymbolSpace(Module):
             with k=4 action and precision cap 15
         """
 
-        if M == None:
-            M = self.precision_cap()
         N = self.level()
-        if check and N % p == 0:
+        if N % p == 0:
             raise ValueError("the level isn't prime to p")
         from sage.modular.arithgroup.all import Gamma, is_Gamma, Gamma0, is_Gamma0, Gamma1, is_Gamma1
         G = self.group()
@@ -363,7 +363,10 @@ class PSModularSymbolSpace(Module):
             G = Gamma(N*p)
         else:
             raise NotImplementedError
-        return PSModularSymbols(G, coefficients=self.coefficient_module().lift(p, M), sign=self.sign())
+        return PSModularSymbols(G, coefficients=self.coefficient_module().change_ring(new_base_ring), sign=self.sign())
+
+    def lift(self, p, M, new_base_ring):
+        return PSModularSymbols(self.group(), coefficients=self.coefficient_module().lift(p, M, new_base_ring), sign=self.sign())
 
     def _an_element_(self):
         r"""
@@ -389,8 +392,9 @@ class PSModularSymbolSpace(Module):
 
     def random_element(self, M):
         r"""
-        Returns a random OMS with tame level `N`, prime `p`, weight `k`, and
-        `M` moments --- requires no `2` or `3`-torsion
+        Returns a random OMS with tame level `N`, prime `p`, weight
+        `k`, and `M` moments --- requires no `2` or `3`-torsion.
+
         INPUT:
 
         - M: the number of moments
@@ -406,7 +410,8 @@ class PSModularSymbolSpace(Module):
 
 
         """
-
+        raise NotImplementedError, "todo"
+    
         if M > self.precision_cap():
             raise PrecisionError ("Too many moments requested.")
 
@@ -427,14 +432,14 @@ class PSModularSymbolSpace(Module):
             else:
                 D[g] = mu
         #t = self.zero()
-        print "gens", manin.gens()
+        #print "gens", manin.gens()
         for j in range(2, len(manin.relations())):
             R = manin.relations(j)
             if len(R) == 1:
-                print "R=", R
+                #print "R=", R
                 if R[0][0] == 1:
-                    print "j=", j
-                    print "indices(j)", manin.indices(j)
+                    #print "j=", j
+                    #print "indices(j)", manin.indices(j)
                     rj = manin.gens()[j -1] #manin.indices(j - 1)]
                     #t = t + D[rj]
                     # Should t do something?
