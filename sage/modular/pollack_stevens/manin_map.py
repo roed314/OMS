@@ -409,7 +409,7 @@ class ManinMap(object):
         EXAMPLES::
 
             sage: E = EllipticCurve('11a')
-            sage: from sage.modular.overconvergent.pollack.modsym_symk import ps_modsym_from_elliptic_curve
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
             sage: phi = ps_modsym_from_elliptic_curve(E); phi
             [-1/5, 3/2, -1/2]
         """
