@@ -27,13 +27,24 @@ class PSModularSymbolElement(ModuleElement):
             self._map = ManinMap(parent._coefficients, parent._manin_relations, map_data)
 
     def _repr_(self):
-        return "A modular symbol with values in %s"%(self.parent().coefficient_module())
+        return "Modular symbol with values in %s"%(self.parent().coefficient_module())
 
     def dict(self):
         D = {}
         for g in self.parent().source().gens():
             D[g] = self._map[g]
         return D
+
+    def weight(self):
+        """
+        Return the weight of this Pollack-Stevens modular symbols.
+
+        This is k-2, where k is the usual notion of weight for modular
+        forms!!!
+
+        
+        """
+        return self.parent().weight()
 
     def values(self):
         return [self._map[g] for g in self.parent().source().gens()]

@@ -1,11 +1,18 @@
+"""
+Pollack-Stevens Modular Symbols Space
+
+
+"""
+
 from sage.modules.module import Module
 from sage.structure.factory import UniqueFactory
 from distributions import Distributions
 from sage.modular.dirichlet import DirichletCharacter
 from sage.modular.arithgroup.all import Gamma0
+from sage.rings.arith import binomial
 from sage.rings.integer import Integer
-from sage.rings.rational_field import QQ
 from sage.rings.integer_ring import ZZ
+from sage.rings.rational_field import QQ
 from modsym import PSModularSymbolElement_symk, PSModularSymbolElement_dist, PSModSymAction
 from fund_domain import ManinRelations, M2ZSpace
 from sage.rings.padics.precision_error import PrecisionError
@@ -254,7 +261,7 @@ class PSModularSymbolSpace(Module):
             sage: D = Distributions(4,2)
             sage: M = PSModularSymbolSpace(Gamma1(6), D)
             sage: M.zero()
-            A modular symbol with values in Space of 2-adic distributions with
+            Modular symbol with values in Space of 2-adic distributions with
             k=4 action and precision cap 5
 
         """
@@ -365,11 +372,11 @@ class PSModularSymbolSpace(Module):
             sage: D = Distributions(4)
             sage: M = PSModularSymbolSpace(Gamma(6), D)
             sage: M.an_element()
-            A modular symbol with values in Sym^4 Q^2
+            Modular symbol with values in Sym^4 Q^2
             sage: D = Distributions(2, 11)
             sage: M = PSModularSymbolSpace(Gamma0(2), D)
             sage: M.an_element()
-            A modular symbol with values in Space of 11-adic distributions with
+            Modular symbol with values in Space of 11-adic distributions with
             k=2 action and precision cap 3
 
         """
@@ -460,13 +467,131 @@ def form_modsym_from_elliptic_curve(E):
         val[g] = D([plus_sym(ac) + minus_sym(ac) - plus_sym(bd) - minus_sym(bd)])
     return V(val)
 
-def form_modsym_from_decomposition(A):
+def ps_modsym_from_simple_modsym_space(A):
     """
+    INPUT:
+
+    - `A` -- nonzero simple Hecke equivariant new space of modular
+      symbols, which need not be cuspidal.
+
+    OUTPUT:
+
+    - corresponding Pollack-Stevens modular symbols; when dim(A)>1, we
+      make an arbitrary choice of defining polynomial for the codomain
+      field.  
+    
+    EXAMPLES::
+
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_simple_modsym_space
+
+    The level 11 example::
+
+        sage: A = ModularSymbols(11, sign=1, weight=2).decomposition()[0]
+        sage: A.is_cuspidal()
+        True
+        sage: f = ps_modsym_from_simple_modsym_space(A); f
+        Modular symbol with values in Sym^0 Q^2
+        sage: f.values()
+        [1, -5/2, -5/2]
+        sage: f.weight()         # this is A.weight()-2  !!!!!!
+        0
+
+    And the -1 sign for the level 11 example::
+
+        sage: A = ModularSymbols(11, sign=-1, weight=2).decomposition()[0]
+        sage: f = ps_modsym_from_simple_modsym_space(A); f.values()
+        [0, 1, -1]
+
+    A does not have to be cuspidal; it can be Eisenstein::
+
+        sage: A = ModularSymbols(11, sign=1, weight=2).decomposition()[1]
+        sage: A.is_cuspidal()
+        False
+        sage: f = ps_modsym_from_simple_modsym_space(A); f
+        Modular symbol with values in Sym^0 Q^2    
+        sage: f.values()
+        [1, 0, 0]        
+
+    We create the simplest weight 2 example in which A has dimension
+    bigger than 1::
+
+        sage: A = ModularSymbols(23, sign=1, weight=2).decomposition()[0]
+        sage: f = ps_modsym_from_simple_modsym_space(A); f.values()
+        [1, 0, 0, 0, 0]
+        sage: A = ModularSymbols(23, sign=-1, weight=2).decomposition()[0]
+        sage: f = ps_modsym_from_simple_modsym_space(A); f.values()
+        [0, 1, -alpha, alpha, -1]
+        sage: f.base_ring()
+        Number Field in alpha with defining polynomial x^2 + x - 1
+
+    We create the +1 modular symbol attached to the weight 12 modular form Delta::
+
+        sage: A = ModularSymbols(1, sign=+1, weight=12).decomposition()[0]
+        sage: f = ps_modsym_from_simple_modsym_space(A); f
+        Modular symbol with values in Sym^10 Q^2
+        sage: f.values()
+        [(-1620/691, 0, 45, 0, -135, 0, 135, 0, -45, 0, 1620/691), (1620/691, -16200/691, 41805/691, 54360/691, -437175/691, 773370/691, -530460/691, 54360/691, 72900/691, -16200/691, 0), (0, 16200/691, -72900/691, -54360/691, 530460/691, -773370/691, 437175/691, -54360/691, -41805/691, 16200/691, -1620/691)]    
+
+    And, the -1 modular symbol attached to Delta::
+
+        sage: A = ModularSymbols(1, sign=-1, weight=12).decomposition()[0]
+        sage: f = ps_modsym_from_simple_modsym_space(A); f
+        Modular symbol with values in Sym^10 Q^2
+        sage: f.values()
+        [(0, -10, 0, 125/2, 0, -105, 0, 125/2, 0, -10, 0), (0, 10, -90, 595/2, -805/2, 105/2, 805/2, -360, 90, 0, 0), (0, 0, 90, -360, 805/2, 105/2, -805/2, 595/2, -90, 10, 0)]
+
+    The next few examples all illustrate the ways in which exceptions are raised
+    if A does not satisfy various constraints.
+
+    First, A must be new::
+
+        sage: A = ModularSymbols(33,sign=1).cuspidal_subspace().old_subspace()
+        sage: ps_modsym_from_simple_modsym_space(A)
+        Traceback (most recent call last):
+        ...
+        ValueError: A must be new        
+
+    A must be simple::
+
+        sage: A = ModularSymbols(43,sign=1).cuspidal_subspace()
+        sage: ps_modsym_from_simple_modsym_space(A)
+        Traceback (most recent call last):
+        ...
+        ValueError: A must be simple
+
+    A must have sign -1 or +1 in order to be simple::
+
+        sage: A = ModularSymbols(11).cuspidal_subspace()
+        sage: ps_modsym_from_simple_modsym_space(A)
+        Traceback (most recent call last):
+        ...
+        ValueError: A must have sign +1 or -1 (otherwise it is not simple)
+
+    The dimension must be positive::
+
+        sage: A = ModularSymbols(10).cuspidal_subspace(); A
+        Modular Symbols subspace of dimension 0 of Modular Symbols space of dimension 3 for Gamma_0(10) of weight 2 with sign 0 over Rational Field
+        sage: ps_modsym_from_simple_modsym_space(A)    
+        Traceback (most recent call last):
+        ...
+        ValueError: A must positive dimension
     """
+    if A.dimension() == 0:
+        raise ValueError, "A must positive dimension"
+    
+    if A.sign() == 0:
+        raise ValueError, "A must have sign +1 or -1 (otherwise it is not simple)"
+
+    if not A.is_new():
+        raise ValueError, "A must be new"
+
+    if not A.is_simple():
+        raise ValueError, "A must be simple"
+
     M = A.ambient_module()
     w = A.dual_eigenvector()
     K = w.base_ring()
-    V = PSModularSymbols(A.group(), A.weight(), base=K) # should eventually add sign as well.
+    V = PSModularSymbols(A.group(), A.weight(), base_ring=K, sign=A.sign()) 
     D = V.coefficient_module()
     N = V.level()
     k = V.weight() # = A.weight() - 2
@@ -476,7 +601,7 @@ def form_modsym_from_decomposition(A):
         ac, bd = cusps_from_mat(g)
         v = []
         for j in range(k+1):
-            # The following might be backward: it should be the coefficient of X^j Y^(k-j)
+            # TODO: The following might be backward: it should be the coefficient of X^j Y^(k-j)
             v.append(w.dot_product(M.modular_symbol([j, ac, bd]).element()) * binomial(k, j))
         val[g] = D(v)
     return V(val)
