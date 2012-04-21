@@ -30,7 +30,17 @@ class PSModularSymbolElement(ModuleElement):
 
     def _repr_(self):
         r"""
-        Return the print representation
+        Returns the print representation.
+
+        EXAMPLES:
+
+        ::
+
+        sage: E = EllipticCurve('11a')
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+        sage: phi = ps_modsym_from_elliptic_curve(E)
+        sage: phi._repr_()
+        'Modular symbol with values in Sym^0 Q^2'
         """
         return "Modular symbol with values in %s"%(self.parent().coefficient_module())
 
@@ -42,7 +52,7 @@ class PSModularSymbolElement(ModuleElement):
 
     def weight(self):
         """
-        Return the weight of this Pollack-Stevens modular symbol.
+        Returns the weight of this Pollack-Stevens modular symbol.
 
         This is k-2, where k is the usual notion of weight for modular
         forms!!!
