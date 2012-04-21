@@ -20,7 +20,7 @@ class pAdicLseries(SageObject):
             - ``quad_twist`` -- conductor of quadratic twist `\chi`, default 1
             - ``error`` -- if None is specified, the correct error bound is computed and the answer is returned modulo
               that accuracy
-              
+
         """
         if symb.parent().prime() == None:
             raise ValueError ("Not a p-adic overconvergent modular symbol.")
@@ -28,7 +28,7 @@ class pAdicLseries(SageObject):
         self._symb = symb
 
         if gam == None:
-            gam = self._symb.parent().prime()
+            gam = 1 + self._symb.parent().prime()
 
         self._gam = gam
         self._quad_twist = quad_twist
@@ -51,7 +51,7 @@ class pAdicLseries(SageObject):
             K = pAdicField(p,M)
             lb = log_gamma_binomial(p,gam,z,n,2*M)
             dn = 0
-            
+
             if n == 0:
                 err = M
             else:
@@ -63,11 +63,11 @@ class pAdicLseries(SageObject):
 
             for j in range(len(lb)):
                 cjn = lb[j]
-                temp = sum((ZZ(K.teichmuller(a))**(-j))*self.basic_integral(a,j) for a in range(1,p))
+                temp = sum((ZZ(K.teichmuller(a))**(-j))*self._basic_integral(a,j) for a in range(1,p))
                 dn = dn + cjn*temp
             self.series[n] = dn + O(p**err)
             return self.series[n]
-        
+
     def symb(self):
         r"""
         """
@@ -90,21 +90,21 @@ class pAdicLseries(SageObject):
         """
         pass
 
-    def twisted_symbol_on_Da(self, a): # rename! should this be in modsym?
+    def eval_twisted_symbol_on_Da(self, a): # rename! should this be in modsym?
         """
-        Returns `\Phi_{\chi}(\{a/p}-{\infty})` where `Phi` is the OMS
-        corresponding to self and `\chi` is a character of conductor `D`
-        
+        Returns `\Phi_{\chi}(\{a/p}-{\infty})` where `Phi` is the OMS and
+        `\chi` is a the quadratic character corresponding to self
+
 
         INPUT:
             - ``a`` -- integer in [0..p-1]
 
         OUTPUT:
 
-        `\Phi_{\chi}(\{a/p\}-\{\infty\})`
+        `\Phi_{\chi}(\{a/p\}-\{\infty\})`, which is a distribution
 
         EXAMPLES:
-        
+
         """
         symb = self.symb()
         p = symb.parent().prime()
@@ -114,31 +114,30 @@ class pAdicLseries(SageObject):
         for b in range(1, abs(D) + 1):
             if gcd(b, D) == 1:
                 M1 = M2Z([1, b / abs(D), 0, 1])
-                new_dist = m_map.__call__(M1 * M2Z[a, 1, p, 0])._act_right(M1)
+                new_dist = m_map.__call__(M1 * M2Z[a, 1, p, 0])._rmul_(M1)
                 new_dist = new_dist.scale(kronecker(D, b)).normalize()
                 twisted_dist = twisted_dist._add(new_dist)
                 #ans = ans + self.eval(M1 * M2Z[a, 1, p, 0])._right_action(M1)._lmul_(kronecker(D, b)).normalize()
-        return PSModularSybmolElement(twisted_dist.normalize(), symb.parent())
+        return twisted_dist.normalize()
 
-    def basic_integral(self, a, j):
+    def _basic_integral(self, a, j):
         r"""
         Returns `\int_{a+pZ_p} (z-{a})^j d\Phi(0-infty)`
         -- see formula [Pollack-Stevens, sec 9.2]
 
         """
-        #check that a is between 0 and p - 1
         symb = self.symb()
         M = symb.precision_cap()
         if j > M:
-            raise PrecisionError ("Too many moments for %s."%s(symb))
+            raise PrecisionError ("Too many moments requested")
         p = self.prime()
         ap = symb.ap(p)
         ap = ap * kronecker(D, p)
         K = Qp(p, M)
         symb_twisted = twisted_symbol_on_Da(symb, a)
         return sum(binomial(j, r) * ((a - ZZ(K.teichmuller(a)))**(j - r)) *
-                (p**r) * self.phi_on_Da(a, D).moment(r) for r in range(j+1)) / ap
-    
+                (p**r) * self.phi_on_Da(a, D).moment(r) for r in range(j + 1)) / ap
+
 
 def log_gamma_binomial(p,gamma,z,n,M):
     r"""
