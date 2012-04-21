@@ -10,9 +10,53 @@ from sage.structure.coerce_actions import LeftModuleAction, RightModuleAction
 from sage.matrix.all import MatrixSpace
 from sage.rings.fast_arith import prime_range
 from sage.modular.pollack_stevens.dist import get_dist_classes, Dist_long, iScale
+from sage.structure.factory import UniqueFactory
+from sage.structure.unique_representation import UniqueRepresentation
 import operator
 
-class Distributions(Module):
+# Need this to be pickleable
+class _default_tuplegen(UniqueRepresentation):
+    def __call__(self, g):
+        return g[0,0], g[0,1], g[1,0], g[1,1]
+
+class Distributions_factory(UniqueFactory):
+    def create_key(self, k, p=None, prec_cap=None, base=None, character=None, tuplegen=None, act_on_left=False):
+        if tuplegen is None:
+            tuplegen = _default_tuplegen()
+        if p is not None:
+            p = ZZ(p)
+        if prec_cap is None:
+            symk = True
+            prec_cap = k+1
+            if base is None:
+                if p is None:
+                    base = QQ
+                else:
+                    base = ZpCA(p)
+        else:
+            symk = False
+            if base is None:
+                if p is not None:
+                    base = ZpCA(p, prec_cap)
+                elif prec_cap > k+1:
+                    raise ValueError("you must specify a prime for non-classical weight")
+                else:
+                    base = QQ
+            elif p is None:
+                p = base.prime()
+        if isinstance(base, pAdicGeneric):
+            if p is None:
+                p = base.prime()
+            elif base.prime() != p:
+                raise ValueError("p must be the same as the prime of base")
+        return (k, p, prec_cap, base, character, tuplegen, act_on_left, symk)
+
+    def create_object(self, version, key):
+        return Distributions_class(*key)
+
+Distributions = Distributions_factory('Distributions')
+
+class Distributions_class(Module):
     """
     Parent object for distributions.
 
@@ -22,7 +66,7 @@ class Distributions(Module):
         sage: Distributions(2, 17, 100)
         Space of 17-adic distributions with k=2 action and precision cap 100
     """
-    def __init__(self, k, p=None, prec_cap=None, base=None, character=None, tuplegen=None, act_on_left=False):
+    def __init__(self, k, p=None, prec_cap=None, base=None, character=None, tuplegen=None, act_on_left=False, symk=False):
         """
         INPUT:
 
@@ -47,36 +91,12 @@ class Distributions(Module):
             <class 'sage.modular.pollack_stevens.distributions.Distributions'>
 
         p must be a prime, but p=6 below, which is not prime::
-        
+
             sage: Distributions(k=0, p=6, prec_cap=10)
             Traceback (most recent call last):
             ...
             ValueError: p must be prime
         """
-        if p is not None:
-            p = ZZ(p)
-        if base is None:
-            if p is None:
-                if prec_cap is None:
-                    base = QQ
-                    prec_cap = k + 1
-                else:
-                    raise ValueError("prec cap cannot be specified if p and base are both None")
-            else:
-                if prec_cap is None:
-                    prec_cap = 20
-                base = ZpCA(p,prec_cap)
-        elif isinstance(base, pAdicGeneric):
-            if p is None:
-                p = base.prime()
-            elif base.prime() != p:
-                raise ValueError("p must be the same as the prime of base")
-            if prec_cap is None:
-                prec_cap = base.precision_cap()
-            elif base.precision_cap() != prec_cap:
-                raise ValueError("prec_cap must match the precision cap of base")
-        elif prec_cap is not None and prec_cap > k+1: # non-classical
-            if p is None or not p.is_prime(): raise ValueError("p must be prime for non-classical weight")
         from sage.rings.padics.pow_computer import PowComputer_long
         # should eventually be the PowComputer on ZpCA once that uses longs.
         Dist, WeightKAction = get_dist_classes(p, prec_cap, base)
@@ -86,13 +106,18 @@ class Distributions(Module):
         Parent.__init__(self, base)
         self._k = k
         self._p = p
-        if prec_cap is None:
-            self._prec_cap = k + 1
-        else:
-            self._prec_cap = prec_cap
+        self._prec_cap = prec_cap
+        self._character = character
+        self._symk = symk
         act = WeightKAction(self, character, tuplegen, act_on_left)
         self._act = act
         self._populate_coercion_lists_(action_list=[iScale(self, act_on_left), act])
+
+    def is_symk(self):
+        return self._symk
+
+    def prime(self):
+        return self._p
 
     def _repr_(self):
         """
@@ -103,10 +128,27 @@ class Distributions(Module):
             'Space of 5-adic distributions with k=0 action and precision cap 10'
             sage: Distributions(0, 5, 10)
             Space of 5-adic distributions with k=0 action and precision cap 10
+
+            sage: Distributions(0)
+            Sym^0 Q^2
         """
-        # TODO: maybe account for character, etc. 
-        return "Space of %s-adic distributions with k=%s action and precision cap %s"%(
-            self._p, self._k, self._prec_cap)
+        # TODO: maybe account for character, etc.
+        if self._p is None:
+            if self.base_ring() is QQ:
+                V = 'Q^2'
+            elif self.base_ring() is ZZ:
+                V = 'Z^2'
+            elif isinstance(self.base_ring(), pAdicGeneric) and self.base_ring().degree() == 1:
+                if self.base_ring().is_field():
+                    V = 'Q_%s^2'%(self._p)
+                else:
+                    V = 'Z_%s^2'%(self._p)
+            else:
+                V = '(%s)^2'%(self.base_ring())
+            return "Sym^%s %s"%(self._k, V)
+        else:
+            return "Space of %s-adic distributions with k=%s action and precision cap %s"%(
+                self._p, self._k, self._prec_cap)
 
     @cached_method
     def approx_module(self, M=None):
@@ -145,6 +187,13 @@ class Distributions(Module):
         elif M > self._prec_cap:
             raise ValueError("M must be less than the precision cap")
         return self.base_ring()**M
+
+    def lift(self, p=None, M=None):
+        if M <= self._prec_cap:
+            return self
+        if p is None:
+            p = self._p
+        return Distributions(self._k, p, M, self.base_ring(), self._character, self._act._tuplegen, self._act.is_left())
 
     def random_element(self, M=None):
         """
@@ -192,6 +241,16 @@ class Distributions(Module):
 
     def zero_element(self, M=None):
         return self(self.approx_module(M)(0))
+
+    def specialize(self):
+        if self._character is not None:
+            raise NotImplementedError
+        return Distributions(k=self._k, p=None, prec_cap=None, base=self.base_ring(), tuplegen=self._act._tuplegen, act_on_left=self._act.is_left())
+
+    def unspecialize(self, p, prec_cap):
+        if self._character is not None:
+            raise NotImplementedError
+        return Distributions(k=self._k, p=p, prec_cap=prec_cap, base=self.base_ring(), tuplegen=self._act._tuplegen, act_on_left=self._act.is_left())
 
 #    def _get_action_(self, S, op, self_on_left):
 #        if S is self.base_ring():

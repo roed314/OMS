@@ -33,7 +33,7 @@ include "stdsage.pxi"
 include "cdefs.pxi"
 
 def get_dist_classes(p, prec_cap, base):
-    if p is None or (isinstance(base, pAdicGeneric) and base.degree() > 1):
+    if p is None or base.is_field() or (isinstance(base, pAdicGeneric) and base.degree() > 1):
         return Dist_vector, WeightKAction_vector
     if 7*p**(prec_cap) < ZZ(2)**(4*sizeof(long)-1):
         return Dist_long, WeightKAction_long
@@ -46,6 +46,51 @@ cdef class Dist(ModuleElement):
 
     def scale(self,left):
         return self * left
+
+    def find_scalar(self, other, p, M, check=True):
+        """
+        Returns an alpha with other = self * alpha, or raises a ValueError.
+
+        self should be nonzero
+        """
+        p = self.parent().prime()
+        i = 0
+        n = self.precision_absolute()
+        a = self.moment(i)
+        if p is None:
+            while a == 0:
+                if other.moment(i) != 0:
+                    raise ValueError("not a scalar multiple")
+                i += 1
+                a = self.moment(i)
+            alpha = other.moment(i) / a
+            if check:
+                i += 1
+                while i < n:
+                    if self.moment(i) != alpha * other.moment(i):
+                        raise ValueError("not a scalar multiple")
+                    i += 1
+        else:
+            v = a.valuation(p)
+            while v >= n - i:
+                i += 1
+                a = self.moment(i)
+                v = a.valuation(p)
+            relprec = n - i - v
+            alpha = other.moment(i) / a % p**(n-i)
+            i += 1
+            while i < n:
+                a = self.moment(i)
+                if check and a % p**(n-i) != alpha * other.moment(i) % p**(n-i):
+                    raise ValueError("not a scalar multiple")
+                v = a.valuation(p)
+                if n - i - v > relprec:
+                    relprec = n - i - v
+                    alpha = other.moment(i) / a % p**(n-i)
+        try:
+            return self.parent().base_ring()(alpha)
+        except ValueError:
+            return alpha
 
     cpdef ModuleElement _rmul_(self, RingElement _left):
         return self._lmul_(_left)
@@ -63,16 +108,28 @@ cdef class Dist(ModuleElement):
         r"""
         Specializes to weight `k` -- i.e. projects to `Sym^k`
         """
-        from sage.modular.overconvergent.pollack.symk import symk
         k=self.parent()._k
-        assert k >= 0,"negative weight"
-        # R.<X,Y>=PolynomialRing(QQ,2)
-        R = PolynomialRing(QQ,('X','Y'))
-        X,Y = R.gens()
-        P=0
-        for j in range(0,k+1):
-            P=P+binomial(k,j)*((-1)**j)*self.moment(j)*(X**j)*(Y**(k-j))
-        return symk(k,P)
+        if k < 0:
+            raise ValueError("negative weight")
+        if self.precision_absolute() < k+1:
+            raise ValueError("not enough moments")
+        V = self.parent().specialize()
+        return V([binomial(k, j) * (-1)**j * self.moment(j) for j in range(k+1)])
+
+    def unspecialize(self, p, M):
+        k = self.parent()._k
+        V = self.parent().unspecialize(p, M)
+        R = V.base_ring()
+        moments = [self.moment(j) * (-1)**j / binomial(k, j) for j in range(k+1)]
+        zero = R(0)
+        moments.extend([zero] * (M - k - 1))
+        mu = V(moments)
+        val = mu.valuation()
+        if val < 0:
+            # This seems unnatural
+            print "scaling by %s^%s to keep things integral"%(p, -val)
+            mu *= p**(-val)
+        return mu
 
     def act_right(self,gam):
         r"""
@@ -115,7 +172,10 @@ cdef class Dist_vector(Dist):
         Displays the moments of the distribution
         """
         self.normalize()
-        return repr(self.moments)
+        if len(self.moments) == 1:
+            return repr(self.moments[0])
+        else:
+            return repr(self.moments)
 
     def moment(self,n):
         r"""
@@ -245,7 +305,10 @@ cdef class Dist_long(Dist):
 
     def _repr_(self):
         self.normalize()
-        return "(" + ", ".join([repr(self.moments[i]) for i in range(self.prec)]) + ")"
+        if self.prec == 1:
+            return repr(self.moments[0])
+        else:
+            return "(" + ", ".join([repr(self.moments[i]) for i in range(self.prec)]) + ")"
 
     cdef int quasi_normalize(self) except -1:
         cdef int i
