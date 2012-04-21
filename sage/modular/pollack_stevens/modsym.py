@@ -27,8 +27,11 @@ class PSModularSymbolElement(ModuleElement):
             self._map = map_data
         else:
             self._map = ManinMap(parent._coefficients, parent._manin_relations, map_data)
-
+            
     def _repr_(self):
+        r"""
+        Return the print representation
+        """
         return "Modular symbol with values in %s"%(self.parent().coefficient_module())
 
     def dict(self):
@@ -39,11 +42,10 @@ class PSModularSymbolElement(ModuleElement):
 
     def weight(self):
         """
-        Return the weight of this Pollack-Stevens modular symbols.
+        Return the weight of this Pollack-Stevens modular symbol.
 
         This is k-2, where k is the usual notion of weight for modular
         forms!!!
-
         
         """
         return self.parent().weight()
@@ -88,7 +90,8 @@ class PSModularSymbolElement(ModuleElement):
         sage: E = EllipticCurve('11a')
         sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
         sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
-        [-1/5, 3/2, -1/2]                                                                                                  sage: 2*phi
+        [-1/5, 3/2, -1/2]
+        sage: 2*phi
         Modular symbol with values in Sym^0 Q^2
         sage: (2*phi).values()
         [-2/5, 3, -1]
