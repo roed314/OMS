@@ -26,9 +26,12 @@ class PSModularSymbolElement(ModuleElement):
         if construct:
             self._map = map_data
         else:
-            self._map = ManinMap(parent._coefficients, parent._manin_relations, map_data)
+            self._map = ManinMap(parent._coefficients, parent._source, map_data)
 
     def _repr_(self):
+        r"""
+        Return the print representation
+        """
         return "Modular symbol with values in %s"%(self.parent().coefficient_module())
 
     def dict(self):
@@ -39,11 +42,10 @@ class PSModularSymbolElement(ModuleElement):
 
     def weight(self):
         """
-        Return the weight of this Pollack-Stevens modular symbols.
+        Return the weight of this Pollack-Stevens modular symbol.
 
         This is k-2, where k is the usual notion of weight for modular
         forms!!!
-
         
         """
         return self.parent().weight()
@@ -59,15 +61,79 @@ class PSModularSymbolElement(ModuleElement):
         return 0
 
     def _add_(self, right):
+        """
+        Returns self + right
+
+        EXAMPLES:
+
+        ::
+
+        sage: E = EllipticCurve('11a')
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+        [-1/5, 3/2, -1/2]
+        sage: phi + phi
+        Modular symbol with values in Sym^0 Q^2
+        sage: (phi + phi).values()
+        [-2/5, 3, -1]
+        """
         return self.__class__(self._map + right._map, self.parent(), construct=True)
 
     def _lmul_(self, right):
+        """
+        Returns self * right
+
+        EXAMPLES:
+
+        ::
+
+        sage: E = EllipticCurve('11a')
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+        [-1/5, 3/2, -1/2]
+        sage: 2*phi
+        Modular symbol with values in Sym^0 Q^2
+        sage: (2*phi).values()
+        [-2/5, 3, -1]
+        """
         return self.__class__(self._map * right, self.parent(), construct=True)
 
     def _rmul_(self, right):
+        """
+        Returns self * right
+
+        EXAMPLES:
+
+        ::
+
+        sage: E = EllipticCurve('11a')
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+        [-1/5, 3/2, -1/2]
+        sage: phi*2
+        Modular symbol with values in Sym^0 Q^2
+        sage: (phi*2).values()
+        [-2/5, 3, -1]
+        """
         return self.__class__(self._map * right, self.parent(), construct=True)
 
     def _sub_(self, right):
+        """
+        Returns self - right
+
+        EXAMPLES:
+
+        ::
+
+        sage: E = EllipticCurve('11a')
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+        [-1/5, 3/2, -1/2]
+        sage: phi - phi
+        Modular symbol with values in Sym^0 Q^2
+        sage: (phi - phi).values()
+        [0, 0, 0]
+        """
         return self.__class__(self._map - right._map, self.parent(), construct=True)
 
     def plus_part(self):
@@ -78,7 +144,7 @@ class PSModularSymbolElement(ModuleElement):
 
         OUTPUT:
 
-        self + self | [1,0,0,-1]
+        - self + self | [1,0,0,-1]
 
         EXAMPLES:
 
@@ -101,7 +167,7 @@ class PSModularSymbolElement(ModuleElement):
 
         OUTPUT:
 
-        self - self | [1,0,0,-1]
+        - self - self | [1,0,0,-1]
 
         EXAMPLES:
 
@@ -281,8 +347,10 @@ class PSModularSymbolElement(ModuleElement):
         -2
         sage: phi_ord.Tq_eigenvalue(2,3,1000)
         -2
+
+        
         sage: phi_ord.Tq_eigenvalue(3,3,10)
-        -2136133753/1068066874
+        -95227/47611
         sage: phi_ord.Tq_eigenvalue(3,3,100)
         ...
         ValueError: not a scalar multiple
@@ -304,6 +372,7 @@ class PSModularSymbolElement(ModuleElement):
     
     def lift(self, algorithm = None, eigensymbol = None):
         r"""
+        
         """
         raise NotImplementedError
 
@@ -368,10 +437,13 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         NOTE: This only returns all completions when `p` splits completely in `K`
 
         INPUT:
-            - ``p`` -- prime
-            - ``M`` -- precision
+
+        - ``p`` -- prime
+        - ``M`` -- precision
 
         OUTPUT:
+
+        - 
 
         EXAMPLES:
         """
@@ -420,7 +492,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
     def _lift_to_OMS(self, p, M, new_base_ring):
         D = {}
         manin = self.parent().source()
-        MSS = self.parent().lift(p, M, new_base_ring)
+        MSS = self.parent()._lift_parent_space(p, M, new_base_ring)
         half = ZZ(1) / ZZ(2)
         for g in manin.gens()[1:]:
             twotor = g in manin.reps_with_two_torsion
@@ -459,24 +531,30 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         r"""
         Only holds on to `M` moments of each value of self
         """
-        sd = self._dict
-        for val in sd.itervalues():
-            val.reduce_precision(M)
-        return self
+        return self.__class__(self._map.reduce_precision(M), self.parent(), construct=True)
 
     def precision_absolute(self):
         r"""
         Returns the number of moments of each value of self
         """
-        return self.precision_cap()
+        return min([a.precision_absolute() for a in self._map])
 
     def specialize(self):
         r"""
         Returns the underlying classical symbol of weight `k` -- i.e.,
         applies the canonical map `D_k --> Sym^k` to all values of
-        self
+        self.
         """
-        sd = self._dict
-        for val in sd.itervalues():
-            val.specialize()
-        return self
+        return self.__class__(self._map.specialize(new_base_ring), self.parent()._specialize_parent_space(new_base_ring()), construct=True)
+
+    def _consistency_check(self):
+        """
+        Check that the map really does satisfy the Manin relations loop (for debugging).
+        """
+        rels = self.parent()._grab_relations()
+        # TODO: no clue how to do this until this object fully works again...
+        raise NotImplementedError
+
+
+
+>>>>>>> 0294e6987d349815708ae9645d111ebba5cb147b
