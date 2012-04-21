@@ -389,8 +389,9 @@ class PSModularSymbolSpace(Module):
 
     def random_element(self, M):
         r"""
-        Returns a random OMS with tame level `N`, prime `p`, weight `k`, and
-        `M` moments --- requires no `2` or `3`-torsion
+        Returns a random OMS with tame level `N`, prime `p`, weight
+        `k`, and `M` moments --- requires no `2` or `3`-torsion.
+
         INPUT:
 
         - M: the number of moments
@@ -406,7 +407,8 @@ class PSModularSymbolSpace(Module):
 
 
         """
-
+        raise NotImplementedError, "todo"
+    
         if M > self.precision_cap():
             raise PrecisionError ("Too many moments requested.")
 
@@ -427,14 +429,14 @@ class PSModularSymbolSpace(Module):
             else:
                 D[g] = mu
         #t = self.zero()
-        print "gens", manin.gens()
+        #print "gens", manin.gens()
         for j in range(2, len(manin.relations())):
             R = manin.relations(j)
             if len(R) == 1:
-                print "R=", R
+                #print "R=", R
                 if R[0][0] == 1:
-                    print "j=", j
-                    print "indices(j)", manin.indices(j)
+                    #print "j=", j
+                    #print "indices(j)", manin.indices(j)
                     rj = manin.gens()[j -1] #manin.indices(j - 1)]
                     #t = t + D[rj]
                     # Should t do something?
