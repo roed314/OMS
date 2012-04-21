@@ -565,6 +565,3 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         # TODO: no clue how to do this until this object fully works again...
         raise NotImplementedError
 
-
-
->>>>>>> 0294e6987d349815708ae9645d111ebba5cb147b
