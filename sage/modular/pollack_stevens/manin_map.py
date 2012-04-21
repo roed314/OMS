@@ -396,6 +396,20 @@ class ManinMap(object):
             val.normalize()
         return self
 
+    def reduce_precision(self, M):
+        D = {}
+        sd = self._dict
+        for ky, val in sd.iteritems():
+            D[ky] = val.reduce_precision(M)
+        return self.__class__(self._codomain, self._manin, D, check=False)
+
+    def specialize(self, new_base_ring):
+        D = {}
+        sd = self._dict
+        for ky, val in sd.iteritems():
+            D[ky] = val.specialize(new_base_ring)
+        return self.__class__(self._codomain.specialize(new_base_ring), self._manin, D, check=False)
+
     def hecke(self, ell, algorithm = 'prep'):
         """
         Returns the image of this Manin map under the Hecke operator `T_{\ell}`.
@@ -451,10 +465,12 @@ class ManinMap(object):
         manin = V.source()
         pmat = M2Z([p,0,0,1])
         D = {}
+        scalar = 1/alpha
+        one = scalar.parent()(1)
         for g in manin.gens():
             # we use scale here so that we don't need to define a
             # construction functor in order to scale by something
             # outside the base ring.
-            D[g] = self._eval_sl2(g) - self(pmat * g).scale(1/alpha) * pmat
+            D[g] = self._eval_sl2(g).scale(one) - (self(pmat * g) * pmat).scale(1/alpha)
         return self.__class__(self._codomain, manin, D, check=False)
 
