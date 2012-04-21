@@ -26,7 +26,7 @@ class PSModularSymbolElement(ModuleElement):
         if construct:
             self._map = map_data
         else:
-            self._map = ManinMap(parent._coefficients, parent._manin_relations, map_data)
+            self._map = ManinMap(parent._coefficients, parent._source, map_data)
 
     def _repr_(self):
         return "Modular symbol with values in %s"%(self.parent().coefficient_module())
@@ -474,9 +474,17 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         r"""
         Returns the underlying classical symbol of weight `k` -- i.e.,
         applies the canonical map `D_k --> Sym^k` to all values of
-        self
+        self.
         """
         sd = self._dict
         for val in sd.itervalues():
             val.specialize()
         return self
+
+    def _consistency_check(self):
+        """
+        Check that the map really does satisfy the Manin relations loop (for debugging).
+        """
+        rels = self.parent()._grab_relations()
+        # TODO: no clue how to do this until this object fully works again...
+        raise NotImplementedError

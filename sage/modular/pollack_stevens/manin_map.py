@@ -457,3 +457,4 @@ class ManinMap(object):
             # outside the base ring.
             D[g] = self._eval_sl2(g) - self(pmat * g).scale(1/alpha) * pmat
         return self.__class__(self._codomain, manin, D, check=False)
+
