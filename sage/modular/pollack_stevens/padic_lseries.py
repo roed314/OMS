@@ -34,7 +34,7 @@ class pAdicLseries(SageObject):
         self._quad_twist = quad_twist
         self._error = error
 
-    def __get_item__(self,n):
+    def __getitem__(self,n):
         try:
             return self.series[n]
         except IndexError:
