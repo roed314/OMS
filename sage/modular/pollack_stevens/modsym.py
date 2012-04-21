@@ -492,7 +492,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
     def _lift_to_OMS(self, p, M, new_base_ring):
         D = {}
         manin = self.parent().source()
-        MSS = self.parent().lift(p, M, new_base_ring)
+        MSS = self.parent()._lift_parent_space(p, M, new_base_ring)
         half = ZZ(1) / ZZ(2)
         for g in manin.gens()[1:]:
             twotor = g in manin.reps_with_two_torsion
@@ -531,16 +531,13 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         r"""
         Only holds on to `M` moments of each value of self
         """
-        sd = self._dict
-        for val in sd.itervalues():
-            val.reduce_precision(M)
-        return self
+        return self.__class__(self._map.reduce_precision(M), self.parent(), construct=True)
 
     def precision_absolute(self):
         r"""
         Returns the number of moments of each value of self
         """
-        return self.precision_cap()
+        return min([a.precision_absolute() for a in self._map])
 
     def specialize(self):
         r"""
@@ -548,7 +545,5 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         applies the canonical map `D_k --> Sym^k` to all values of
         self
         """
-        sd = self._dict
-        for val in sd.itervalues():
-            val.specialize()
-        return self
+        return self.__class__(self._map.specialize(new_base_ring), self.parent()._specialize_parent_space(new_base_ring()), construct=True)
+
