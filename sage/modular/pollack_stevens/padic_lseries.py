@@ -49,12 +49,12 @@ class pAdicLseries(SageObject):
             z = S.gen()
             M = symb.precision_cap()
             K = pAdicField(p,M)
-            lb = log_gamma_binomial(p,gam,z,n,2*M)
             dn = 0
-
             if n == 0:
                 err = M
+                lb = [1] + [0 for a in range(M-1)]
             else:
+                lb = log_gamma_binomial(p,gam,z,n,2*M)
                 if error == None:
                     err = min([j+lb[j].valuation(p) for j in range(M,len(lb))])
                 else:
