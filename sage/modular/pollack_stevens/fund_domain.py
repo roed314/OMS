@@ -889,7 +889,7 @@ class ManinRelations(PSModularSymbolsDomain):
             The projective line over the integers modulo 11
         """
         return self._P
-
+    
     def form_list_of_cusps(self):
         r"""
         Returns the intersection of a fundamental domain for
