@@ -211,7 +211,7 @@ class PSModularSymbolElement(ModuleElement):
         sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi.values()
         [-1/5, 3/2, -1/2]
-        sage: phi_ord = phi.p_stabilize_ordinary(3,E.ap(3),10)
+        sage: phi_ord = phi.p_stabilize(p = 3, ap = E.ap(3), M = 10, ordinary = True)
         sage: phi_ord.is_Tq_eigensymbol(2,3,10)
         True
         sage: phi_ord.is_Tq_eigensymbol(2,3,100)
@@ -254,7 +254,7 @@ class PSModularSymbolElement(ModuleElement):
         sage: from sage.modular.pollack_stevens.space import form_modsym_from_elliptic_curve
         sage: phi = form_modsym_from_elliptic_curve(E); phi.values()
         [-1/5, 3/2, -1/2]
-        sage: phi_ord = phi.p_stabilize(p = 3,ap = E.ap(3),M = 10,ordinary = True)
+        sage: phi_ord = phi.p_stabilize(p = 3, ap = E.ap(3), M = 10, ordinary = True)
         sage: phi_ord.Tq_eigenvalue(2,3,10)
         -2
         sage: phi_ord.Tq_eigenvalue(2,3,100)
@@ -262,8 +262,10 @@ class PSModularSymbolElement(ModuleElement):
         sage: phi_ord.Tq_eigenvalue(2,3,1000)
         -2
         sage: phi_ord.Tq_eigenvalue(3,3,10)
+        -2136133753/1068066874
+        sage: phi_ord.Tq_eigenvalue(3,3,100)
         ...
-        ValueError: No eigenvalue exists modulo 3^10
+        ValueError: not a scalar multiple
         """
         f = self.hecke(q)
         gens = self.parent().source().gens()
