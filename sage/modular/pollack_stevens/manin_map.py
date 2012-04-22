@@ -196,7 +196,7 @@ class ManinMap(object):
                 self._dict = dict(zip(g, [c]*len(g)))
         else:
             self._dict = defining_data
-
+            
     def _compute_image_from_gens(self, B):
         L = self._manin.relations(B)
         # could raise KeyError if B is not a coset rep
@@ -336,13 +336,13 @@ class ManinMap(object):
         """
         return "Map from the set of right cosets of Gamma0(%s) in SL_2(Z) to %s"%(
             self._manin.level(), self._codomain)
-
+    
     def _eval_sl2(self, A):
         r"""
         Returns the value of self on the unimodular divisor corresponding to `A`.
 
         Note that `A` must be in `SL_2(Z)` for this to work.
-
+        
         INPUT:
             - ``A`` - an element of `SL_2(Z)`
 
