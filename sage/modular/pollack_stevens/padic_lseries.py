@@ -25,26 +25,42 @@ class pAdicLseries(SageObject):
 
 
         EXAMPLES::
-        
-        (something like this should work)
 
             from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
             sage: E = EllipticCurve('37a')
             sage: p = 5
-            sage: prec = 10
+            sage: prec = 4
             sage: phi = ps_modsym_from_elliptic_curve(E)
-            sage: phi_stabilized = phi.p_stabilize(p,prec)
+            sage: phi_stabilized = phi.p_stabilize(p,prec+3)
             sage: Phi = phi_stabilized.lift(p,prec,algorithm='stevens',eigensymbol=True)
             sage: L = pAdicLseries(Phi)
             sage: L[1]
+            2 + 3*5 + O(5^2)
+            sage: L[0]
+            O(5^2)
         
-
-        Using the existing algorithm in Sage:
+        Using the existing algorithm in Sage, it seems we're off by a factor of 2:
         
             sage: L = E.padic_lseries(5)
             sage: L.series(4)[1]
             1 + 4*5 + 2*5^2 + O(5^3)
-        
+
+        But here, we're correct without the factor of 2:
+
+            sage: E = EllipticCurve('57a')
+            sage: p = 5
+            sage: prec = 4
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi_stabilized = phi.p_stabilize(p,M = prec+3)
+            sage: Phi = phi_stabilized.lift(p,prec,None,'stevens',True)
+            sage: L = pAdicLseries(Phi)
+            sage: L[1]
+            3*5 + 5^2 + O(5^3)
+
+            sage: L1 = E.padic_lseries(5)
+            sage: L1.series(4)[1]
+            3*5 + 5^2 + O(5^3)
+                    
         """
         self._coefficients = {}
         
@@ -64,20 +80,22 @@ class pAdicLseries(SageObject):
         """
         Returns the `n`-th coefficient of the `p`-adic `L`-series
 
-
-        (Something like this should work)
         
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-            sage: E = EllipticCurve('37a')
+            sage: E = EllipticCurve('57a')
             sage: p = 5
-            sage: prec = 10
+            sage: prec = 4
             sage: phi = ps_modsym_from_elliptic_curve(E)
-            sage: phi_stabilized = phi.p_stabilize(p,prec)
-            sage: Phi = phi_stabilized.lift(p,prec,algorithm='stevens',eigensymbol=True)
+            sage: phi_stabilized = phi.p_stabilize(p,M = prec+3)
+            sage: Phi = phi_stabilized.lift(p,prec,None,'stevens',True)
             sage: L = pAdicLseries(Phi)
             sage: L[1]
+            3*5 + 5^2 + O(5^3)
+
+            sage: L1 = E.padic_lseries(5)
+            sage: L1.series(4)[1]
+            3*5 + 5^2 + O(5^3)
                                                 
         """
         if self._coefficients.has_key(n):
@@ -90,7 +108,7 @@ class pAdicLseries(SageObject):
             precision = self._precision
             S = QQ[['z']]
             z = S.gen()
-            M = symb.precision_cap()
+            M = symb.precision_absolute()
             K = pAdicField(p, M)
             dn = 0
             if n == 0:
@@ -197,7 +215,7 @@ class pAdicLseries(SageObject):
         M = self.symb().precision_absolute()
         K = pAdicField(p, M)
         R = PowerSeriesRing(K, 'T', prec)
-        T = R(R.gen(), prec)
+        T = R.gens()
         return sum(self._coefficients[i] * T**i for i in range(n)) + O(T**n)
 
     def interpolation_factor(self):
@@ -250,8 +268,8 @@ class pAdicLseries(SageObject):
         D = self._quadratic_twist
         for b in range(1, abs(D) + 1):
             if gcd(b, D) == 1:
-                M1 = M2Z([1, b / abs(D), 0, 1])
-                new_dist = m_map(M1 * M2Z[a, 1, p, 0])*(M1)
+                M1 = M2Z([ZZ(1), b / abs(D), 0, ZZ(1)])
+                new_dist = m_map(M1 * M2Z([a, ZZ(1), p, 0]))*(M1)
                 new_dist = new_dist.scale(kronecker(D, b)).normalize()
                 twisted_dist = twisted_dist + new_dist 
                 #ans = ans + self.eval(M1 * M2Z[a, 1, p, 0])._right_action(M1)._lmul_(kronecker(D, b)).normalize()
@@ -262,7 +280,7 @@ class pAdicLseries(SageObject):
         Returns `\int_{a+pZ_p} (z-{a})^j d\Phi(0-infty)`
         -- see formula [Pollack-Stevens, sec 9.2]
 
-
+        
 
         EXAMPLES
         """
@@ -271,12 +289,13 @@ class pAdicLseries(SageObject):
         if j > M:
             raise PrecisionError ("Too many moments requested")
         p = self.prime()
-        ap = symb.ap(p)
+        ap = symb.Tq_eigenvalue(p)
+        D = self._quadratic_twist
         ap = ap * kronecker(D, p)
-        K = Qp(p, M)
-        symb_twisted = self.twisted_symbol_on_Da(symb, a)
+        K = pAdicField(p, M)
+        symb_twisted = self.eval_twisted_symbol_on_Da(a)
         return sum(binomial(j, r) * ((a - ZZ(K.teichmuller(a)))**(j - r)) *
-                (p**r) * self.phi_on_Da(a, D).moment(r) for r in range(j + 1)) / ap
+                (p**r) * self.eval_twisted_symbol_on_Da(a).moment(r) for r in range(j + 1)) / ap
 
     
 def log_gamma_binomial(p,gamma,z,n,M):
