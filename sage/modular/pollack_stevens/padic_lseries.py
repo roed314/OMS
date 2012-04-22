@@ -208,15 +208,31 @@ class pAdicLseries(SageObject):
         associated to self, as a power series in `T` (corresponding to
         `\gamma-1` with `\gamma= 1 + p` as a generator of `1+p\ZZ_p`).
 
-        EXAMPLES:
+        EXAMPLES::
+        
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: E = EllipticCurve('57a')
+            sage: p = 5
+            sage: prec = 4
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi_stabilized = phi.p_stabilize(p,M = prec+3)
+            sage: Phi = phi_stabilized.lift(p,prec,None,'stevens',True)
+            sage: L = pAdicLseries(Phi)
+            sage: L.series(3,4)
+            O(5^3) + (3*5 + 5^2 + O(5^3))*T + (5 + O(5^2))*T^2
+            
+            sage: L1 = E.padic_lseries(5)
+            sage: L1.series(4)
+            O(5^6) + (3*5 + 5^2 + O(5^3))*T + (5 + 4*5^2 + O(5^3))*T^2 + (4*5^2 + O(5^3))*T^3 + (2*5 + 4*5^2 + O(5^3))*T^4 + O(T^5)
         
         """
         p = self.prime()
         M = self.symb().precision_absolute()
         K = pAdicField(p, M)
-        R = PowerSeriesRing(K, 'T', prec)
-        T = R.gens()
-        return sum(self._coefficients[i] * T**i for i in range(n)) + O(T**n)
+        R = PowerSeriesRing(K, names = 'T')
+        T = R.gens()[0]
+        R.set_default_prec(prec) 
+        return sum(self[i] * T**i for i in range(n))
 
     def interpolation_factor(self):
         r"""
@@ -280,9 +296,8 @@ class pAdicLseries(SageObject):
         Returns `\int_{a+pZ_p} (z-{a})^j d\Phi(0-infty)`
         -- see formula [Pollack-Stevens, sec 9.2]
 
-        
 
-        EXAMPLES
+        EXAMPLES:
         """
         symb = self.symb()
         M = symb.precision_absolute()
