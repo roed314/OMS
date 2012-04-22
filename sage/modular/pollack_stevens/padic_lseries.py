@@ -28,22 +28,22 @@ class pAdicLseries(SageObject):
         
         (something like this should work)
 
-        from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-        sage: E = EllipticCurve('37a')
-        sage: p = 5
-        sage: prec = 10
-        sage: phi = ps_modsym_from_elliptic_curve(E)
-        sage: phi_stabilized = phi.p_stabilize(p,prec)
-        sage: Phi = phi_stabilized.lift(p,prec,algorithm='stevens',eigensymbol=True)
-        sage: L = pAdicLseries(Phi)
-        sage: L[1]
+            from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: E = EllipticCurve('37a')
+            sage: p = 5
+            sage: prec = 10
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi_stabilized = phi.p_stabilize(p,prec)
+            sage: Phi = phi_stabilized.lift(p,prec,algorithm='stevens',eigensymbol=True)
+            sage: L = pAdicLseries(Phi)
+            sage: L[1]
         
 
         Using the existing algorithm in Sage:
         
-        sage: L = E.padic_lseries(5)
-        sage: L.series(4)[1]
-        1 + 4*5 + 2*5^2 + O(5^3)
+            sage: L = E.padic_lseries(5)
+            sage: L.series(4)[1]
+            1 + 4*5 + 2*5^2 + O(5^3)
         
         """
         self._coefficients = {}
@@ -172,16 +172,16 @@ class pAdicLseries(SageObject):
 
         EXAMPLES::
 
-        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-        sage: E = EllipticCurve('37a')
-        sage: p = 5
-        sage: prec = 6
-        sage: phi = ps_modsym_from_elliptic_curve(E)
-        sage: phi_stabilized = phi.p_stabilize(p,M = prec)
-        sage: Phi = phi_stabilized.lift(p,prec,None,'stevens',True)
-        sage: L = pAdicLseries(Phi)
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: E = EllipticCurve('37a')
+            sage: p = 5
+            sage: prec = 6
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi_stabilized = phi.p_stabilize(p,M = prec)
+            sage: Phi = phi_stabilized.lift(p,prec,None,'stevens',True)
+            sage: L = pAdicLseries(Phi)
         """
-        s = "%s-adic L-series of $s"%(self.prime(), self.symb())
+        s = "%s-adic L-series of %s"%(self.prime(), self.symb())
         return s
 
     def series(self, n, prec):
@@ -190,6 +190,8 @@ class pAdicLseries(SageObject):
         associated to self, as a power series in `T` (corresponding to
         `\gamma-1` with `\gamma= 1 + p` as a generator of `1+p\ZZ_p`).
 
+        EXAMPLES:
+        
         """
         p = self.prime()
         M = self.symb().precision_absolute()
@@ -202,6 +204,8 @@ class pAdicLseries(SageObject):
         r"""
         For `K` the field of definition of ap, returns the interpolation
         factor `\eps`
+
+        EXAMPLES:
         """
         M = self.symb().precision_absolute()
         p = self.prime()
@@ -258,6 +262,9 @@ class pAdicLseries(SageObject):
         Returns `\int_{a+pZ_p} (z-{a})^j d\Phi(0-infty)`
         -- see formula [Pollack-Stevens, sec 9.2]
 
+
+
+        EXAMPLES
         """
         symb = self.symb()
         M = symb.precision_absolute()
