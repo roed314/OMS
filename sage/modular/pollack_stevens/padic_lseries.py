@@ -50,7 +50,7 @@ class pAdicLseries(SageObject):
         
         if symb.parent().prime() == None:
             raise ValueError ("Not a p-adic overconvergent modular symbol.")
-
+        
         self._symb = symb
 
         if gamma == None:
@@ -85,7 +85,7 @@ class pAdicLseries(SageObject):
         else:
             p = self.prime()
             symb = self.symb()
-            ap = symb.ap(p)
+            ap = symb.Tq_eigenvalue(p)
             gamma = self._gamma
             precision = self._precision
             S = QQ[['z']]
