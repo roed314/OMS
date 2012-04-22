@@ -433,6 +433,18 @@ class PSModularSymbolSpace(Module):
         return PSModularSymbols(self.group(), coefficients=self.coefficient_module().lift(p, M, new_base_ring), sign=self.sign())
 
     def change_ring(self, new_base_ring):
+        """
+        Changes base ring of self to new_base_ring
+
+        EXAMPLES:
+
+        ::
+
+            sage: D = Distributions(4)
+            sage: M = PSModularSymbolSpace(Gamma(6), D)
+            sage: M.change_ring(Qp(5,8))
+            Modular Symbols space of dimension 11 for Gamma_0(67) of weight 2 with sign 0 over 5-adic Field with capped relative precision 8
+        """
         return PSModularSymbols(self.group(), coefficients=self.coefficient_module().change_ring(new_base_ring), sign=self.sign())
 
     def _an_element_(self):
