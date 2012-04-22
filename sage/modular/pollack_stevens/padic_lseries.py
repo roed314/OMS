@@ -268,13 +268,22 @@ class pAdicLseries(SageObject):
         `\chi` is a the quadratic character corresponding to self
 
         INPUT:
-            - ``a`` -- integer in [0..p-1]
+            - ``a`` -- integer in range(p)
 
         OUTPUT:
 
         The distribution `\Phi_{\chi}(\{a/p\}-\{\infty\})`.
 
         EXAMPLES:
+            sage: E = EllipticCurve('57a')
+            sage: p = 5
+            sage: prec = 4
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi_stabilized = phi.p_stabilize(p,M = prec+3)
+            sage: Phi = phi_stabilized.lift(p,prec,None,'stevens',True)
+            sage: L = pAdicLseries(Phi)
+            sage: L.eval_twisted_symbol_on_Da(1)
+            (2 + 2*5 + 2*5^2 + 2*5^3 + O(5^4), 2 + 3*5 + 2*5^2 + O(5^3), 4*5 + O(5^2), 3 + O(5))
 
         """
         symb = self.symb()
@@ -296,8 +305,25 @@ class pAdicLseries(SageObject):
         Returns `\int_{a+pZ_p} (z-{a})^j d\Phi(0-infty)`
         -- see formula [Pollack-Stevens, sec 9.2]
 
+        INPUT:
 
-        EXAMPLES:
+        - a -- integer in range(p)
+        - j -- integer in range(self.symb().precision_absolute())
+
+        EXAMPLES::
+
+            sage: E = EllipticCurve('57a')
+            sage: p = 5
+            sage: prec = 4
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi_stabilized = phi.p_stabilize(p,M = prec+3)
+            sage: Phi = phi_stabilized.lift(p,prec,None,'stevens',True)
+            sage: L = pAdicLseries(Phi)
+            sage: L.eval_twisted_symbol_on_Da(1)
+            (2 + 2*5 + 2*5^2 + 2*5^3 + O(5^4), 2 + 3*5 + 2*5^2 + O(5^3), 4*5 + O(5^2), 3 + O(5))
+            sage: L._basic_integral(1,2)
+            2*5^3 + O(5^4)
+        
         """
         symb = self.symb()
         M = symb.precision_absolute()
