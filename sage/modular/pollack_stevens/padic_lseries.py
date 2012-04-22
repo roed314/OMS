@@ -38,6 +38,13 @@ class pAdicLseries(SageObject):
         sage: L = pAdicLseries(Phi)
         sage: L[1]
         
+
+        Using the existing algorithm in Sage:
+        
+        sage: L = E.padic_lseries(5)
+        sage: L.series(4)[1]
+        1 + 4*5 + 2*5^2 + O(5^3)
+        
         """
         if symb.parent().prime() == None:
             raise ValueError ("Not a p-adic overconvergent modular symbol.")
@@ -55,6 +62,21 @@ class pAdicLseries(SageObject):
         """
         Returns the `n`-th coefficient of the `p`-adic `L`-series
 
+
+        (Something like this should work)
+        
+        EXAMPLES::
+
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: E = EllipticCurve('37a')
+            sage: p = 5
+            sage: prec = 10
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi_stabilized = phi.p_stabilize(p,prec)
+            sage: Phi = phi_stabilized.lift(p,prec,algorithm='stevens',eigensymbol=True)
+            sage: L = pAdicLseries(Phi)
+            sage: L[1]
+                                                
         """
         try:
             return self.series[n]
