@@ -36,11 +36,11 @@ class PSModularSymbolElement(ModuleElement):
 
         ::
 
-        sage: E = EllipticCurve('11a')
-        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-        sage: phi = ps_modsym_from_elliptic_curve(E)
-        sage: phi._repr_()
-        'Modular symbol with values in Sym^0 Q^2'
+            sage: E = EllipticCurve('11a')
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi._repr_()
+            'Modular symbol with values in Sym^0 Q^2'
         """
         return "Modular symbol with values in %s"%(self.parent().coefficient_module())
 
@@ -64,6 +64,25 @@ class PSModularSymbolElement(ModuleElement):
         return [self._map[g] for g in self.parent().source().gens()]
 
     def __cmp__(self, other):
+        """
+        Checks if self == other
+
+        EXAMPLES:
+
+        ::
+
+            sage: E = EllipticCurve('11a')
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi == phi
+            True
+            sage: phi == 2*phi
+            False
+            sage: psi = ps_modsym_from_elliptic_curve(EllipticCurve('37a'))
+            sage: psi == phi
+            False
+        
+        """
         gens = self.parent().source().gens()
         for g in gens:
             c = cmp(self._map[g], other._map[g])
@@ -78,14 +97,14 @@ class PSModularSymbolElement(ModuleElement):
 
         ::
 
-        sage: E = EllipticCurve('11a')
-        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
-        [-1/5, 3/2, -1/2]
-        sage: phi + phi
-        Modular symbol with values in Sym^0 Q^2
-        sage: (phi + phi).values()
-        [-2/5, 3, -1]
+            sage: E = EllipticCurve('11a')
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+            [-1/5, 3/2, -1/2]
+            sage: phi + phi
+            Modular symbol with values in Sym^0 Q^2
+            sage: (phi + phi).values()
+            [-2/5, 3, -1]
         """
         return self.__class__(self._map + right._map, self.parent(), construct=True)
 
@@ -97,14 +116,14 @@ class PSModularSymbolElement(ModuleElement):
 
         ::
 
-        sage: E = EllipticCurve('11a')
-        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
-        [-1/5, 3/2, -1/2]
-        sage: 2*phi
-        Modular symbol with values in Sym^0 Q^2
-        sage: (2*phi).values()
-        [-2/5, 3, -1]
+            sage: E = EllipticCurve('11a')
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+            [-1/5, 3/2, -1/2]
+            sage: 2*phi
+            Modular symbol with values in Sym^0 Q^2
+            sage: (2*phi).values()
+            [-2/5, 3, -1]
         """
         return self.__class__(self._map * right, self.parent(), construct=True)
 
@@ -116,14 +135,14 @@ class PSModularSymbolElement(ModuleElement):
 
         ::
 
-        sage: E = EllipticCurve('11a')
-        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
-        [-1/5, 3/2, -1/2]
-        sage: phi*2
-        Modular symbol with values in Sym^0 Q^2
-        sage: (phi*2).values()
-        [-2/5, 3, -1]
+            sage: E = EllipticCurve('11a')
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+            [-1/5, 3/2, -1/2]
+            sage: phi*2
+            Modular symbol with values in Sym^0 Q^2
+            sage: (phi*2).values()
+            [-2/5, 3, -1]
         """
         return self.__class__(self._map * right, self.parent(), construct=True)
 
@@ -135,14 +154,14 @@ class PSModularSymbolElement(ModuleElement):
 
         ::
 
-        sage: E = EllipticCurve('11a')
-        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
-        [-1/5, 3/2, -1/2]
-        sage: phi - phi
-        Modular symbol with values in Sym^0 Q^2
-        sage: (phi - phi).values()
-        [0, 0, 0]
+            sage: E = EllipticCurve('11a')
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+            [-1/5, 3/2, -1/2]
+            sage: phi - phi
+            Modular symbol with values in Sym^0 Q^2
+            sage: (phi - phi).values()
+            [0, 0, 0]
         """
         return self.__class__(self._map - right._map, self.parent(), construct=True)
 
@@ -183,12 +202,12 @@ class PSModularSymbolElement(ModuleElement):
 
         ::
 
-        sage: E = EllipticCurve('11a')
-        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-        sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
-        [-1/5, 3/2, -1/2]
-        sage: (phi.plus_part()+phi.minus_part()) == phi * 2
-        True
+            sage: E = EllipticCurve('11a')  
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
+            [-1/5, 3/2, -1/2]
+            sage: (phi.plus_part()+phi.minus_part()) == phi * 2
+            True
         """
         return self - self * minusproj
 
