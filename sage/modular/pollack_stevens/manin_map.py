@@ -197,6 +197,23 @@ class ManinMap(object):
             self._dict = defining_data
             
     def _compute_image_from_gens(self, B):
+        """
+        Compute the image of self evaluated at B by using generators
+
+        INPUT:
+            - B -- coset representative of Manin relations
+        
+        EXAMPLES::
+
+            sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
+            sage: D = Distributions(0, 5, 10)
+            sage: MR = ManinRelations(11)
+            sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
+            sage: f = ManinMap(D, MR, data)
+            sage: f._compute_image_from_gens(MR.reps()[1])
+            (24, 0)
+        
+        """
         L = self._manin.relations(B)
         # could raise KeyError if B is not a coset rep
         if len(L) == 0:
@@ -218,6 +235,7 @@ class ManinMap(object):
     def compute_full_data(self):
         r"""
         Computes the values of self on all coset reps from its values on our generating set.
+
         """
         for B in self._manin.reps():
             if not self._dict.has_key(B):
