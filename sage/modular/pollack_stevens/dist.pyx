@@ -684,21 +684,18 @@ cdef class Dist_vector(Dist):
 
     def solve_diff_eqn(self):
         r"""
-        
+        Solves the difference equation.
 
-        See Lemma 4.4 of [PS].
+        See Theorem 4.5 and Lemma 4.4 of [PS].
 
         OUTPUT:
 
-        - 
+        - a distribution v so that self = v | Delta, where Delta = [1, 1; 0, 1] - 1.
 
         EXAMPLES::
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
             sage: 
-        """
-        r"""
-        Solves the difference equation.
         """
         # assert self.moments[0][0]==0, "not total measure zero"
         # print "result accurate modulo p^",self.moment(0).valuation(self.p)
@@ -728,17 +725,17 @@ cdef class Dist_vector(Dist):
 
 cdef class Dist_long(Dist):
     r"""
-    
+    A class for distributions implemented using a C array of longs.
 
     INPUT:
 
-    - 
+    - ``moments`` -- the list of moments.  If ``check == False`` it
+      must be a vector in the appropriate approximation module.
+
+    - ``parent`` -- a :class:`distributions.Distributions_class` or
+      :class:`distributions.Symk_class` instance
 
     - ``check`` -- (default: True) boolean, whether to validate input
-
-    OUTPUT:
-
-    - 
 
     EXAMPLES::
 

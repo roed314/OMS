@@ -483,15 +483,11 @@ class PSModularSymbolElement(ModuleElement):
             sage: phi.values()
             [-1/5, 3/2, -1/2]
             sage: phi_ord = phi.p_stabilize(p = 3, ap = E.ap(3), M = 10, ordinary = True)
-            sage: phi_ord.Tq_eigenvalue(2,3,10)
-            -2
-            sage: phi_ord.Tq_eigenvalue(2,3,100)
-            -2
-            sage: phi_ord.Tq_eigenvalue(2,3,1000)
-            -2
-
+            sage: phi_ord.Tq_eigenvalue(2,3,10) + 2
+            O(3^10)
 
             sage: phi_ord.Tq_eigenvalue(3,3,10)
+            2 + 3^2 + 2*3^3 + 2*3^4 + 2*3^6 + 3^8 + 2*3^9 + O(3^10)
             -95227/47611
             sage: phi_ord.Tq_eigenvalue(3,3,100)
             Traceback (most recent call last):
@@ -526,6 +522,23 @@ class PSModularSymbolElement(ModuleElement):
 
 class PSModularSymbolElement_symk(PSModularSymbolElement):
     def _find_M(self, M):
+        """
+        Determines M from user input.
+
+        INPUT:
+
+        - ``M`` -- an integer at least 2 or None.  If None, sets M to
+          be one more than the precision cap of the parent (the
+          minimum amount of lifting).
+
+        OUTPUT:
+
+        - An updated ``M``.
+
+        EXAMPLES::
+
+            sage: 
+        """
         if M is None:
             M = self.parent().precision_cap() + 1
         elif M <= 1:
@@ -541,32 +554,21 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             ap = self.Tq_eigenvalue(p, check=check)
         if check and ap.valuation(p) > 0:
             raise ValueError("p is not ordinary")
-        disc = ap**2 - 4*p**(k+1)
-        sdisc = None
-        set_padicbase = False
+        poly = PolynomialRing(ap.parent(), 'x')([p**(k+1), -ap, 1])
         if new_base_ring is None:
-            if M is None:
-                raise ValueError
-            #    Q = disc.parent().fraction_field() # usually QQ
-            #    if disc.is_square():
-            #        new_base_ring = Q
-            #        sdisc = disc.sqrt()
-            #    else:
-            #        poly = PolynomialRing(disc.parent(), 'x')([-disc, 0, 1])
-            #        new_base_ring = Q.extension(poly, 'a')
-            #        sdisc = new_base_ring.gen()
-            # These should be completions
+            # These should actually be completions of disc.parent()
+            if p == 2:
+                # is this the right precision adjustment for p=2?
+                new_base_ring = Qp(2, M+1)
             else:
-                if p == 2:
-                    # is this the right precision adjustment for p=2?
-                    new_base_ring = Qp(2, M+1)
-                else:
-                    new_base_ring = Qp(p, M)
-                set_padicbase = True
-        if sdisc is None:
-            sdisc = new_base_ring(disc).sqrt()
-        v0 = (new_base_ring(ap) + sdisc) / 2
-        v1 = (new_base_ring(ap) - sdisc) / 2
+                new_base_ring = Qp(p, M)
+            set_padicbase = True
+        else:
+            set_padicbase = False
+        try:
+            (v0,e0),(v1,e1) = poly.roots(new_base_ring)
+        except TypeError, ValueError:
+            raise ValueError("new base ring must contain a root of x^2 - ap * x + p^(k+1)")
         if v0.valuation(p) > 0:
             v0, v1 = v1, v0
         if ordinary:
@@ -582,12 +584,12 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             # where newM is obtained from self._find_extraprec
             prec_cap = None
             if alpha.precision_relative() < newM:
-                prec_cap = newM + alpha.valuation() + (1 if p == 2 else 0)
+                prec_cap = newM + alpha.valuation(p) + (1 if p == 2 else 0)
             elif ap == 1 + p**(k+1) and ordinary:
                 # here alpha = 1, so we need to give up and use an aq.
                 pass
             elif (alpha - 1).precision_relative() < newM:
-                prec_cap = newM + (alpha - 1).valuation() + (1 if p == 2 else 0)
+                prec_cap = newM + (alpha - 1).valuation(p) + (1 if p == 2 else 0)
             if prec_cap is not None:
                 new_base_ring = Qp(p, prec_cap)
                 return self._find_alpha(p=p, k=k, M=M, ap=ap, new_base_ring=new_base_ring, ordinary=ordinary, check=False, find_extraprec=find_extraprec)
