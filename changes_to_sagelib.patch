@@ -2,7 +2,7 @@
 # User David Roe <roed.math@gmail.com>
 # Date 1334787052 25200
 # Node ID ef7f54a3c0a458827701f765cb52b186629eed1f
-# Parent  7d8ac0ee679de0e5eeba4966fe280f5f65295472
+# Parent 79ac47ef6a96f22f071bf07b4d3887248794f3d5
 [mq]: modlist.tmp
 
 diff --git a/module_list.py b/module_list.py
@@ -25,7 +25,15 @@ diff --git a/module_list.py b/module_list.py
 diff --git a/sage/matrix/matrix_integer_2x2.pyx b/sage/matrix/matrix_integer_2x2.pyx
 --- a/sage/matrix/matrix_integer_2x2.pyx
 +++ b/sage/matrix/matrix_integer_2x2.pyx
-@@ -382,11 +382,14 @@
+@@ -156,6 +156,7 @@
+             TypeError: entries has the wrong length
+         """
+         matrix.Matrix.__init__(self, parent)
++        self._mutability = Mutability(True)
+ 
+         cdef Py_ssize_t i, n
+         
+@@ -382,11 +383,14 @@
              sage: m == n
              False
          """
@@ -66,6 +74,49 @@ diff --git a/sage/modular/overconvergent/all.py b/sage/modular/overconvergent/al
  from genus0 import OverconvergentModularForms
 +
 +from pollack.all import *
+diff --git a/sage/rings/padics/padic_ZZ_pX_CR_element.pyx b/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
+--- a/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
++++ b/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
+@@ -2239,6 +2239,39 @@
+         # for now, a simple implementation
+         return self * (~right)
+ 
++    def add_bigoh(self, _n):
++        if _n is infinity:
++            return self
++        _n = Integer(_n)
++        cdef long n, aprec
++        if mpz_fits_slong_p((<Integer>_n).value):
++            n = mpz_get_si((<Integer>_n).value)
++        elif mpz_sgn((<Integer>_n).value) > 0:
++            return self
++        else:
++            raise ValueError("negative valuation too large")
++        if self.relprec < 0:
++            aprec = self.ordp - self.relprec
++        else:
++            aprec = self.ordp + self.relprec
++        if n >= aprec:
++            return self
++        if n <= self.ordp:
++            ans = self._new_c(0)
++            ans.ordp = n
++        else:
++            ans = self._new_c(n - self.ordp)
++            ans.ordp = self.ordp
++        if n < 0 and not ans.prime_pow.in_field:
++            ans._parent = self._parent.fraction_field()
++            ans.prime_pow = ans._parent.prime_pow
++        if ans.relprec == 0:
++            return ans
++        ZZ_pX_conv_modulus(ans.unit, self.unit, self.prime_pow.get_context_capdiv(ans.relprec).x)
++        if self.relprec < 0:
++            ans.relprec = -ans.relprec
++        return ans
++
+     def __copy__(self):
+         """
+         Returns a copy of ``self``.
 diff --git a/sage/rings/padics/padic_capped_absolute_element.pyx b/sage/rings/padics/padic_capped_absolute_element.pyx
 --- a/sage/rings/padics/padic_capped_absolute_element.pyx
 +++ b/sage/rings/padics/padic_capped_absolute_element.pyx
@@ -88,6 +139,22 @@ diff --git a/sage/rings/padics/padic_capped_absolute_element.pyx b/sage/rings/pa
          cdef Integer ans
          ans = PY_NEW(Integer)
          mpz_set_ui(ans.value, self.valuation_c())
+diff --git a/sage/rings/padics/padic_capped_relative_element.pyx b/sage/rings/padics/padic_capped_relative_element.pyx
+--- a/sage/rings/padics/padic_capped_relative_element.pyx
++++ b/sage/rings/padics/padic_capped_relative_element.pyx
+@@ -1574,11 +1574,11 @@
+             ...
+             PrecisionError: Not enough precision to determine if element is zero
+         """
++        self._normalize()
+         if absprec is None:
+             return mpz_sgn(self.unit) <= 0
+         if mpz_sgn(self.unit) == -1:
+             return True
+-        self._normalize()
+         if not PY_TYPE_CHECK(absprec, Integer):
+             absprec = Integer(absprec)
+         elif mpz_sgn(self.unit) == 0:
 diff --git a/sage/rings/padics/pow_computer.pxd b/sage/rings/padics/pow_computer.pxd
 --- a/sage/rings/padics/pow_computer.pxd
 +++ b/sage/rings/padics/pow_computer.pxd
