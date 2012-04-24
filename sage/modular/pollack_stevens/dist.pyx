@@ -398,6 +398,13 @@ cdef class Dist(ModuleElement):
         #    mu *= p**(-val)
         return mu
 
+    def _is_malformed(self):
+        n = self.precision_absolute()
+        for i in range(n):
+            if self.moment(i).precision_absolute() < n - i:
+                return True
+        return False
+
     def act_right(self,gamma):
         r"""
         The image of this element under the right action by a
