@@ -139,22 +139,6 @@ diff --git a/sage/rings/padics/padic_capped_absolute_element.pyx b/sage/rings/pa
          cdef Integer ans
          ans = PY_NEW(Integer)
          mpz_set_ui(ans.value, self.valuation_c())
-diff --git a/sage/rings/padics/padic_capped_relative_element.pyx b/sage/rings/padics/padic_capped_relative_element.pyx
---- a/sage/rings/padics/padic_capped_relative_element.pyx
-+++ b/sage/rings/padics/padic_capped_relative_element.pyx
-@@ -1574,11 +1574,11 @@
-             ...
-             PrecisionError: Not enough precision to determine if element is zero
-         """
-+        self._normalize()
-         if absprec is None:
-             return mpz_sgn(self.unit) <= 0
-         if mpz_sgn(self.unit) == -1:
-             return True
--        self._normalize()
-         if not PY_TYPE_CHECK(absprec, Integer):
-             absprec = Integer(absprec)
-         elif mpz_sgn(self.unit) == 0:
 diff --git a/sage/rings/padics/pow_computer.pxd b/sage/rings/padics/pow_computer.pxd
 --- a/sage/rings/padics/pow_computer.pxd
 +++ b/sage/rings/padics/pow_computer.pxd
@@ -223,7 +207,7 @@ diff --git a/setup.py b/setup.py
              cplus = ''
  
          # call cython, abort if it failed
--        cmd = "python `which cython` %s --old-style-globals --disable-function-redefinition --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I%s -o %s %s"%(cplus, os.getcwd(), outfile, f)
+-        cmd = "python `which cython` %s --old-style-globals --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I%s -o %s %s"%(cplus, os.getcwd(), outfile, f)
 +        cmd = "python `which cython` %s --old-style-globals --disable-function-redefinition --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I'%s/sage/sage/ext/' -I%s -o %s %s"%(cplus, SAGE_DEVEL, os.getcwd(), outfile, f)
          r = run_command(cmd)
          if r:
