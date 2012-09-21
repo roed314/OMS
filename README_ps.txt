@@ -68,3 +68,4 @@ If changes_to_sagelib.patch changes, do this:
 # test you must pass --force_lib.
      
      sage -t --force_lib 
+ 
