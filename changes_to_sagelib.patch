@@ -2,13 +2,13 @@
 # User David Roe <roed.math@gmail.com>
 # Date 1334787052 25200
 # Node ID ef7f54a3c0a458827701f765cb52b186629eed1f
-# Parent 79ac47ef6a96f22f071bf07b4d3887248794f3d5
+# Parent c52914cde06c575b48ab8661524ccd2ab9e70e71
 [mq]: modlist.tmp
 
 diff --git a/module_list.py b/module_list.py
 --- a/module_list.py
 +++ b/module_list.py
-@@ -1148,6 +1148,13 @@
+@@ -1207,6 +1207,13 @@
                sources = ['sage/modular/modsym/p1list.pyx'],
                libraries = ['gmp']),
  
@@ -25,15 +25,15 @@ diff --git a/module_list.py b/module_list.py
 diff --git a/sage/matrix/matrix_integer_2x2.pyx b/sage/matrix/matrix_integer_2x2.pyx
 --- a/sage/matrix/matrix_integer_2x2.pyx
 +++ b/sage/matrix/matrix_integer_2x2.pyx
-@@ -156,6 +156,7 @@
-             TypeError: entries has the wrong length
+@@ -157,6 +157,7 @@
+             Space of 2x2 integer matrices from [11, 3]!
          """
          matrix.Matrix.__init__(self, parent)
 +        self._mutability = Mutability(True)
  
          cdef Py_ssize_t i, n
          
-@@ -382,11 +383,14 @@
+@@ -383,11 +384,14 @@
              sage: m == n
              False
          """
@@ -68,12 +68,13 @@ diff --git a/sage/modular/all.py b/sage/modular/all.py
 diff --git a/sage/modular/overconvergent/all.py b/sage/modular/overconvergent/all.py
 --- a/sage/modular/overconvergent/all.py
 +++ b/sage/modular/overconvergent/all.py
-@@ -1,3 +1,5 @@
- from weightspace import  WeightSpace_constructor as pAdicWeightSpace
+@@ -2,4 +2,6 @@
  
  from genus0 import OverconvergentModularForms
-+
+ 
 +from pollack.all import *
++
+ from hecke_series import hecke_series
 diff --git a/sage/rings/padics/padic_ZZ_pX_CR_element.pyx b/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
 --- a/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
 +++ b/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
@@ -203,16 +204,16 @@ diff --git a/sage/rings/padics/pow_computer.pyx b/sage/rings/padics/pow_computer
 diff --git a/setup.py b/setup.py
 --- a/setup.py
 +++ b/setup.py
-@@ -740,7 +740,7 @@
-             cplus = ''
+@@ -744,7 +744,7 @@
+             debug = '--gdb'
  
          # call cython, abort if it failed
--        cmd = "python `which cython` %s --old-style-globals --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I%s -o %s %s"%(cplus, os.getcwd(), outfile, f)
-+        cmd = "python `which cython` %s --old-style-globals --disable-function-redefinition --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I'%s/sage/sage/ext/' -I%s -o %s %s"%(cplus, SAGE_DEVEL, os.getcwd(), outfile, f)
+-        cmd = "cython %s %s --old-style-globals --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I%s -o %s %s"%(debug, cplus, os.getcwd(), outfile, f)
++        cmd = "cython %s %s --old-style-globals --disable-function-redefinition --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I'%s' -I%s -o %s %s"%(debug, cplus, os.path.join(SAGE_DEVEL,'sage','sage','ext'), os.getcwd(), outfile, f)
          r = run_command(cmd)
          if r:
              return r
-@@ -954,7 +954,10 @@
+@@ -962,7 +962,10 @@
                       'sage.modular.modsym',
                       'sage.modular.quatalg',
                       'sage.modular.ssmod',
