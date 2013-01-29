@@ -1,5 +1,11 @@
-# 1. Make a clone of the git repository anywhere you want: 
-     git clone  git@github.com:haikona/OMS.git
+# 1. Make a clone of the git repository anywhere you want:
+
+     cd /path/to/desired/location
+     git clone git@github.com:haikona/OMS.git
+
+# If this fails you can instead try
+
+     git clone https://github.com/haikona/OMS.git
 
 # 2. Apply a patch to the Sage library:
      sage -sh
@@ -7,19 +13,9 @@
      hg qimport /path/to/changes_to_sagelib.patch
      hg qpush
 
-# 3. Edit $SAGE_ROOT/local/include/zn_poly/zn_poly.h
-     sage -sh
-     cd $SAGE_ROOT/local/include/zn_poly
-     emacs zn_poly.h
+TWO possible step 3's:
 
-     DELETE line 72:  typedef unsigned long ulong
-     ADD three lines: #ifndef ulong
-                      #define ulong unsigned long
-		      #endif
-
-TWO possible step 4's:
-
-# 4. Make symlinks:
+# 3. Make symlinks:
      sage -sh
      cd $SAGE_ROOT/devel/sage-main/sage/modular/
      ln -s /path/to/OMS/sage/modular/btquotients .
@@ -28,7 +24,7 @@ TWO possible step 4's:
      ln -s /path/to/OMS/sage/modular/overconvergent/pollack .
 
 ## ALTERNATIVE: you can do the following and develop in place
-# 4'. Copy files from your clone
+# 3'. Copy files from your clone
 
 #     The following should work fine (notice the trailing slash after OMS):
       sage -sh
@@ -46,8 +42,8 @@ TWO possible step 4's:
       cd overconvergent/
       cp -r /path/to/OMS/sage/modular/overconvergent/pollack pollack
 
-## You should run git commands in /path/to/OMS if you went with option 4, or $SAGE_ROOT/devel/sage-main in option 4'.
-# 5. Synchronize
+## You should run git commands in /path/to/OMS if you went with option 3, or $SAGE_ROOT/devel/sage-main in option 4'.
+# 4. Synchronize
 
      git pull
      git push
@@ -62,10 +58,10 @@ If changes_to_sagelib.patch changes, do this:
      hg qpush
      sage -br
 
-# 6. Testing.
+# 5. Testing.
 
 # In some versions of sage if you use the symlink approach, when you
 # test you must pass --force_lib.
-     
-     sage -t --force_lib 
- 
+
+     sage -t --force_lib
+
