@@ -7,4 +7,4 @@
 !/sage/modular/pollack_stevens/*
 !/sage/modular/btquotients/*
 !/sage/modular/overconvergent/pollack/*
-
+!/sage/modular/overconvergent/families/*
