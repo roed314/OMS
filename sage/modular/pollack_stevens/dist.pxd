@@ -37,6 +37,7 @@ cdef class WeightKAction(Action):
     cdef public _Np
     cdef public _actmat
     cdef public _maxprecs
+    cdef public _symk
 
     cpdef _check_mat(self, a, b, c, d)
     cpdef acting_matrix(self, g, M)
@@ -51,4 +52,7 @@ cdef class SimpleMat(SageObject):
     cdef bint _inited
 
 cdef class WeightKAction_long(WeightKAction):
+    pass
+
+cdef class iScale(Action):
     pass

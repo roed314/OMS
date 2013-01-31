@@ -149,7 +149,7 @@ def find_good_monomial(f):
 def find_relations(X,dmax,prec,generators,h=0):
     genus=len(X)
     p=X[0].parent()._X.prime()
-    K=Qq(p**2,prec,names='g')
+    K=Qq(p^2,prec = prec, names = 'g')
     g=K.gen()
     max_num_monomials=binomial(genus+dmax-1,dmax)
 
@@ -271,7 +271,7 @@ def find_divisor(F,x):
     gens=R.gens()
     y=gens[(gens.index(x)+1)%len(gens)]
     F1=[f.subs(dict([(x,0),(y,1)])) for f in F]
-    S=PolynomialRing(RationalField(),names='y')
+    S = PolynomialRing(RationalField(), 'y')
     y = S.gen()
     others=[]
     for f in F1:
