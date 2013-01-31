@@ -14,8 +14,6 @@ from sage.modules.module import Module
 from sage.rings.all import Integer
 from sage.structure.element import Element
 from sage.matrix.constructor import Matrix, zero_matrix
-from sage.matrix.matrix_space import MatrixSpace_generic
-from sage.matrix.matrix_space import MatrixSpace
 from sage.rings.all import Qp
 from sage.rings.all import RationalField
 from sage.rings.number_field.all import NumberField
@@ -65,7 +63,7 @@ class BTMap(object):
         else:
             val  =  -self._F[u.label-self._nE]
 
-        return (u.igamma(lambda g : self._source.embed_quaternion(g,exact = self.codomain.base_ring().is_exact(), prec = self._codomain.precision_cap()) * (p**(-u.power)))*val
+        return (u.igamma(lambda g : self._source.embed_quaternion(g,exact = self.codomain.base_ring().is_exact(), prec = self._codomain.precision_cap()) * (p**(-u.power)))*val)
 
     def __getitem__(self, B):
         try:

@@ -9,7 +9,6 @@
 from sage.structure.element import ModuleElement
 from sage.modules.module import Module
 from sage.matrix.constructor import Matrix
-from sage.matrix.matrix_space import MatrixSpace_generic
 from sage.matrix.matrix_space import MatrixSpace
 from copy import copy
 from sage.rings.finite_rings.integer_mod_ring import Zmod
