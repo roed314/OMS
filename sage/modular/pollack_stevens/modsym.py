@@ -261,7 +261,7 @@ class PSModularSymbolElement(ModuleElement):
             ValueError: you must specify a prime
         """
         pp = self.parent().prime()
-        ppp = (alpha is not None) and hasattr(alpha.parent(),'prime') and alpha.parent().prime()
+        ppp = ((alpha is not None) and hasattr(alpha.parent(),'prime') and alpha.parent().prime()) or None
         p = ZZ(p) or pp or ppp
         if not p:
             if not allow_none:
@@ -444,9 +444,9 @@ class PSModularSymbolElement(ModuleElement):
             sage: phi_ord.is_Tq_eigensymbol(2,3,10)
             True
             sage: phi_ord.is_Tq_eigensymbol(2,3,100)
-            True
+            False
             sage: phi_ord.is_Tq_eigensymbol(2,3,1000)
-            True
+            False
             sage: phi_ord.is_Tq_eigensymbol(3,3,10)
             True
             sage: phi_ord.is_Tq_eigensymbol(3,3,100)
@@ -488,7 +488,6 @@ class PSModularSymbolElement(ModuleElement):
 
             sage: phi_ord.Tq_eigenvalue(3,3,10)
             2 + 3^2 + 2*3^3 + 2*3^4 + 2*3^6 + 3^8 + 2*3^9 + O(3^10)
-            -95227/47611
             sage: phi_ord.Tq_eigenvalue(3,3,100)
             Traceback (most recent call last):
             ...
@@ -537,7 +536,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         EXAMPLES::
 
-            sage: 
+            sage: pass
         """
         if M is None:
             M = self.parent().precision_cap() + 1
@@ -694,10 +693,10 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: D = ModularSymbols(67,2,1).cuspidal_submodule().new_subspace().decomposition()[1]
             sage: f = ps_modsym_from_simple_modsym_space(D)
             sage: f.completions(41,10)
-            [(Modular symbol with values in Space of 41-adic distributions with k=0 action and precision cap 1, Ring morphism:
+            [(Modular symbol with values in Sym^0 Q_41^2, Ring morphism:
               From: Number Field in alpha with defining polynomial x^2 + 3*x + 1
               To:   41-adic Field with capped relative precision 10
-              Defn: alpha |--> 5 + 22*41 + 19*41^2 + 10*41^3 + 28*41^4 + 22*41^5 + 9*41^6 + 25*41^7 + 40*41^8 + 8*41^9 + O(41^10)), (Modular symbol with values in Space of 41-adic distributions with k=0 action and precision cap 1, Ring morphism:
+              Defn: alpha |--> 5 + 22*41 + 19*41^2 + 10*41^3 + 28*41^4 + 22*41^5 + 9*41^6 + 25*41^7 + 40*41^8 + 8*41^9 + O(41^10)), (Modular symbol with values in Sym^0 Q_41^2, Ring morphism:
               From: Number Field in alpha with defining polynomial x^2 + 3*x + 1
               To:   41-adic Field with capped relative precision 10
               Defn: alpha |--> 33 + 18*41 + 21*41^2 + 30*41^3 + 12*41^4 + 18*41^5 + 31*41^6 + 15*41^7 + 32*41^9 + O(41^10))]
@@ -791,8 +790,10 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 return self._lift_to_OMS_eigen(p, M, new_base_ring, alpha, newM, eisenloss, q, aq, check)
             else:
                 return self._lift_to_OMS(p, M, new_base_ring, check)
-        else:
+        elif algorithm == 'greenberg':
             return self._lift_greenberg(p, M, new_base_ring, check)
+        else:
+            raise ValueError("algorithm %s not recognized" % algorithm)
         
     def _lift_to_OMS(self, p, M, new_base_ring, check):
         """
@@ -1023,15 +1024,15 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
             Space of overconvergent modular symbols for Congruence Subgroup Gamma0(2) with sign 0 and values in Space of 5-adic distributions with k=0 action and precision cap 10
             sage: f = M(1)
             sage: f.specialize()
-            Modular symbol with values in Space of 5-adic distributions with k=0 action and precision cap 1
+            Modular symbol with values in Sym^0 Z_5^2
             sage: f.specialize().values()
-            [1 + O(5^10), 1 + O(5^10)]
+            [1, 1]
             sage: f.values()
             [1, 1]
             sage: f.specialize().parent()
-            Space of overconvergent modular symbols for Congruence Subgroup Gamma0(2) with sign 0 and values in Space of 5-adic distributions with k=0 action and precision cap 1
+            Space of modular symbols for Congruence Subgroup Gamma0(2) with sign 0 and values in Sym^0 Z_5^2
             sage: f.specialize().parent().coefficient_module()
-            Space of 5-adic distributions with k=0 action and precision cap 1
+            Sym^0 Z_5^2
             sage: f.specialize().parent().coefficient_module().is_symk()
             True
 
@@ -1054,4 +1055,3 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         rels = self.parent()._grab_relations()
         # TODO: no clue how to do this until this object fully works again...
         raise NotImplementedError
-
