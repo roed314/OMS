@@ -25,14 +25,6 @@ diff --git a/module_list.py b/module_list.py
 diff --git a/sage/matrix/matrix_integer_2x2.pyx b/sage/matrix/matrix_integer_2x2.pyx
 --- a/sage/matrix/matrix_integer_2x2.pyx
 +++ b/sage/matrix/matrix_integer_2x2.pyx
-@@ -157,6 +157,7 @@
-             Space of 2x2 integer matrices from [11, 3]!
-         """
-         matrix.Matrix.__init__(self, parent)
-+        self._mutability = Mutability(True)
- 
-         cdef Py_ssize_t i, n
-         
 @@ -383,11 +384,14 @@
              sage: m == n
              False
