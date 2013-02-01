@@ -43,7 +43,7 @@ from sage.rings.arith import convergents,xgcd,gcd
 M2ZSpace = MatrixSpace_ZZ_2x2()
 def M2Z(x):
     """
-    Creates an immutable 2x2 integer matrix
+    Creates an immutable 2x2 integer matrix.
 
     INPUT:
 
@@ -72,98 +72,128 @@ t01 = (0,1)
 t11 = (1,1)
 
 class PSModularSymbolsDomain(SageObject):
+    r"""
+    The domain of a modular symbol.
+
+    INPUT:
+
+        - ``N`` -- a positive integer, the level of the congruence subgroup
+          `\Gamma_0(N)`
+
+        - ``reps`` -- a list of 2x2 matrices, the coset representatives of
+          `PSL_2(\ZZ)`
+
+        - ``indices`` -- a list of integers; indices of elements in ``reps``
+          which are generators
+
+        - ``rels`` -- a list of list of triples ``(d, A, i)``, one for each
+          coset representative of ``reps`` which describes how to express the
+          elements of ``reps`` in terms of generators specified by ``indices``.
+          See :meth:`relations` for a detailed explanations of these triples.
+
+        - ``equiv_ind`` -- a dictionary which maps normalized coordinates on
+          `P^1(\ZZ/N\ZZ)` to an integer such that a matrix whose bottom row is
+          equivalent to `[a:b]` in `P^1(\ZZ/N\ZZ)` is in the coset of
+          ``reps[equiv_ind[(a,b)]]``
+
+    EXAMPLES::
+
+        sage: from sage.modular.pollack_stevens.fund_domain import PSModularSymbolsDomain, M2Z
+        sage: PSModularSymbolsDomain(2 , [M2Z([1,0,0,1]), M2Z([1,1,-1,0]), M2Z([0,-1,1,1])], [0,2], [[(1, M2Z([1,0,0,1]), 0)], [(-1,M2Z([-1,-1,0,-1]),0)], [(1, M2Z([1,0,0,1]), 2)]], {(0,1): 0, (1,0): 1, (1,1): 2})
+        Modular symbol domain of level 2
+
+    TESTS:
+
+    The level ``N`` must be an integer::
+
+        sage: PSModularSymbolsDomain(1/2, None, None, None, None)
+        Traceback (most recent call last):
+        ...
+        TypeError: no conversion of this rational to integer
+        sage: PSModularSymbolsDomain(Gamma0(11), None, None, None, None)
+        Traceback (most recent call last):
+        ...
+        TypeError: unable to coerce <class 'sage.modular.arithgroup.congroup_gamma0.Gamma0_class_with_category'> to an integer
+
+    """
     def __init__(self, N, reps, indices, rels, equiv_ind):
-        """
+        r"""
         INPUT:
 
-        - `N` -- positive integer
-        - ``reps`` -- TODO
-        - ``indices`` -- TODO
-        - ``rels`` -- TODO
-        - ``equiv_ind`` -- TODO
+            See :class:`PSModularSymbolsDomain`.
 
         EXAMPLES::
 
-        TODO: some good examples
-
-        The level N must be an integer::
-
             sage: from sage.modular.pollack_stevens.fund_domain import PSModularSymbolsDomain
-            sage: PSModularSymbolsDomain(1/2, None, None, None, None)
-            Traceback (most recent call last):
-            ...
-            TypeError: no conversion of this rational to integer
-            sage: PSModularSymbolsDomain(Gamma0(11), None, None, None, None)
-            Traceback (most recent call last):
-            ...
-            TypeError: unable to coerce <class 'sage.modular.arithgroup.congroup_gamma0.Gamma0_class_with_category'> to an integer
-        """
-        ## Store the level
-        self._N = ZZ(N)
+            sage: isinstance(ManinRelations(11), PSModularSymbolsDomain) # indirect doctest
+            True
 
-        ## Coset representatives of Gamma_0(N) coming from the geometric
-        ## fundamental domain algorithm
+        """
+        self._N = ZZ(N)
         self._reps = reps
 
-        ## This is a list of indices of the (geometric) coset representatives
-        ## whose values (on the associated degree zero divisors) determine the
-        ## modular symbol.
         self._indices = sorted(indices)
-
         self._gens = [reps[i] for i in self._indices]
         self._ngens = len(indices)
 
+        if len(rels) != len(reps):
+            raise ValueError("length of reps and length of rels must be equal")
         self._rels = rels
         self._rel_dict = {}
         for j, L in enumerate(rels):
             self._rel_dict[reps[j]] = [(d, A, reps[i]) for (d, A, i) in L]
-        ## A list of lists of triples (d, A, i), one for each coset
-        ## representative of Gamma_0(N) (ordered to correspond to the
-        ## representatives of self.reps) expressing the value of a
-        ## modular symbol on the associated unimodular path as a sum of terms
-        ##    d * (value on the i-th coset rep) | A
-        ## where the index i must appear in self.gens_index, and the slash gives the
-        ##  matrix action.
 
         self._equiv_ind = equiv_ind
         self._equiv_rep = {}
         for ky in equiv_ind:
             self._equiv_rep[ky] = reps[equiv_ind[ky]]
 
-    def __len__(self):
+    def _repr_(self):
+        r"""
+        A string representation of this domain.
+
+        EXAMPLES::
+
+            sage: from sage.modular.pollack_stevens.fund_domain import PSModularSymbolsDomain, M2Z
+            sage: PSModularSymbolsDomain(2 , [M2Z([1,0,0,1]), M2Z([1,1,-1,0]), M2Z([0,-1,1,1])], [0,2], [[(1, M2Z([1,0,0,1]), 0)], [(-1,M2Z([-1,-1,0,-1]),0)], [(1, M2Z([1,0,0,1]), 2)]], {(0,1): 0, (1,0): 1, (1,1): 2})._repr_()
+            'Modular symbol domain of level 2'
+
         """
+        return "Modular symbol domain of level %s"%self._N
+
+    def __len__(self):
+        r"""
         Returns the number of coset representatives.
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(11)
             sage: len(A)
             12
+
         """
         return len(self._reps)
 
     def __getitem__(self, i):
-        """
-        Returns the `i`-th coset rep.
+        r"""
+        Returns the ``i``-th coset representative.
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(11)
             sage: A[4]
             [-1 -2]
             [ 2  3]
+
         """
         return self._reps[i]
 
     def __iter__(self):
-        """
+        r"""
         Returns an iterator over all coset representatives.
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(11)
             sage: for rep in A:
             ...       if rep[1,0] == 1:
@@ -174,28 +204,29 @@ class PSModularSymbolsDomain(SageObject):
             [ 1  2]
             [ 0 -1]
             [ 1  1]
+
         """
         return iter(self._reps)
 
     def gens(self):
-        """
+        r"""
         Returns the list of coset representatives chosen as generators.
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(11)
             sage: A.gens()
             [
             [1 0]  [ 0 -1]  [-1 -1]
             [0 1], [ 1  3], [ 3  2]
             ]
+
         """
         return self._gens
 
     def gen(self, n=0):
-        """
-        Returns the `n`-th generator.
+        r"""
+        Returns the ``n``-th generator.
 
         INPUT:
 
@@ -203,29 +234,29 @@ class PSModularSymbolsDomain(SageObject):
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(137)
             sage: A.gen(17)
             [-4 -1]
             [ 9  2]
+
         """
         return self._gens[n]
 
     def ngens(self):
-        """
+        r"""
         Returns the number of generators.
 
         OUTPUT:
 
-        - the number of coset representatives from which a modular
-          symbol's value on any coset can be derived.
+        The number of coset representatives from which a modular symbol's value
+        on any coset can be derived.
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(1137)
             sage: A.ngens()
             255
+
         """
         return len(self._gens)
 
@@ -235,24 +266,24 @@ class PSModularSymbolsDomain(SageObject):
 
         OUTPUT:
 
-        - The integer `N` of the group `\Gamma_0(N)` for which the
-          Manin Relations are being computed.
+        The integer `N` of the group `\Gamma_0(N)` for which the Manin
+        Relations are being computed.
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(11)
             sage: A.level()
             11
+
         """
         return self._N
 
     def indices(self, n=None):
         r"""
-        Returns the indices of coset reps which were chosen as our
-        generators.
+        Returns the ``n``-th index of the coset representatives which were
+        chosen as our generators.
 
-        In particular, the divisors associated to these coset reps
+        In particular, the divisors associated to these coset representatives
         generate all divisors over `\ZZ[\Gamma_0(N)]`, and thus a modular
         symbol is uniquely determined by its values on these divisors.
 
@@ -262,23 +293,26 @@ class PSModularSymbolsDomain(SageObject):
 
         OUTPUT:
 
-        - The list of indices in self.reps() of our generating
-          set.
+        The ``n``-th index of the generating set in ``self.reps()`` or all
+        indices if ``n`` is ``None``.
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(11)
             sage: A.indices()
             [0, 2, 3]
+
             sage: A.indices(2)
             3
+
             sage: A = ManinRelations(13)
             sage: A.indices()
             [0, 2, 3, 4, 5]
+
             sage: A = ManinRelations(101)
             sage: A.indices()
             [0, 2, 3, 4, 5, 6, 8, 9, 11, 13, 14, 16, 17, 19, 20, 23, 24, 26, 28]
+
         """
         if n is None:
             return self._indices
@@ -287,8 +321,8 @@ class PSModularSymbolsDomain(SageObject):
 
     def reps(self, n=None):
         r"""
-        Returns the n-th coset rep associated with our fundamental
-        domain or all coset reps if n is not specified.
+        Returns the ``n``-th coset representative associated with our
+        fundamental domain.
 
         INPUT:
 
@@ -296,12 +330,11 @@ class PSModularSymbolsDomain(SageObject):
 
         OUTPUT:
 
-        - If n is given then the n-th coset representative is returned
-          and otherwise all coset reps are returned.
+        The ``n``-th coset representative or all coset representatives if ``n``
+        is ``None``.
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(11)
             sage: A.reps(0)
             [1 0]
@@ -320,6 +353,7 @@ class PSModularSymbolsDomain(SageObject):
             [ 0 -1]  [ 1  0]  [-1 -1]  [ 1 -1]
             [ 1  1], [-1  1], [ 2  1], [-1  2]
             ]
+
         """
         if n is None:
             return self._reps
@@ -378,7 +412,6 @@ class PSModularSymbolsDomain(SageObject):
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.fund_domain import ManinRelations
             sage: A = ManinRelations(11)
             sage: A.indices()
             [0, 2, 3]
