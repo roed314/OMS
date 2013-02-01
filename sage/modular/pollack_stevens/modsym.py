@@ -813,12 +813,9 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         - ``new_base_ring`` -- change of base ring
 
         - ``algorithm`` -- 'stevens' or 'greenberg'
-<<<<<<< HEAD
-        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol, !does not specify whether input is an eigensymbol or not!)
-=======
 
-        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol)
->>>>>>> 0705cff3aa980efe7519276b743a023d608880f0
+        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol, !does not specify whether input is an eigensymbol or not!)
+
 
         OUTPUT:
 
