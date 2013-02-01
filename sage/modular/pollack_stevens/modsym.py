@@ -817,12 +817,18 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         - ``algorithm`` -- 'stevens' or 'greenberg' (default 'stevens')
 
-        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol, !does not specify whether input is an eigensymbol or not!)
+        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol)
+
+        (Note: ``eigensymbol = True`` does *not* just indicate to the code that
+        self is an eigensymbol; it solves a wholly different problem, lifting
+        an eigensymbol to an eigensymbol.)
 
         OUTPUT:
 
         An overconvergent modular symbol whose specialization equals self, up
-        to some Eisenstein error if ``eigensymbol`` is False.
+        to some Eisenstein error if ``eigensymbol`` is False. If ``eigensymbol
+        = True`` then the output will be an overconvergent Hecke eigensymbol
+        (and it will lift the input exactly, the Eisenstein error disappears).
 
         EXAMPLES::
 
