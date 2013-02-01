@@ -1,7 +1,18 @@
 """
-Pollack-Stevens Modular Symbols Space
+Pollack-Stevens Modular Symbols Spaces
 
+This module contains a class for spaces of modular symbols that use Glenn
+Stevens' conventions.
 
+There are two main differences between the modular symbols in this directory
+and the ones in :mod:`sage.modular.modsym`:
+
+- There is a shift in the weight: weight `k=0` here corresponds to weight `k=2`
+  there.
+
+- There is a duality: these modular symbols are functions from
+  `Div^0(P^1(\QQ))` (cohomological objects), the others are formal linear
+  combinations of `Div^0(P^1(\QQ))` (homological objects).
 """
 
 from sage.modules.module import Module
@@ -19,22 +30,45 @@ from fund_domain import ManinRelations, M2ZSpace
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.infinity import infinity as oo
 
-class PSModularSymbols_constructor(UniqueFactory):
+class PSModularSymbols_factory(UniqueFactory):
+    r"""
+    Create a space of Pollack-Stevens modular symbols.
+
+    INPUT:
+
+    - ``group`` -- integer or congruence subgroup
+    - ``weight`` -- integer `\ge 2`, or None
+    - ``sign`` -- integer; -1, 0, 1
+    - ``base_ring`` -- ring or None
+    - `p` -- prime or None
+    - ``prec_cap`` -- positive integer or None
+    - ``coefficients`` -- the coefficient module (a special type of module,
+      typically distributions), or None.
+
+    If an explicit coefficient module is given, then the arguments ``weight``,
+    ``base_ring``, ``prec_cap`` and possibly also ``p`` are redundant and are
+    ignored. They are only relevant if ``coefficients`` is None, in which case
+    the coefficient module is inferred from the other data. 
+
+    EXAMPLES::
+
+        sage: PSModularSymbols(Gamma0(7), weight=2, prec_cap = None)
+        Space of modular symbols for Congruence Subgroup Gamma0(7) with sign 0 and values in Sym^0 Q^2
+
+    An example with an explict coefficient module::
+
+        sage: D = Distributions(3, 7, prec_cap=10)
+        sage: PSModularSymbols(Gamma0(7), coefficients=D)
+        Space of overconvergent modular symbols for Congruence Subgroup Gamma0(7) with sign 0 and values in Space of 7-adic distributions with k=3 action and precision cap 10 
+    """
     def create_key(self, group, weight=None, sign=0, base_ring=None, p=None, prec_cap=None, coefficients=None):
         """
-        INPUT:
-
-        - ``group`` -- integer or congruence subgroup
-        - ``weight`` -- nonnegative integer or None
-        - ``sign`` -- integer; -1, 0, 1
-        - ``base_ring`` -- ring or None
-        - `p` -- prime or None
-        - ``prec_cap`` -- positive integer or None
-        - ``coefficients`` -- the coefficient module (a special type of module, typically distributions)
+        Sanitize input.
         
         EXAMPLES::
         
-            sage: D = Distributions(3, 7, prec_cap=10); M = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
+            sage: D = Distributions(3, 7, prec_cap=10)
+            sage: M = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
         """
         if isinstance(group, (int, Integer)):
             group = Gamma0(group)
@@ -64,28 +98,15 @@ class PSModularSymbols_constructor(UniqueFactory):
         """
         return PSModularSymbolSpace(*key)
 
-PSModularSymbols = PSModularSymbols_constructor('PSModularSymbols')
+PSModularSymbols = PSModularSymbols_factory('PSModularSymbols')
 
 class PSModularSymbolSpace(Module):
     """
     A class for spaces of modular symbols that use Glenn Stevens'
-    conventions.
-
-    There are two main differences between the modular symbols in this
-    directory and the ones in sage.modular.modsym.
-
-    - There is a shift in the weight: weight `k=0` here corresponds to
-      weight `k=2` there.
-
-    - There is a duality: these modular symbols are functions from
-      `Div^0(P^1(\QQ))`, the others are formal linear combinations of
-      such elements.
-
-    INPUT:
-
-    - ``V`` -- the coefficient module, which should have a right action of `M_2(\ZZ)`
-    - ``domain`` -- a set or None, giving the domain
+    conventions. This class should not be instantiated directly by the user:
+    this is handled by the factory object ``PSModularSymbols``.
     """
+
     def __init__(self, group, coefficients, sign=0):
         """
         INPUT:
@@ -105,6 +126,7 @@ class PSModularSymbolSpace(Module):
             -1
             sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=1); M.sign()
             1        
+            sage: TestSuite(M).run()
         """
         Module.__init__(self, coefficients.base_ring())
         if sign not in [0,-1,1]:
@@ -470,10 +492,10 @@ class PSModularSymbolSpace(Module):
             sage: x = M.an_element(); x       # indirect doctest
             Modular symbol with values in Sym^4 Q^2
             sage: x.values()
-            [(2, 1), (2, 1), (2, 1)]
+            [(0, 1, 2, 3, 4), (0, 1, 2, 3, 4), (0, 1, 2, 3, 4)]
             sage: D = Symk(2, Qp(11)); M = PSModularSymbols(Gamma0(2), coefficients=D)
             sage: x = M.an_element(); x.values()
-            [(2 + O(11^20), 1 + O(11^20)), (2 + O(11^20), 1 + O(11^20))]
+            [(0, 1 + O(11^20), 2 + O(11^20)), (0, 1 + O(11^20), 2 + O(11^20))]
             sage: x in M
             True
         """
@@ -636,7 +658,7 @@ def ps_modsym_from_simple_modsym_space(A):
         sage: f = ps_modsym_from_simple_modsym_space(A); f
         Modular symbol with values in Sym^10 Q^2
         sage: f.values()
-        [(-1620/691, 0, 45, 0, -135, 0, 135, 0, -45, 0, 1620/691), (1620/691, -16200/691, 41805/691, 54360/691, -437175/691, 773370/691, -530460/691, 54360/691, 72900/691, -16200/691, 0), (0, 16200/691, -72900/691, -54360/691, 530460/691, -773370/691, 437175/691, -54360/691, -41805/691, 16200/691, -1620/691)]    
+        [(-1620/691, 0, 1, 0, -9/14, 0, 9/14, 0, -1, 0, 1620/691), (1620/691, 1620/691, 929/691, -453/691, -29145/9674, -42965/9674, -2526/691, -453/691, 1620/691, 1620/691, 0), (0, -1620/691, -1620/691, 453/691, 2526/691, 42965/9674, 29145/9674, 453/691, -929/691, -1620/691, -1620/691)]
 
     And, the -1 modular symbol attached to Delta::
 
@@ -644,8 +666,7 @@ def ps_modsym_from_simple_modsym_space(A):
         sage: f = ps_modsym_from_simple_modsym_space(A); f
         Modular symbol with values in Sym^10 Q^2
         sage: f.values()
-        [(0, -10, 0, 125/2, 0, -105, 0, 125/2, 0, -10, 0), (0, 10, -90, 595/2, -805/2, 105/2, 805/2, -360, 90, 0, 0), (0, 0, 90, -360, 805/2, 105/2, -805/2, 595/2, -90, 10, 0)]
-
+        [(0, 1, 0, -25/48, 0, 5/12, 0, -25/48, 0, 1, 0), (0, -1, -2, -119/48, -23/12, -5/24, 23/12, 3, 2, 0, 0), (0, 0, 2, 3, 23/12, -5/24, -23/12, -119/48, -2, -1, 0)]
 
     A consistency check with ps_modsym_from_simple_modsym_space::
 
@@ -661,7 +682,7 @@ def ps_modsym_from_simple_modsym_space(A):
         [0, 1, -1]
 
     We find that a linear combination of the plus and minus parts
-    equals the Pollack-Stevens symbol attached to E.  This illustrates
+    equals the Pollack-Stevens symbol attached to E. This illustrates
     how ps_modsym_from_simple_modsym_space is only well-defined up to
     a nonzero scalar.
     
@@ -732,6 +753,6 @@ def ps_modsym_from_simple_modsym_space(A):
         v = []
         for j in range(k+1):
             # TODO: The following might be backward: it should be the coefficient of X^j Y^(k-j)
-            v.append(w.dot_product(M.modular_symbol([j, ac, bd]).element()) * binomial(k, j))
+            v.append(w.dot_product(M.modular_symbol([j, ac, bd]).element()) * (-1)**(k-j))
         val[g] = D(v)
     return V(val)

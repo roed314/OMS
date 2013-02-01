@@ -2,9 +2,10 @@
 *~
 /*
 !/changes_to_sagelib.patch
+!/trac_13949.patch
 !/README_ps.txt
 !/.gitignore
 !/sage/modular/pollack_stevens/*
 !/sage/modular/btquotients/*
 !/sage/modular/overconvergent/pollack/*
-
+!/sage/modular/overconvergent/families/*

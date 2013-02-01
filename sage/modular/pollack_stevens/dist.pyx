@@ -1,3 +1,12 @@
+#*****************************************************************************
+#       Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
+#
+#  Distributed under the terms of the GNU General Public License (GPL)
+#  as published by the Free Software Foundation; either version 2 of
+#  the License, or (at your option) any later version.
+#                  http://www.gnu.org/licenses/
+#*****************************************************************************
+
 from sage.structure.sage_object import SageObject
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
@@ -221,7 +230,7 @@ cdef class Dist(ModuleElement):
                 i += 1
                 while i < n:
                     verbose("comparing moment %s"%i)
-                    if self.moment(i) != alpha * other.moment(i):
+                    if alpha * self.moment(i) != other.moment(i):
                         raise ValueError("not a scalar multiple")
                     i += 1
         else:
@@ -411,6 +420,19 @@ cdef class Dist(ModuleElement):
         return mu
 
     def _is_malformed(self):
+        r"""
+        Check that the precision of self is sensible.
+
+        EXAMPLE::
+
+            sage: D = sage.modular.pollack_stevens.distributions.Symk(2, base=Qp(5))
+            sage: v = D([1, 2, 3])
+            sage: v._is_malformed()
+            False
+            sage: v = D([1 + O(5), 2, 3])
+            sage: v._is_malformed()
+            True
+        """
         n = self.precision_absolute()
         for i in range(n):
             if self.moment(i).precision_absolute() < n - i:
@@ -461,26 +483,46 @@ cdef class Dist_vector(Dist):
 
         sage: from sage.modular.pollack_stevens.distributions import Distributions
     """
-    def __init__(self,moments, parent, check=True):
+    def __init__(self, moments, parent, check=True):
         """
         Initialization.
 
         TESTS::
 
-            sage: from sage.modular.pollack_stevens.distributions import Distributions
+            sage: from sage.modular.pollack_stevens.distributions import Symk
+            sage: Symk(4)(0)
+            (0, 0, 0, 0, 0)
+            
         """
-        Dist.__init__(self,parent)
+        Dist.__init__(self, parent)
         if check:
-            base = parent.base_ring()
-            try:
+            # case 1: input is a distribution already
+            if PY_TYPE_CHECK(moments, Dist):
+                pass
+            # case 2: input is a vector, or something with a len
+            elif hasattr(moments, '__len__'):
                 M = len(moments)
-            except TypeError:
-                M = 1
-                moments = [moments]
-            moments = parent.approx_module(M)(moments)
+                moments = parent.approx_module(M)(moments)
+            # case 3: input is zero
+            elif moments == 0:
+                moments = parent.approx_module(parent.precision_cap())(moments)
+            # case 4: everything else
+            else:
+                moments = parent.approx_module(1)([moments])
+            # TODO: This is not quite right if the input is an inexact zero.
         self.moments = moments
 
     def __reduce__(self):
+        r"""
+        Used for pickling.
+
+        EXAMPLE::
+
+            sage: D = sage.modular.pollack_stevens.distributions.Symk(2)
+            sage: x = D([2,3,4])
+            sage: x.__reduce__()
+            (<type 'sage.modular.pollack_stevens.dist.Dist_vector'>, ((2, 3, 4), Sym^2 Q^2, False))
+        """
         return (self.__class__,(self.moments,self.parent(),False))
 
     cdef Dist_vector _new_c(self):
@@ -643,19 +685,6 @@ cdef class Dist_vector(Dist):
         """
         return cmp(left.moments, right.moments)
 
-    def zero(self):
-        r"""
-        
-
-        OUTPUT:
-
-        - 
-
-        """
-        cdef Dist_vector ans = self._new_c()
-        ans.moments = 0 * self.moments # could make this faster
-        return ans
-
     cpdef normalize(self):
         r"""
         Normalize by reducing modulo `Fil^N`, where `N` is the number of moments.
@@ -785,15 +814,27 @@ cdef class Dist_long(Dist):
         p = parent._p
         cdef int i
         if check:
-            try:
+            
+            # case 1: input is a distribution already
+            if PY_TYPE_CHECK(moments, Dist):
                 M = len(moments)
-            except TypeError:
+            # case 2: input is a vector, or something with a len
+            elif hasattr(moments, '__len__'):
+                M = len(moments)
+                moments = parent.approx_module(M)(moments)
+            # case 3: input is zero
+            elif moments == 0:
+                M = parent.precision_cap()
+                moments = [0] * M
+            else:
                 M = 1
                 moments = [moments]
             if M > 100 or 7*p**M > ZZ(2)**(4*sizeof(long) - 1): # 6 is so that we don't overflow on gathers
                 raise ValueError("moments too long")
+        else:
+            M = len(moments)
             
-        for i in range(M):
+        for i in range(len(moments)):
             # TODO: shouldn't be doing the conversion to ZZ when check=False?
             self.moments[i] = ZZ(moments[i])
         self.prec = M
@@ -1021,25 +1062,6 @@ cdef class Dist_long(Dist):
                 return 1
         return 0
 
-    def zero(self):
-        r"""
-        
-
-        OUTPUT:
-
-        - 
-
-        EXAMPLES::
-
-            sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
-        """
-        cdef Dist_long ans = self._new_c()
-        ans.prec = self.prec
-        cdef int i
-        for i in range(self.prec):
-            ans.moments[i] = 0
-        return ans
-
     def reduce_precision(self, M):
         r"""
         
@@ -1089,6 +1111,18 @@ cdef class Dist_long(Dist):
     #    for i in range(self.prec):
     #        ans.moments[i] = self.moments[i]
     #    return ans
+ 
+    def __reduce__(self):
+        r"""
+        Used in pickling.
+
+        EXAMPLE::
+
+            sage: D = Distributions(0, 5, 10)
+            sage: D([1,2,3,4]).__reduce__()
+            (<type 'sage.modular.pollack_stevens.dist.Dist_long'>, ([1, 2, 3, 4], Space of 5-adic distributions with k=0 action and precision cap 10, False))
+        """
+        return (self.__class__,([self.moments[i] for i in xrange(self.prec)], self.parent(), False))
 
 cdef class WeightKAction(Action):
     r"""
