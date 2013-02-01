@@ -680,7 +680,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             Modular symbol with values in Sym^0 Q_5^2
             sage: phis.hecke(7) == phis*E.ap(7)
             True
-e            sage: phis.hecke(5) == phis*E.ap(5)
+            sage: phis.hecke(5) == phis*E.ap(5)
             False
             sage: phis.hecke(3) == phis*E.ap(3)
             True
