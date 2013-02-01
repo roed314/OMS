@@ -818,7 +818,8 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         OUTPUT:
 
-        An overconvergent modular symbol whose specialization equals self up to some Eisenstein error.
+        An overconvergent modular symbol whose specialization equals self, up
+        to some Eisenstein error if ``eigensymbol`` is False.
 
         EXAMPLES::
 
@@ -830,6 +831,14 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             10 + 10*11 + 10*11^2 + 10*11^3 + O(11^4)
             sage: g.Tq_eigenvalue(11)
             1 + O(11^4)
+
+        We check that lifting and then specializing gives back the original symbol::
+
+            sage: [x.moment(0) for x in g.specialize().values()] == [x.moment(0) for x in f.values()]
+            True
+
+        (TODO: Calling ``g.specialize() == f`` returns False, because
+        comparison for mod sym objects is apparently broken.)
         """
         if p is None:
             p = self.parent().prime()
@@ -1012,7 +1021,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 Phi = Phi.reduce_precision(M + s)
         else:
             k = self.parent().weight()
-            Phi = (q**(k+1) + 1 - aq) * ((q**(k+1) + 1) * Phi - Phi.hecke(q))
+            Phi = ~(q**(k+1) + 1 - aq) * ((q**(k+1) + 1) * Phi - Phi.hecke(q))
             if eisenloss > 0:
                 verbose("change precision to %s"%(M + s))
                 Phi = Phi.reduce_precision(M + s)
