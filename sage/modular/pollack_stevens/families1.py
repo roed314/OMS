@@ -56,5 +56,3 @@ class PSModularSymbolElement_fam(PSModularSymbolElement):
         rels = self.parent()._grab_relations()
         # TODO: no clue how to do this until this object fully works again...
         raise NotImplementedError
-
-----------------------------------------------------------------
