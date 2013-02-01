@@ -775,6 +775,8 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             raise ValueError("inconsistent prime")
         if M is None:
             M = self.parent().precision_cap() + 1
+###  I don't understand this.  This might only make sense in weight 2.  Probably need a bound
+###  on M related to the weight.
         elif M <= 1:
             raise ValueError("M must be at least 2")
         else:

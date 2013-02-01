@@ -408,7 +408,8 @@ cdef class Dist(ModuleElement):
         p = V.prime()
         M = V.precision_cap()
         R = V.base_ring()
-        moments = [R(self.moment(j) * (-1)**j / binomial(k, j)) for j in range(k+1)]
+
+        moments = [R(self.moment(j)) for j in range(k+1)]
         zero = R(0)
         moments.extend([zero] * (M - k - 1))
         mu = V(moments)
