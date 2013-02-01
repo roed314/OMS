@@ -81,7 +81,7 @@ class PSModularSymbolsDomain(SageObject):
           `\Gamma_0(N)`
 
         - ``reps`` -- a list of 2x2 matrices, the coset representatives of
-          `PSL_2(\ZZ)`
+          `Div^0(P^1(\QQ))`
 
         - ``indices`` -- a list of integers; indices of elements in ``reps``
           which are generators
@@ -100,7 +100,7 @@ class PSModularSymbolsDomain(SageObject):
 
         sage: from sage.modular.pollack_stevens.fund_domain import PSModularSymbolsDomain, M2Z
         sage: PSModularSymbolsDomain(2 , [M2Z([1,0,0,1]), M2Z([1,1,-1,0]), M2Z([0,-1,1,1])], [0,2], [[(1, M2Z([1,0,0,1]), 0)], [(-1,M2Z([-1,-1,0,-1]),0)], [(1, M2Z([1,0,0,1]), 2)]], {(0,1): 0, (1,0): 1, (1,1): 2})
-        Modular symbol domain of level 2
+        Modular Symbol domain of level 2
 
     TESTS:
 
@@ -141,7 +141,7 @@ class PSModularSymbolsDomain(SageObject):
         self._rels = rels
         self._rel_dict = {}
         for j, L in enumerate(rels):
-            self._rel_dict[reps[j]] = [(d, A, reps[i]) for (d, A, i) in L]
+            self._rel_dict[reps[j]] = L
 
         self._equiv_ind = equiv_ind
         self._equiv_rep = {}
@@ -156,10 +156,10 @@ class PSModularSymbolsDomain(SageObject):
 
             sage: from sage.modular.pollack_stevens.fund_domain import PSModularSymbolsDomain, M2Z
             sage: PSModularSymbolsDomain(2 , [M2Z([1,0,0,1]), M2Z([1,1,-1,0]), M2Z([0,-1,1,1])], [0,2], [[(1, M2Z([1,0,0,1]), 0)], [(-1,M2Z([-1,-1,0,-1]),0)], [(1, M2Z([1,0,0,1]), 2)]], {(0,1): 0, (1,0): 1, (1,1): 2})._repr_()
-            'Modular symbol domain of level 2'
+            'Modular Symbol domain of level 2'
 
         """
-        return "Modular symbol domain of level %s"%self._N
+        return "Modular Symbol domain of level %s"%self._N
 
     def __len__(self):
         r"""
@@ -360,94 +360,81 @@ class PSModularSymbolsDomain(SageObject):
         else:
             return self._reps[n]
 
-    def relations(self, A=None, indices=False):
+    def relations(self, A=None):
         r"""
-        Expresses the divisor attached to the coset rep of A in terms
-        of our chosen generators.
+        Expresses the divisor attached to the coset representative of ``A`` in
+        terms of our chosen generators.
 
         INPUT:
 
-        - ``A`` -- None, integer or a coset rep (default: None)
-
-        - ``indices`` -- boolean (default: False), determines output
-          type when ``A`` is None.
+        - ``A`` -- ``None``, an integer, or a coset representative (default:
+          ``None``)
 
         OUTPUT:
 
-        - A `\ZZ[\Gamma_0(N)]`-relation expressing the divisor
-          attached to one (or all) coset rep(s) in terms of our
-          generating set.  The type of the return value depends on
-          ``A`` and ``indices``.
+        A `\ZZ[\Gamma_0(N)]`-relation expressing the divisor attached to ``A``
+        in terms of the generating set. The relation is given as a list of
+        triples ``(d, B, i)`` such that the divisor attached to `A`` is the sum
+        of ``d`` times the divisor attached to ``B^{-1} * self.reps(i)``.
 
-          - If ``A`` is a 2x2 matrix that is among the coset
-            represetatives, returns a list of triples `(d, B, C)` such
-            that the divisor attached to ``A`` equals the sum over
-            these triples of:
+        If ``A`` is an integer, then return this data for the ``A``-th
+        coset representative.
 
-              `d * B^{-1} * (divisor attached to C)`
-
-            Here `C` will be one of the chosen generating coset reps.
-
-          - If ``A`` is an integer, returns a list of triples `(d, B,
-            i)` such that the divisor attached to the `i`-th coset rep
-            equals the sum over these triples of:
-
-              `d * B^{-1} * (divisor attached to i-th coset rep)`
-
-            Here each index `i` must appear in ``self.indices()``.
-
-          - If ``A`` is None and ``indices`` is False, returns a
-            dictionary whose keys are the cosets reps and the values
-            are the lists of triples `(d, B, C)` described above.
-
-          - If ``A`` is None and ``indices`` is True, returns a list
-            of triples `(d, B, i)` in the same order as the coset reps
-            to which they correspond.
+        If ``A`` is ``None``, then return this data in a list for all coset
+        representatives.
 
         .. NOTE::
 
-            These relations allow us to recover the value of a modular
-            symbol on any coset rep in terms of its values on our
+            These relations allow us to recover the value of a modular symbol
+            on any coset representative in terms of its values on our
             generating set.
 
         EXAMPLES::
 
-            sage: A = ManinRelations(11)
-            sage: A.indices()
+            sage: MR = ManinRelations(11)
+            sage: MR.indices()
             [0, 2, 3]
-            sage: A.relations(0)
+            sage: MR.relations(0)
             [(1, [1 0]
             [0 1], 0)]
-            sage: A.relations(2)
+            sage: MR.relations(2)
             [(1, [1 0]
             [0 1], 2)]
-            sage: A.relations(3)
+            sage: MR.relations(3)
             [(1, [1 0]
             [0 1], 3)]
-            sage: A.relations(4)
-            [(-1, [-3 -2]
-            [11  7], 2)]
-            sage: B=A.relations(4)[0][1]; B
-            [-3 -2]
-            [11  7]
-            sage: B^(-1)*A.reps(2)
-            [ 2 -1]
-            [-3  2]
-            sage: A.reps(4)
+
+        The fourth coset representative can be expressed through the second coset representative::
+
+            sage: MR.reps(4)
             [-1 -2]
             [ 2  3]
-            sage: from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2
-            sage: M2Z = MatrixSpace_ZZ_2x2()
-            sage: sig = M2Z([0,1,-1,0])
-            sage: B^(-1)*A.reps(2) == A.reps(4)*sig
-            True
+            sage: d, B, i = MR.relations(4)[0]
+            sage: P = ~B*MR.reps(i); P
+            [ 2 -1]
+            [-3  2]
+            sage: d # the above corresponds to minus the divisor of A.reps(4) since d is -1
+            -1
+
+        The sixth coset representative can be expressed as the sum of the second and the third::
+
+            sage: MR.reps(6)
+            [ 0 -1]
+            [ 1  2]
+            sage: MR.relations(6)
+            [(1, [1 0]
+            [0 1], 2), (1, [1 0]
+            [0 1], 3)]
+            sage: MR.reps(2), MR.reps(3) # MR.reps(6) is the sum of these divisors
+            (
+            [ 0 -1]  [-1 -1]
+            [ 1  3], [ 3  2]
+            )
+
         """
         if A is None:
-            if indices:
-                return self._rels
-            else:
-                return self._rel_dict
-        if isinstance(A, (int, Integer, slice)):
+            return self._rels
+        elif isinstance(A, (int, Integer, slice)):
             return self._rels[A]
         else:
             return self._rel_dict[A]
