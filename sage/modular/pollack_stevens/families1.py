@@ -18,6 +18,10 @@ from sage.modular.pollack_stevens.modsym import PSModularSymbolElement
 class PSModularSymbolElement_fam(PSModularSymbolElement):
 
     def _show_malformed_dist(self, location_str):
+        r"""
+        This checks if the distribution is malformed.
+        """
+
         malformed = []
         gens = self.parent().source().gens()
         for j, g in enumerate(gens):
