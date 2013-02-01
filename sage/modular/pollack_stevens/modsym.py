@@ -750,7 +750,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         - ``alpha`` -- `U_p` eigenvalue
         - ``new_base_ring`` -- change of base ring
         - ``algorithm`` -- 'stevens' or 'greenberg'
-        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol)
+        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol, !does not specify whether input is an eigensymbol or not!)
 
         OUTPUT:
 
@@ -803,6 +803,12 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             return self._lift_greenberg(p, M, new_base_ring, check)
         else:
             raise ValueError("algorithm %s not recognized" % algorithm)
+    
+    def _lift_greenberg(self, p, M, new_base_ring, check):
+    """
+    
+    """
+        raise NotImplementedError("Working on the implementation at Sage Days 44.")
         
     def _lift_to_OMS(self, p, M, new_base_ring, check):
         """
