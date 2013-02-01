@@ -1,13 +1,22 @@
 """
 Manin Relations
 
-Code to create the Manin Relations class, which solves the "Manin
-relations".  That is, a description of `Div^0(P^1(Q))` as a `\ZZ[\Gamma_0(N)]`-module
-in terms of generators and relations is found.  The method used is
-geometric, constructing a nice fundamental domain for `\Gamma_0(N)` and
-reading the relevant Manin relations off of that picture.  The
-algorithm follows the paper of Pollack and Stevens "Overconvergent
-modular symbols and p-adic L-functions".
+Code to create the Manin Relations class, which solves the "Manin relations".
+That is, a description of `Div^0(P^1(\QQ))` as a `\ZZ[\Gamma_0(N)]`-module in
+terms of generators and relations is found. The method used is geometric,
+constructing a nice fundamental domain for `\Gamma_0(N)` and reading the
+relevant Manin relations off of that picture. The algorithm follows [PS2011].
+
+REFERENCES:
+
+.. [PS2011] R. Pollack, and G. Stevens. "Overconvergent modular symobals and
+p-adic L-functions." Annales scientifiques de l'Ecole normale superieure. Vol.
+44. No. 1. Elsevier, 2011.
+
+AUTHORS:
+
+    - Robert Pollack, Jonathan Hanke (2012): initial version
+
 """
 #*****************************************************************************
 #       Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
