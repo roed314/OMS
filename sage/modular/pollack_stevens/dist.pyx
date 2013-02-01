@@ -1,3 +1,12 @@
+#*****************************************************************************
+#       Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
+#
+#  Distributed under the terms of the GNU General Public License (GPL)
+#  as published by the Free Software Foundation; either version 2 of
+#  the License, or (at your option) any later version.
+#                  http://www.gnu.org/licenses/
+#*****************************************************************************
+
 from sage.structure.sage_object import SageObject
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
@@ -467,17 +476,28 @@ cdef class Dist_vector(Dist):
 
         TESTS::
 
-            sage: from sage.modular.pollack_stevens.distributions import Distributions
+            sage: from sage.modular.pollack_stevens.distributions import Symk
+            sage: Symk(4)(0)
+            (0, 0, 0, 0, 0)
+            
         """
         Dist.__init__(self,parent)
         if check:
-            base = parent.base_ring()
+            # special case: handle 0
+            if moments == 0:
+                M = parent.precision_cap()
+                moments = [0]*parent.precision_cap()
+            else:
+                base = parent.base_ring()
+                try:
+                    M = len(moments)
+                except TypeError:
+                    M = 1
+                    moments = [moments]
             try:
-                M = len(moments)
-            except TypeError:
-                M = 1
-                moments = [moments]
-            moments = parent.approx_module(M)(moments)
+                moments = parent.approx_module(M)(moments)
+            except ValueError:
+                raise ValueError("Cannot create an element of %s from %s" % (parent, moments))
         self.moments = moments
 
     def __reduce__(self):
@@ -785,6 +805,8 @@ cdef class Dist_long(Dist):
         p = parent._p
         cdef int i
         if check:
+            if moments == 0:
+                moments = [0] * parent.precision_cap()
             try:
                 M = len(moments)
             except TypeError:
