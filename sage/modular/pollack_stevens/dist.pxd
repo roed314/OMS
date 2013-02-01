@@ -14,6 +14,7 @@ cdef class Dist(ModuleElement):
 
 cdef class Dist_vector(Dist):
     cdef public moments
+    cdef long ordp
     cdef Dist_vector _new_c(self)
 
 #cdef class Dist2(Dist): # only works on 64-bit....
@@ -24,7 +25,8 @@ cdef class Dist_vector(Dist):
 
 cdef class Dist_long(Dist):
     cdef long[60] moments # 38 once 2 is special-cased
-    cdef int prec
+    cdef int relprec
+    cdef long ordp
     cdef public PowComputer_long prime_pow
     cdef int quasi_normalize(self) except -1
     cdef Dist_long _new_c(self)

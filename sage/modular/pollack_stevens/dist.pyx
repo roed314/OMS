@@ -138,7 +138,12 @@ cdef class Dist(ModuleElement):
 
     def is_zero(self, p=None, M=None):
         r"""
-        Returns True if all of the moments are either identically zero or zero modulo p^M
+        Returns True if all of the moments are either identically zero
+        or zero modulo p^M.
+
+        Note that some moments are not known to precision M, in which
+        case they are only checked to be equal to zero modulo the
+        precision to which they are defined.
 
         INPUT:
 
@@ -162,9 +167,10 @@ cdef class Dist(ModuleElement):
             sage: v.is_zero()
             True
         """
-        n = self.precision_absolute()
+        n = self.precision_relative()
+        aprec = self.precision_absolute()
         if M is None:
-            return all([self.moment(a).is_zero() for a in range(n)])
+            return all([self.moment(a).is_zero(aprec-a) for a in range(n)])
         else:
             return all([self.moment(a).valuation(p) >= M for a in range(n)])
 
