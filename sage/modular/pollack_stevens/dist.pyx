@@ -172,7 +172,7 @@ cdef class Dist(ModuleElement):
         if M is None:
             return all([self.moment(a).is_zero(aprec-a) for a in range(n)])
         else:
-            return all([self.moment(a).valuation(p) >= M for a in range(n)])
+            return all([self.moment(a).is_zero(min(M, aprec-a)) for a in range(n)])
 
     def find_scalar(self, other, p, M = None, check=True):
         r"""
@@ -213,8 +213,8 @@ cdef class Dist(ModuleElement):
 
         """
         i = 0
-        n = self.precision_absolute()
-        if n != other.precision_absolute():
+        n = self.precision_relative()
+        if n != other.precision_relative():
             raise ValueError("other should have the same number of moments")
         verbose("n = %s"%n)
         verbose("moment 0")
@@ -489,7 +489,7 @@ cdef class Dist_vector(Dist):
 
         sage: from sage.modular.pollack_stevens.distributions import Distributions
     """
-    def __init__(self, moments, parent, check=True):
+    def __init__(self, moments, parent, ordp=0, check=True):
         """
         Initialization.
 
@@ -517,6 +517,7 @@ cdef class Dist_vector(Dist):
                 moments = parent.approx_module(1)([moments])
             # TODO: This is not quite right if the input is an inexact zero.
         self.moments = moments
+        self.ordp = ordp
 
     def __reduce__(self):
         r"""
@@ -534,6 +535,8 @@ cdef class Dist_vector(Dist):
     cdef Dist_vector _new_c(self):
         r"""
         Creates an empty distribution.
+
+        Note that you MUST fill in the ordp attribute on the resulting distribution.
 
         OUTPUT:
 
@@ -560,10 +563,15 @@ cdef class Dist_vector(Dist):
         Displays the moments of the distribution
         """
         self.normalize()
+        valstr = ""
+        if self.ordp == 1:
+            valstr = "%s * "%(self.parent().prime())
+        elif self.ordp != 0:
+            valstr = "%s^%s * "%(self.parent().prime(), self.ordp)
         if len(self.moments) == 1:
-            return repr(self.moments[0])
+            return valstr + repr(self.moments[0])
         else:
-            return repr(self.moments)
+            return valstr + repr(self.moments)
 
     def _rational_(self):
         """
@@ -774,6 +782,7 @@ cdef class Dist_vector(Dist):
         for m in range(1,M):
             scalar = K(self.moment(m) / m) # division can take us out of the base ring.
             for j in range(m-1,M):
+                # multiplication by the bernoulli number can also introduce denominators
                 v[j] += binomial(j,m-1) * bernoulli(j-m+1) * scalar
         cdef Dist_vector ans = self._new_c()
         ans.moments = V(v)
