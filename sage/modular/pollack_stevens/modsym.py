@@ -884,9 +884,6 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             raise ValueError("algorithm %s not recognized" % algorithm)
     
     def _lift_greenberg(self, p, M, new_base_ring, check):
-    """
-    
-    """
         raise NotImplementedError("Working on the implementation at Sage Days 44.")
         
 
@@ -997,7 +994,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         `p`-ordinary eigensymbol
 
         INPUT:
-
+git exit
         - ``p`` -- prime
         - ``M`` -- integer equal to the number of moments
         - ``new_base_ring`` -- new base ring
