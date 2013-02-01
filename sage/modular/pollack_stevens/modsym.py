@@ -930,7 +930,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 # See [PS] section 4.1
                 gam = manin.two_torsion[g]
                 mu = self._map[g].lift(p, M, new_base_ring)
-                D[g] = (mu * gam - mu) * half
+                D[g] = (mu - mu * gam) * half
             elif threetor:
                 # See [PS] section 4.1
                 gam = manin.three_torsion[g]
@@ -941,16 +941,18 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 D[g] = self._map[g].lift(p, M, new_base_ring)
 
         t = self.parent().coefficient_module().lift(p, M, new_base_ring).zero_element()
-        for h in manin[2:]:
-            R = manin.relations(h)
-            if len(R) == 1:
-                c, A, g = R[0]
-                if c == 1:
-                    t += self._map[h].lift(p, M, new_base_ring)
-                elif A is not Id:
-                    # rules out extra three torsion terms
-                    t += c * self._map[g].lift(p, M, new_base_ring) * A
-        D[manin.gen(0)] = t.solve_diff_eqn()  ###### Check this!
+        ## This loops adds up around the boundary of fundamental domain except the two verticle lines
+        for g in manin.gens()[1:]:
+            twotor = g in manin.reps_with_two_torsion
+            threetor = g in manin.reps_with_three_torsion
+            if twotor or threetor:
+               t = t - D[g]
+            else:
+               t = t + D[g] * manin.gammas[g] - D[g]
+        ## t now should be sum Phi(D_i) | (gamma_i - 1) - sum Phi(D'_i) - sum Phi(D''_i)
+        ## (Here I'm using the opposite sign convention of [PS1] regarding D'_i and D''_i)
+
+        D[manin.gen(0)] = -t.solve_diff_eqn()  ###### Check this!
         return MSS(D)
 
     def _find_aq(self, p, M, check):
