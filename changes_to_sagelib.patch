@@ -1,9 +1,9 @@
 # HG changeset patch
 # User David Roe <roed.math@gmail.com>
 # Date 1334787052 25200
-# Node ID ef7f54a3c0a458827701f765cb52b186629eed1f
-# Parent c52914cde06c575b48ab8661524ccd2ab9e70e71
-[mq]: modlist.tmp
+# Node ID f15c22727ca0159fe236ecd83c415bea2ec05cb4
+# Parent  8352a4055d80dc42d481f6f0f549532d0e155872
+Changes to Sage library for Pollack-Stevens
 
 diff --git a/module_list.py b/module_list.py
 --- a/module_list.py
@@ -25,7 +25,7 @@ diff --git a/module_list.py b/module_list.py
 diff --git a/sage/matrix/matrix_integer_2x2.pyx b/sage/matrix/matrix_integer_2x2.pyx
 --- a/sage/matrix/matrix_integer_2x2.pyx
 +++ b/sage/matrix/matrix_integer_2x2.pyx
-@@ -383,11 +384,14 @@
+@@ -385,11 +385,14 @@
              sage: m == n
              False
          """
@@ -48,7 +48,7 @@ diff --git a/sage/matrix/matrix_integer_2x2.pyx b/sage/matrix/matrix_integer_2x2
 diff --git a/sage/modular/all.py b/sage/modular/all.py
 --- a/sage/modular/all.py
 +++ b/sage/modular/all.py
-@@ -30,6 +30,8 @@
+@@ -30,7 +30,10 @@
  
  from overconvergent.all import *
  
@@ -57,6 +57,39 @@ diff --git a/sage/modular/all.py b/sage/modular/all.py
  from local_comp.all import *
  
  from cusps_nf import NFCusp, NFCusps, NFCusps_clear_cache, Gamma0_NFCusps
+ 
++from btquotients.all import *
+diff --git a/sage/modular/modform/element.py b/sage/modular/modform/element.py
+--- a/sage/modular/modform/element.py
++++ b/sage/modular/modform/element.py
+@@ -19,6 +19,7 @@
+ from sage.modules.free_module_element import vector
+ from sage.misc.misc import verbose
+ from sage.modular.dirichlet import DirichletGroup
++from sage.modular.pollack_stevens.space import ps_modsym_from_simple_modsym_space
+ 
+ def is_ModularFormElement(x):
+     """
+@@ -834,6 +835,19 @@
+         """
+         return self.__modsym_space.modular_symbols_of_sign(sign)
+ 
++    def PS_modular_symbol(self, sign=1):
++        r"""
++        Return the Pollack-Stevens modular symbol attached to this newform.
++
++        EXAMPLE::
++
++            sage: f = Newform('37a')
++            sage: f.PS_modular_symbol()
++            Modular symbol with values in Sym^0 Q^2
++        """
++        M = self.modular_symbols(sign)
++        return ps_modsym_from_simple_modsym_space(M)
++
+     def _defining_modular_symbols(self):
+         """
+         Return the modular symbols space corresponding to self.
 diff --git a/sage/modular/overconvergent/all.py b/sage/modular/overconvergent/all.py
 --- a/sage/modular/overconvergent/all.py
 +++ b/sage/modular/overconvergent/all.py
@@ -193,6 +226,29 @@ diff --git a/sage/rings/padics/pow_computer.pyx b/sage/rings/padics/pow_computer
  pow_comp_cache = {}
  cdef PowComputer_base PowComputer_c(Integer m, Integer cache_limit, Integer prec_cap, in_field):
      """
+diff --git a/sage/schemes/elliptic_curves/ell_rational_field.py b/sage/schemes/elliptic_curves/ell_rational_field.py
+--- a/sage/schemes/elliptic_curves/ell_rational_field.py
++++ b/sage/schemes/elliptic_curves/ell_rational_field.py
+@@ -1235,6 +1235,19 @@
+ 
+     padic_lseries = padics.padic_lseries
+ 
++    def PS_modular_symbol(self):
++        r"""
++        Return the Pollack-Stevens modular symbol of E.
++
++        EXAMPLE::
++
++            sage: E = EllipticCurve('389a') 
++            sage: E.PS_modular_symbol()    
++            Modular symbol with values in Sym^0 Q^2
++        """
++        from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
++        return ps_modsym_from_elliptic_curve(self)
++
+     def newform(self):
+         r"""
+         Same as ``self.modular_form()``.
 diff --git a/setup.py b/setup.py
 --- a/setup.py
 +++ b/setup.py

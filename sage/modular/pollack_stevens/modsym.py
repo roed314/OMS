@@ -7,11 +7,11 @@
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+import operator
+
 from sage.structure.element import ModuleElement
 from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2
 from sage.rings.integer_ring import ZZ
-from manin_map import ManinMap
-import operator
 from sage.misc.cachefunc import cached_method
 from sage.rings.padics.factory import Qp
 from sage.rings.polynomial.all import PolynomialRing
@@ -22,9 +22,12 @@ from sage.misc.misc import verbose
 from sage.rings.padics.precision_error import PrecisionError
 
 from sage.categories.action import Action
-
 from fund_domain import M2ZSpace, M2Z, Id
+from manin_map import ManinMap
+from padic_lseries import pAdicLseries
+
 minusproj = M2Z([1,0,0,-1])
+
 
 class PSModSymAction(Action):
     def __init__(self, actor, MSspace):
@@ -793,7 +796,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 ans.append((embedded_sym,psi))
             return ans
 
-    def lift(self, p=None, M=None, alpha=None, new_base_ring=None, algorithm = None, eigensymbol = False, check=True):
+    def lift(self, p=None, M=None, alpha=None, new_base_ring=None, algorithm='stevens', eigensymbol=False, check=True):
         r"""
         Returns a (`p`-adic) overconvergent modular symbol with
         `M` moments which lifts self up to an Eisenstein error
@@ -812,15 +815,20 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         - ``new_base_ring`` -- change of base ring
 
-        - ``algorithm`` -- 'stevens' or 'greenberg'
+        - ``algorithm`` -- 'stevens' or 'greenberg' (default 'stevens')
 
-        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol, !does not specify whether input is an eigensymbol or not!)
+        - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol)
 
+        (Note: ``eigensymbol = True`` does *not* just indicate to the code that
+        self is an eigensymbol; it solves a wholly different problem, lifting
+        an eigensymbol to an eigensymbol.)
 
         OUTPUT:
 
         An overconvergent modular symbol whose specialization equals self, up
-        to some Eisenstein error if ``eigensymbol`` is False.
+        to some Eisenstein error if ``eigensymbol`` is False. If ``eigensymbol
+        = True`` then the output will be an overconvergent Hecke eigensymbol
+        (and it will lift the input exactly, the Eisenstein error disappears).
 
         EXAMPLES::
 
@@ -1161,3 +1169,15 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         rels = self.parent()._grab_relations()
         # TODO: no clue how to do this until this object fully works again...
         raise NotImplementedError
+
+    def padic_lseries(self,*args, **kwds):
+        r"""
+        Return the p-adic L-series of this modular symbol.
+
+        EXAMPLE::
+            
+            sage: f = Newform("37a")
+            sage: f.PS_modular_symbol().lift(37, M=6, algorithm="stevens").padic_lseries()
+            37-adic L-series of Modular symbol with values in Space of 37-adic distributions with k=0 action and precision cap 6
+        """
+        return pAdicLseries(self, *args, **kwds)
