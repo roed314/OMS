@@ -951,8 +951,8 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         t = self.parent().coefficient_module().lift(p, M, new_base_ring).zero_element()
         ## This loops adds up around the boundary of fundamental domain except the two verticle lines
         for g in manin.gens()[1:]:
-            twotor = g in manin.reps_with_two_torsion
-            threetor = g in manin.reps_with_three_torsion
+            twotor = g in manin.reps_with_two_torsion()
+            threetor = g in manin.reps_with_three_torsion()
             if twotor or threetor:
                t = t - D[g]
             else:
