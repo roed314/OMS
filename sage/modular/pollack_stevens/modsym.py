@@ -1044,7 +1044,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                                ordinary=True, algorithm=None, eigensymbol=False, check=True):
         """
         `p`-stabilizes and lifts
-        
+
         EXAMPLES::
 
             sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
@@ -1071,12 +1071,12 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             newM, eisenloss, q, aq = self._find_extraprec(p, M, alpha, check)
             if hasattr(new_base_ring, 'precision_cap') and newM > new_base_ring.precision_cap():
                 raise ValueError("Not enough precision in new base ring")
-            
+
         # Now we can stabilize
         self = self.p_stabilize(p=p, alpha=alpha,ap=ap, M=newM, new_base_ring = new_base_ring, check=check)
         # And use the standard lifting function for eigensymbols
         return self._lift_to_OMS_eigen(p=p, M=M, new_base_ring=new_base_ring, ap=alpha, newM=newM, eisenloss=eisenloss, q=q, aq=aq, check=check)
-    
+
 class PSModularSymbolElement_dist(PSModularSymbolElement):
 
     def _show_malformed_dist(self, location_str):

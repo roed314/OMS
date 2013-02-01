@@ -70,9 +70,10 @@ class Distributions_factory(UniqueFactory):
         """
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
+            sage: from sage.modular.pollack_stevens.distributions import Distributions
             sage: Distributions(20, 3, 10)              # indirect doctest
             Space of 3-adic distributions with k=20 action and precision cap 10
+            sage: TestSuite(Distributions).run()
         """
         k = ZZ(k)
         if tuplegen is None:
@@ -107,6 +108,30 @@ class Distributions_factory(UniqueFactory):
         return Distributions_class(*key)
 
 class Symk_factory(UniqueFactory):
+    r"""
+    Create the space of polynomial distributions of degree k (stored as a sequence of k + 1 moments).
+
+    INPUT:
+
+    - ``k`` (integer): the degree (degree `k` corresponds to weight `k + 2` modular forms)
+    - ``base`` (ring, default None): the base ring (None is interpreted as `\QQ`)
+    - ``character`` (Dirichlet character or None, default None) the character
+    - ``tuplegen`` (None or a callable that turns 2x2 matrices into a 4-tuple, default None)
+    - ``act_on_left`` (boolean, default False) whether to have the group acting
+      on the left rather than the right.
+
+    EXAMPLE::
+
+        sage: from sage.modular.pollack_stevens.distributions import Symk
+        sage: Symk(5)
+        Sym^5 Q^2
+        sage: Symk(5, RR)
+        Sym^5 (Real Field with 53 bits of precision)^2
+        sage: Symk(5, oo.parent()) # don't do this
+        Sym^5 (The Infinity Ring)^2
+        sage: Symk(5, act_on_left = True)
+        Sym^5 Q^2
+    """
     def create_key(self, k, base=None, character=None, tuplegen=None, act_on_left=False):
         r"""
         Sanitize input.
@@ -118,6 +143,7 @@ class Symk_factory(UniqueFactory):
             Sym^6 Q^2
             sage: Symk(6, Qp(7)) # indirect doctest
             Sym^6 Q_7^2
+            sage: TestSuite(Symk).run()
         """
         k = ZZ(k)
         if tuplegen is None:
