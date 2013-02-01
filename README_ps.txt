@@ -57,9 +57,20 @@ If changes_to_sagelib.patch changes, do this:
      cd $SAGE_ROOT/devel/sage/
      hg qpop
      hg qrm   changes_to_sagelib.patch
-     hg qimport /path/to/changes_to_sagelib.patch
-     hg qpush
+     hg qimport -P /path/to/changes_to_sagelib.patch
      sage -br
+
+If you installed the project before trac_13949.patch existed and need to import it:
+
+     sage -sh
+     cd $SAGE_ROOT/devel/sage
+     hg qpop
+     hg qrm   changes_to_sagelib.patch
+     hg qimport -P /path/to/trac_13949.patch
+     hg qimport -P /path/to/changes_to_sagelib.patch
+     sage -br
+
+Note that rebuilding after this will take quite a while (~30 minutes).
 
 # 5. Rebuilding
 
