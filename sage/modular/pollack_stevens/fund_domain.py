@@ -717,6 +717,7 @@ class ManinRelations(PSModularSymbolsDomain):
         threetor_index = []
         threetorrels = []
         rels = [0] * len(coset_reps)
+        gammas = {}
 
         ## the list rels (above) will give Z[Gamma_0(N)] relations between
         ## the associated divisor of each coset representatives in terms
@@ -877,6 +878,12 @@ class ManinRelations(PSModularSymbolsDomain):
                                 ## phi(gam D_s) = - phi(D_r) and thus
                                 ## phi(D_s) = -phi(D_r)|gam
                                 ## since gam is in Gamma_0(N)
+								
+                                gammas[coset_reps[r]] = gam
+                                ## this is a dictionary whose keys are the
+                                ## non-torsion generators and whose values
+                                ## are the corresponding gamma_i. It is
+                                ## eventually stored as self.gammas.
 
                                 boundary_checked[r] = True
                                 boundary_checked[s] = True
@@ -928,7 +935,8 @@ class ManinRelations(PSModularSymbolsDomain):
         for i, rep in enumerate(coset_reps):
             ky = P.normalize(rep[t10],rep[t11])
             equiv_ind[ky] = i
-
+		
+        self.gammas = gammas
         PSModularSymbolsDomain.__init__(self, N, coset_reps, gens_index, rels, equiv_ind)
 
         ## A list of indices of the (geometric) coset representatives whose
