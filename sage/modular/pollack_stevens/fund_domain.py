@@ -878,7 +878,7 @@ class ManinRelations(PSModularSymbolsDomain):
                                 ## phi(gam D_s) = - phi(D_r) and thus
                                 ## phi(D_s) = -phi(D_r)|gam
                                 ## since gam is in Gamma_0(N)
-								
+
                                 gammas[coset_reps[r]] = gam
                                 ## this is a dictionary whose keys are the
                                 ## non-torsion generators and whose values
@@ -935,7 +935,7 @@ class ManinRelations(PSModularSymbolsDomain):
         for i, rep in enumerate(coset_reps):
             ky = P.normalize(rep[t10],rep[t11])
             equiv_ind[ky] = i
-		
+
         self.gammas = gammas
         PSModularSymbolsDomain.__init__(self, N, coset_reps, gens_index, rels, equiv_ind)
 
