@@ -539,6 +539,35 @@ class PSModularSymbolElement(ModuleElement):
         return aq
 
     def is_ordinary(self,p=None):
+        r"""
+        Returns true if the p-th eigenvalue is a p-adic unit.
+
+        INPUT:
+        
+        - ``p`` - a positive integral prime (defaults to None)
+
+        OUTPUT:
+
+        - True/False
+
+        EXAMPLES::
+
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: E = EllipticCurve('11a1')
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi.is_ordinary(2)
+            False
+            sage: E.ap(2)
+            -2
+            sage: phi.is_ordinary(3)
+            True
+            sage: E.ap(3)
+            -1
+            sage: phip = phi.p_stabilize(3,20)
+            sage: phip.is_ordinary()
+            True
+
+        """
         if p == None:
             if self.parent().prime() == None:
                 raise ValueError("need to specify a prime")
@@ -551,7 +580,53 @@ class PSModularSymbolElement(ModuleElement):
                 raise ValueError("not implemented yet")  ## need to specify a prime of number field, 
                                                          ## but then you need underlying prime to apply Hecke
         return ap.valuation(p) == 0
-                
+
+    def _consistency_check(self):
+        """
+        Check that the map really does satisfy the Manin relations loop (for debugging).
+        The two and three torsion relations are checked and it is checked that the symbol
+        adds up correctly around the fundamental domain
+
+        EXAMPLES::
+
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: E = EllipticCurve('37a1')
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi._consistency_check()
+            This modular symbol satisfies the manin relations
+
+        """
+
+        f = self._map
+        MR = self._map._manin
+        ## Test two torsion relations
+        for g in MR.reps_with_two_torsion():
+            gamg = MR.two_torsion_matrix(g)
+            if not (f[g]*gamg + f[g]).is_zero():
+                raise ValueError("Two torsion relation failed with",g)
+
+        ## Test three torsion relations
+        for g in MR.reps_with_three_torsion():
+            gamg = MR.three_torsion_matrix(g)
+            if not (f[g]*(gamg**2) + f[g]*gamg + f[g]).is_zero():
+                raise ValueError("Three torsion relation failed with",g)
+
+        ## Test that the symbol adds to 0 around the boundary of the fundamental domain
+        t = self.parent().coefficient_module().zero_element()
+        for g in MR.gens()[1:]:
+            if (not g in MR.reps_with_two_torsion()) and (not g in MR.reps_with_three_torsion()):
+                t += f[g] * MR.gammas[g] - f[g]
+            else:
+                if g in MR.reps_with_two_torsion():
+                    t -= f[g] 
+                else:
+                    t -= f[g]
+                    
+        id = MR.gens()[0]
+        if f[id]*MR.gammas[id] - f[id] != -t:
+            raise ValueError("Does not add up correctly around loop")
+
+        print "This modular symbol satisfies the manin relations"
 
 class PSModularSymbolElement_symk(PSModularSymbolElement):
     def _find_M(self, M):
@@ -1247,14 +1322,6 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
             new_base_ring = self.base_ring()
         return self.__class__(self._map.specialize(new_base_ring),
                               self.parent()._specialize_parent_space(new_base_ring), construct=True)
-
-    def _consistency_check(self):
-        """
-        Check that the map really does satisfy the Manin relations loop (for debugging).
-        """
-        rels = self.parent()._grab_relations()
-        # TODO: no clue how to do this until this object fully works again...
-        raise NotImplementedError
 
     def padic_lseries(self,*args, **kwds):
         r"""
