@@ -13,7 +13,7 @@ cdef class Dist(ModuleElement):
     cpdef normalize(self)
     cdef long ordp
     cdef long _relprec(self)
-    cdef unscaled_moment(self, long i)
+    cdef _unscaled_moment(self, long i)
 
 cdef class Dist_vector(Dist):
     cdef public _moments

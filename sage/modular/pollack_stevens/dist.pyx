@@ -28,6 +28,7 @@ from sage.rings.padics.padic_capped_absolute_element cimport pAdicCappedAbsolute
 from sage.rings.padics.padic_capped_relative_element cimport pAdicCappedRelativeElement
 from sage.rings.padics.padic_fixed_mod_element cimport pAdicFixedModElement
 from sage.rings.integer cimport Integer
+from sage.rings.rational cimport Rational
 from sage.misc.misc import verbose, cputime
 
 cdef extern from "zn_poly/zn_poly.h":
@@ -122,6 +123,12 @@ cdef class Dist(ModuleElement):
             sage: v.normalize()
             (1 + O(7^5), 2 + O(7^4), 3 + O(7^3), 4 + O(7^2), 5 + O(7))
         """
+        raise NotImplementedError
+
+    cdef long _relprec(self):
+        raise NotImplementedError
+
+    cdef _unscaled_moment(self, long i):
         raise NotImplementedError
 
     def scale(self,left):
@@ -661,6 +668,9 @@ cdef class Dist_vector(Dist):
             return QQ(self.moment(0))
         raise TypeError, "k must be 0"
 
+    cdef long _relprec(self):
+        return len(self._moments)
+
     cdef _unscaled_moment(self, long n):
         r"""
         Returns the `n`-th moment, unscaled by the overall power of p stored in self.ordp.
@@ -792,12 +802,12 @@ cdef class Dist_vector(Dist):
         if not self.parent().is_symk(): # non-classical
             V = self._moments.parent()
             R = V.base_ring()
-            n = self.precision_absolute()
+            n = self.precision_relative()
             if isinstance(R, pAdicGeneric):
-                self._moments = V([self.moment(i).add_bigoh(n-i) for i in range(n)])
+                self._moments = V([self._moments[i].add_bigoh(n-i) for i in range(n)])
             else:
                 p = self.parent()._p
-                self._moments = V([self.moment(i)%(p**(n-i)) for i in range(n)])
+                self._moments = V([self._moments[i]%(p**(n-i)) for i in range(n)])
         return self
 
     def reduce_precision(self, M):
@@ -852,7 +862,7 @@ cdef class Dist_vector(Dist):
         for m in range(1,M):
             scalar = K(self.moment(m) / m)
             # bernoulli(1) = -1/2; the only nonzero odd bernoulli number
-            v[m] += m * half * scalar 
+            v[m] += m * minhalf * scalar 
             for j in range(m-1,M,2):
                 v[j] += binomial(j,m-1) * bern[(j-m+1)//2] * scalar
         p = self.parent().prime()
@@ -1017,6 +1027,9 @@ cdef class Dist_long(Dist):
                 self._moments[i] = self._moments[i] % self.prime_pow.small_powers[self.relprec-i]
         return self
 
+    cdef long _relprec(self):
+        return self.relprec
+
     cdef _unscaled_moment(self, long _n):
         r"""
         
@@ -1096,7 +1109,7 @@ cdef class Dist_long(Dist):
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
-        return self._addsub(self, <Dist_long?> right, False)
+        return self._addsub(<Dist_long?> right, False)
 
     cpdef ModuleElement _sub_(self, ModuleElement right):
         r"""
@@ -1106,7 +1119,7 @@ cdef class Dist_long(Dist):
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
-        return self._addsub(self, <Dist_long?> right, True)
+        return self._addsub(<Dist_long?> right, True)
 
     cpdef ModuleElement _lmul_(self, RingElement _right):
         r"""
