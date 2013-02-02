@@ -11,11 +11,12 @@ from sage.rings.padics.pow_computer cimport PowComputer_long
 
 cdef class Dist(ModuleElement):
     cpdef normalize(self)
+    cdef long ordp
 
 cdef class Dist_vector(Dist):
-    cdef public moments
-    cdef long ordp
+    cdef public _moments
     cdef Dist_vector _new_c(self)
+    cdef Dist_vector _addsub(self, Dist_vector right, bint negate)
 
 #cdef class Dist2(Dist): # only works on 64-bit....
 #    cdef long[60] moments
@@ -24,9 +25,8 @@ cdef class Dist_vector(Dist):
 #    cdef Dist2 _new_c(self)
 
 cdef class Dist_long(Dist):
-    cdef long[60] moments # 38 once 2 is special-cased
+    cdef long[60] _moments # 38 once 2 is special-cased
     cdef int relprec
-    cdef long ordp
     cdef public PowComputer_long prime_pow
     cdef int quasi_normalize(self) except -1
     cdef Dist_long _new_c(self)
