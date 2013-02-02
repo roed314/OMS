@@ -224,7 +224,7 @@ class PSModularSymbolElement(ModuleElement):
             [0, 0, 0]
         """
         return self.__class__(self._map - right._map, self.parent(), construct=True)
-    
+
     def _get_prime(self, p=None, alpha = None, allow_none=False):
         """
         Combines a prime specified by the user with the prime from the parent.
@@ -1033,14 +1033,30 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         INPUT:
 
         - ``p`` -- prime
+
         - ``M`` -- integer equal to the number of moments
+
         - ``new_base_ring`` -- new base ring
+
+        - ``ap`` -- Hecke eigenvalue at `p`
+
+        - ``newM`` --
+
+        - ``eisenloss`` --
+
+        - ``q`` -- prime
+
+        - ``aq`` -- Hecke eigenvalue at `q`
+
+        - ``check`` --
 
         OUTPUT:
 
-        -
+        - Hecke-eigenvalue OMS lifting self.
 
         EXAMPLES::
+
+
 
         """
         if new_base_ring(ap).valuation() > 0:
@@ -1091,7 +1107,31 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
     def p_stabilize_and_lift(self, p=None, M=None, alpha=None, ap=None, new_base_ring=None, \
                                ordinary=True, algorithm=None, eigensymbol=False, check=True):
         """
-        `p`-stabilizes and lifts
+        `p`-stabilizes and lifts self
+
+        INPUT:
+
+        - ``p`` -- (default: None)
+
+        - ``M`` -- (default: None)
+
+        - ``alpha`` -- (default: None)
+
+        - ``ap`` -- (default: None)
+
+        - ``new_base_ring`` -- (default: None)
+
+        - ``ordinary`` -- (default: True)
+
+        - ``algorithm`` -- (default: None)
+
+        - ``eigensymbol`` -- (default: False)
+
+        - ``check`` -- (default: True)
+
+        OUTPUT:
+
+        `p`-stabilized and lifted version of self.
 
         EXAMPLES::
 
