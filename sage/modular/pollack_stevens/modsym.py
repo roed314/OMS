@@ -476,8 +476,9 @@ class PSModularSymbolElement(ModuleElement):
         INPUT:
 
         - ``q`` -- prime of the Hecke operator
-        - ``p`` -- prime we are working modulo
-        - ``M`` -- degree of accuracy of approximation
+        - ``p`` -- prime we are working modulo (default: None)
+        - ``M`` -- degree of accuracy of approximation (default: None)
+        - ``check`` --
 
         OUTPUT:
 
@@ -900,7 +901,6 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: f._lift_to_OMS(11,4,Qp(11,4),True)
             Modular symbol with values in Space of 11-adic distributions with k=0 action and precision cap 4
 
-
         """
         D = {}
         manin = self.parent().source()
@@ -938,7 +938,32 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         return MSS(D)
 
     def _find_aq(self, p, M, check):
-        """
+        r"""
+        Helper function for finding Hecke eigenvalue `aq` and `q`
+        (with `q` not equal to `p`) in the case when `ap = 1 (mod p^M)`,
+        which creates the need to use other Hecke eigenvalues
+
+        INPUT:
+
+        - ``p`` -- working prime
+
+        - ``M`` -- precision
+
+        - ``check`` --
+
+        OUTPUT:
+
+        Tuple `(q, aq, eisenloss)`, with
+
+        - ``q`` -- a prime not equal to `p`
+
+        - ``aq`` -- Hecke eigenvalue at `q`
+
+        - ``eisenloss`` -- the `p`-adic valuation of `aq - q^(k+1) - 1`
+
+        EXAMPLES::
+
+
         """
         q = ZZ(2)
         k = self.parent().weight()
@@ -982,11 +1007,10 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         OUTPUT:
 
-        - 
+        -
 
         EXAMPLES::
-        
-        
+
         """
         verbose("computing naive lift: M=%s, newM=%s, new_base_ring=%s"%(M, newM, new_base_ring))
         Phi = self._lift_to_OMS(p, newM, new_base_ring, check)
@@ -1105,7 +1129,7 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         Returns the underlying classical symbol of weight `k` -- i.e.,
         applies the canonical map `D_k --> Sym^k` to all values of
         self.
-        
+
         EXAMPLES::
 
             sage: D = Distributions(0, 5, 10);  M = PSModularSymbols(Gamma0(2), coefficients=D); M
