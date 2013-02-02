@@ -229,8 +229,10 @@ class Distributions_abstract(Module):
         self._character = character
         self._symk = symk
         act = WeightKAction(self, character, tuplegen, act_on_left)
+        act_S0p = WeightKAction(self, character, tuplegen, act_on_left, padic = True)
         self._act = act
-        self._populate_coercion_lists_(action_list=[iScale(self, act_on_left), act])
+        self._act_S0p = act_S0p
+        self._populate_coercion_lists_(action_list=[iScale(self, act_on_left), act,act_S0p])
 
     def prime(self):
         """

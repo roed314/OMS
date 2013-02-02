@@ -1237,6 +1237,8 @@ cdef class WeightKAction(Action):
 
     - ``on_left`` -- whether this action should be on the left.
 
+    - ``padic`` -- if True, define an action of Sigma_0(p)
+
     OUTPUT:
 
     - 
@@ -1245,7 +1247,7 @@ cdef class WeightKAction(Action):
 
         sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
     """
-    def __init__(self, Dk, character, tuplegen, on_left):
+    def __init__(self, Dk, character, tuplegen, on_left, padic = False):
         r"""
         Initialization.
 

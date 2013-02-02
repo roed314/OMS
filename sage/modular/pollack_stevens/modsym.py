@@ -7,11 +7,11 @@
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+import operator
+
 from sage.structure.element import ModuleElement
 from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2
 from sage.rings.integer_ring import ZZ
-from manin_map import ManinMap
-import operator
 from sage.misc.cachefunc import cached_method
 from sage.rings.padics.factory import Qp
 from sage.rings.polynomial.all import PolynomialRing
@@ -22,9 +22,12 @@ from sage.misc.misc import verbose
 from sage.rings.padics.precision_error import PrecisionError
 
 from sage.categories.action import Action
-
 from fund_domain import M2ZSpace, M2Z, Id
+from manin_map import ManinMap
+from padic_lseries import pAdicLseries
+
 minusproj = M2Z([1,0,0,-1])
+
 
 class PSModSymAction(Action):
     def __init__(self, actor, MSspace):
@@ -43,8 +46,8 @@ class PSModularSymbolElement(ModuleElement):
 
     def _repr_(self):
         r"""
-        Returns the print representation.
-
+        Returns the print representation of the symbol.
+ 
         EXAMPLES::
 
             sage: E = EllipticCurve('11a')
@@ -476,8 +479,9 @@ class PSModularSymbolElement(ModuleElement):
         INPUT:
 
         - ``q`` -- prime of the Hecke operator
-        - ``p`` -- prime we are working modulo
-        - ``M`` -- degree of accuracy of approximation
+        - ``p`` -- prime we are working modulo (default: None)
+        - ``M`` -- degree of accuracy of approximation (default: None)
+        - ``check`` --
 
         OUTPUT:
 
@@ -793,7 +797,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 ans.append((embedded_sym,psi))
             return ans
 
-    def lift(self, p=None, M=None, alpha=None, new_base_ring=None, algorithm = None, eigensymbol = False, check=True):
+    def lift(self, p=None, M=None, alpha=None, new_base_ring=None, algorithm='stevens', eigensymbol=False, check=True):
         r"""
         Returns a (`p`-adic) overconvergent modular symbol with
         `M` moments which lifts self up to an Eisenstein error
@@ -812,13 +816,20 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         - ``new_base_ring`` -- change of base ring
 
-        - ``algorithm`` -- 'stevens' or 'greenberg'
+        - ``algorithm`` -- 'stevens' or 'greenberg' (default 'stevens')
 
         - ``eigensymbol`` -- if True, lifts to Hecke eigensymbol (self must be a `p`-ordinary eigensymbol)
 
+        (Note: ``eigensymbol = True`` does *not* just indicate to the code that
+        self is an eigensymbol; it solves a wholly different problem, lifting
+        an eigensymbol to an eigensymbol.)
+
         OUTPUT:
 
-        An overconvergent modular symbol whose specialization equals self up to some Eisenstein error.
+        An overconvergent modular symbol whose specialization equals self, up
+        to some Eisenstein error if ``eigensymbol`` is False. If ``eigensymbol
+        = True`` then the output will be an overconvergent Hecke eigensymbol
+        (and it will lift the input exactly, the Eisenstein error disappears).
 
         EXAMPLES::
 
@@ -830,6 +841,14 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             10 + 10*11 + 10*11^2 + 10*11^3 + O(11^4)
             sage: g.Tq_eigenvalue(11)
             1 + O(11^4)
+
+        We check that lifting and then specializing gives back the original symbol::
+
+            sage: [x.moment(0) for x in g.specialize().values()] == [x.moment(0) for x in f.values()]
+            True
+
+        (TODO: Calling ``g.specialize() == f`` returns False, because
+        comparison for mod sym objects is apparently broken.)
         """
         if p is None:
             p = self.parent().prime()
@@ -839,6 +858,8 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             raise ValueError("inconsistent prime")
         if M is None:
             M = self.parent().precision_cap() + 1
+###  I don't understand this.  This might only make sense in weight 2.  Probably need a bound
+###  on M related to the weight.
         elif M <= 1:
             raise ValueError("M must be at least 2")
         else:
@@ -867,6 +888,10 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             return self._lift_greenberg(p, M, new_base_ring, check)
         else:
             raise ValueError("algorithm %s not recognized" % algorithm)
+    
+    def _lift_greenberg(self, p, M, new_base_ring, check):
+        raise NotImplementedError("Working on the implementation at Sage Days 44.")
+        
 
     def _lift_to_OMS(self, p, M, new_base_ring, check):
         r"""
@@ -900,7 +925,6 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: f._lift_to_OMS(11,4,Qp(11,4),True)
             Modular symbol with values in Space of 11-adic distributions with k=0 action and precision cap 4
 
-
         """
         D = {}
         manin = self.parent().source()
@@ -908,16 +932,16 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         verbose("Naive lifting: newM=%s, new_base_ring=%s"%(M, MSS.base_ring()))
         half = ZZ(1) / ZZ(2)
         for g in manin.gens()[1:]:
-            twotor = g in manin.reps_with_two_torsion
-            threetor = g in manin.reps_with_three_torsion
+            twotor = g in manin.reps_with_two_torsion()
+            threetor = g in manin.reps_with_three_torsion()
             if twotor:
                 # See [PS] section 4.1
-                gam = manin.two_torsion[g]
+                gam = manin.two_torsion_matrix(g)
                 mu = self._map[g].lift(p, M, new_base_ring)
-                D[g] = (mu * gam - mu) * half
+                D[g] = (mu - mu * gam) * half
             elif threetor:
                 # See [PS] section 4.1
-                gam = manin.three_torsion[g]
+                gam = manin.three_torsion_matrix(g)
                 mu = self._map[g].lift(p, M, new_base_ring)
                 D[g] = (2 * mu - mu * gam - mu * (gam**2)) * half
             else:
@@ -925,20 +949,47 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 D[g] = self._map[g].lift(p, M, new_base_ring)
 
         t = self.parent().coefficient_module().lift(p, M, new_base_ring).zero_element()
-        for h in manin[2:]:
-            R = manin.relations(h)
-            if len(R) == 1:
-                c, A, g = R[0]
-                if c == 1:
-                    t += self._map[h].lift(p, M, new_base_ring)
-                elif A is not Id:
-                    # rules out extra three torsion terms
-                    t += c * self._map[g].lift(p, M, new_base_ring) * A
-        D[manin.gen(0)] = t.solve_diff_eqn()  ###### Check this!
+        ## This loops adds up around the boundary of fundamental domain except the two verticle lines
+        for g in manin.gens()[1:]:
+            twotor = g in manin.reps_with_two_torsion()
+            threetor = g in manin.reps_with_three_torsion()
+            if twotor or threetor:
+               t = t - D[g]
+            else:
+               t = t + D[g] * manin.gammas[g] - D[g]
+        ## t now should be sum Phi(D_i) | (gamma_i - 1) - sum Phi(D'_i) - sum Phi(D''_i)
+        ## (Here I'm using the opposite sign convention of [PS1] regarding D'_i and D''_i)
+
+        D[manin.gen(0)] = -t.solve_diff_eqn()  ###### Check this!
         return MSS(D)
 
     def _find_aq(self, p, M, check):
-        """
+        r"""
+        Helper function for finding Hecke eigenvalue `aq` and `q`
+        (with `q` not equal to `p`) in the case when `ap = 1 (mod p^M)`,
+        which creates the need to use other Hecke eigenvalues
+
+        INPUT:
+
+        - ``p`` -- working prime
+
+        - ``M`` -- precision
+
+        - ``check`` --
+
+        OUTPUT:
+
+        Tuple `(q, aq, eisenloss)`, with
+
+        - ``q`` -- a prime not equal to `p`
+
+        - ``aq`` -- Hecke eigenvalue at `q`
+
+        - ``eisenloss`` -- the `p`-adic valuation of `aq - q^(k+1) - 1`
+
+        EXAMPLES::
+
+
         """
         q = ZZ(2)
         k = self.parent().weight()
@@ -982,12 +1033,13 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         OUTPUT:
 
-        - 
+        -
 
         EXAMPLES::
-        
-        
+
         """
+        if new_base_ring(ap).valuation() > 0: 
+            raise ValueError("Lifting non-ordinary eigensymbols not implemented (issue #20)")
         verbose("computing naive lift: M=%s, newM=%s, new_base_ring=%s"%(M, newM, new_base_ring))
         Phi = self._lift_to_OMS(p, newM, new_base_ring, check)
         verbose(Phi._show_malformed_dist("naive lift"), level=2)
@@ -1012,7 +1064,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 Phi = Phi.reduce_precision(M + s)
         else:
             k = self.parent().weight()
-            Phi = (q**(k+1) + 1 - aq) * ((q**(k+1) + 1) * Phi - Phi.hecke(q))
+            Phi = ~(q**(k+1) + 1 - aq) * ((q**(k+1) + 1) * Phi - Phi.hecke(q))
             if eisenloss > 0:
                 verbose("change precision to %s"%(M + s))
                 Phi = Phi.reduce_precision(M + s)
@@ -1105,7 +1157,7 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         Returns the underlying classical symbol of weight `k` -- i.e.,
         applies the canonical map `D_k --> Sym^k` to all values of
         self.
-        
+
         EXAMPLES::
 
             sage: D = Distributions(0, 5, 10);  M = PSModularSymbols(Gamma0(2), coefficients=D); M
@@ -1143,3 +1195,15 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         rels = self.parent()._grab_relations()
         # TODO: no clue how to do this until this object fully works again...
         raise NotImplementedError
+
+    def padic_lseries(self,*args, **kwds):
+        r"""
+        Return the p-adic L-series of this modular symbol.
+
+        EXAMPLE::
+            
+            sage: f = Newform("37a")
+            sage: f.PS_modular_symbol().lift(37, M=6, algorithm="stevens").padic_lseries()
+            37-adic L-series of Modular symbol with values in Space of 37-adic distributions with k=0 action and precision cap 6
+        """
+        return pAdicLseries(self, *args, **kwds)
