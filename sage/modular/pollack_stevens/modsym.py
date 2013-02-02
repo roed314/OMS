@@ -46,8 +46,8 @@ class PSModularSymbolElement(ModuleElement):
 
     def _repr_(self):
         r"""
-        Returns the print representation.
-
+        Returns the print representation of the symbol.
+ 
         EXAMPLES::
 
             sage: E = EllipticCurve('11a')
@@ -479,8 +479,9 @@ class PSModularSymbolElement(ModuleElement):
         INPUT:
 
         - ``q`` -- prime of the Hecke operator
-        - ``p`` -- prime we are working modulo
-        - ``M`` -- degree of accuracy of approximation
+        - ``p`` -- prime we are working modulo (default: None)
+        - ``M`` -- degree of accuracy of approximation (default: None)
+        - ``check`` --
 
         OUTPUT:
 
@@ -924,7 +925,6 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: f._lift_to_OMS(11,4,Qp(11,4),True)
             Modular symbol with values in Space of 11-adic distributions with k=0 action and precision cap 4
 
-
         """
         D = {}
         manin = self.parent().source()
@@ -932,16 +932,16 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         verbose("Naive lifting: newM=%s, new_base_ring=%s"%(M, MSS.base_ring()))
         half = ZZ(1) / ZZ(2)
         for g in manin.gens()[1:]:
-            twotor = g in manin.reps_with_two_torsion
-            threetor = g in manin.reps_with_three_torsion
+            twotor = g in manin.reps_with_two_torsion()
+            threetor = g in manin.reps_with_three_torsion()
             if twotor:
                 # See [PS] section 4.1
-                gam = manin.two_torsion[g]
+                gam = manin.two_torsion_matrix(g)
                 mu = self._map[g].lift(p, M, new_base_ring)
-                D[g] = (mu * gam - mu) * half
+                D[g] = (mu - mu * gam) * half
             elif threetor:
                 # See [PS] section 4.1
-                gam = manin.three_torsion[g]
+                gam = manin.three_torsion_matrix(g)
                 mu = self._map[g].lift(p, M, new_base_ring)
                 D[g] = (2 * mu - mu * gam - mu * (gam**2)) * half
             else:
@@ -949,20 +949,47 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 D[g] = self._map[g].lift(p, M, new_base_ring)
 
         t = self.parent().coefficient_module().lift(p, M, new_base_ring).zero_element()
-        for h in manin[2:]:
-            R = manin.relations(h)
-            if len(R) == 1:
-                c, A, g = R[0]
-                if c == 1:
-                    t += self._map[h].lift(p, M, new_base_ring)
-                elif A is not Id:
-                    # rules out extra three torsion terms
-                    t += c * self._map[g].lift(p, M, new_base_ring) * A
-        D[manin.gen(0)] = t.solve_diff_eqn()  ###### Check this!
+        ## This loops adds up around the boundary of fundamental domain except the two verticle lines
+        for g in manin.gens()[1:]:
+            twotor = g in manin.reps_with_two_torsion()
+            threetor = g in manin.reps_with_three_torsion()
+            if twotor or threetor:
+               t = t - D[g]
+            else:
+               t = t + D[g] * manin.gammas[g] - D[g]
+        ## t now should be sum Phi(D_i) | (gamma_i - 1) - sum Phi(D'_i) - sum Phi(D''_i)
+        ## (Here I'm using the opposite sign convention of [PS1] regarding D'_i and D''_i)
+
+        D[manin.gen(0)] = -t.solve_diff_eqn()  ###### Check this!
         return MSS(D)
 
     def _find_aq(self, p, M, check):
-        """
+        r"""
+        Helper function for finding Hecke eigenvalue `aq` and `q`
+        (with `q` not equal to `p`) in the case when `ap = 1 (mod p^M)`,
+        which creates the need to use other Hecke eigenvalues
+
+        INPUT:
+
+        - ``p`` -- working prime
+
+        - ``M`` -- precision
+
+        - ``check`` --
+
+        OUTPUT:
+
+        Tuple `(q, aq, eisenloss)`, with
+
+        - ``q`` -- a prime not equal to `p`
+
+        - ``aq`` -- Hecke eigenvalue at `q`
+
+        - ``eisenloss`` -- the `p`-adic valuation of `aq - q^(k+1) - 1`
+
+        EXAMPLES::
+
+
         """
         q = ZZ(2)
         k = self.parent().weight()
@@ -999,19 +1026,20 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         `p`-ordinary eigensymbol
 
         INPUT:
-git exit
+
         - ``p`` -- prime
         - ``M`` -- integer equal to the number of moments
         - ``new_base_ring`` -- new base ring
 
         OUTPUT:
 
-        - 
+        -
 
         EXAMPLES::
-        
-        
+
         """
+        if new_base_ring(ap).valuation() > 0: 
+            raise ValueError("Lifting non-ordinary eigensymbols not implemented (issue #20)")
         verbose("computing naive lift: M=%s, newM=%s, new_base_ring=%s"%(M, newM, new_base_ring))
         Phi = self._lift_to_OMS(p, newM, new_base_ring, check)
         verbose(Phi._show_malformed_dist("naive lift"), level=2)
@@ -1129,7 +1157,7 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         Returns the underlying classical symbol of weight `k` -- i.e.,
         applies the canonical map `D_k --> Sym^k` to all values of
         self.
-        
+
         EXAMPLES::
 
             sage: D = Distributions(0, 5, 10);  M = PSModularSymbols(Gamma0(2), coefficients=D); M
