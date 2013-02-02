@@ -47,7 +47,7 @@ class PSModularSymbolElement(ModuleElement):
     def _repr_(self):
         r"""
         Returns the print representation of the symbol.
- 
+
         EXAMPLES::
 
             sage: E = EllipticCurve('11a')
@@ -212,7 +212,7 @@ class PSModularSymbolElement(ModuleElement):
         """
         Returns self - right
 
-        EXAMPLES:;
+        EXAMPLES::
 
             sage: E = EllipticCurve('11a')
             sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
@@ -888,10 +888,10 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             return self._lift_greenberg(p, M, new_base_ring, check)
         else:
             raise ValueError("algorithm %s not recognized" % algorithm)
-    
+
     def _lift_greenberg(self, p, M, new_base_ring, check):
         raise NotImplementedError("Working on the implementation at Sage Days 44.")
-        
+
 
     def _lift_to_OMS(self, p, M, new_base_ring, check):
         r"""
@@ -949,7 +949,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 D[g] = self._map[g].lift(p, M, new_base_ring)
 
         t = self.parent().coefficient_module().lift(p, M, new_base_ring).zero_element()
-        ## This loops adds up around the boundary of fundamental domain except the two verticle lines
+        ## This loops adds up around the boundary of fundamental domain except the two vertical lines
         for g in manin.gens()[1:]:
             twotor = g in manin.reps_with_two_torsion()
             threetor = g in manin.reps_with_three_torsion()
@@ -1201,7 +1201,7 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
         Return the p-adic L-series of this modular symbol.
 
         EXAMPLE::
-            
+
             sage: f = Newform("37a")
             sage: f.PS_modular_symbol().lift(37, M=6, algorithm="stevens").padic_lseries()
             37-adic L-series of Modular symbol with values in Space of 37-adic distributions with k=0 action and precision cap 6
