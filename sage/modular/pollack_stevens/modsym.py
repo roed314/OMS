@@ -870,7 +870,6 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             else:
                 # We may need extra precision in solving the difference equation
                 extraprec = (M-1).exact_log(p)
-                print "new_base_ring was none and now",extraprec
                 # should eventually be a completion
                 new_base_ring = Qp(p, M+extraprec)
         if algorithm is None:
