@@ -1,4 +1,4 @@
-"""
+r"""
 Pollack-Stevens Modular Symbols Spaces
 
 This module contains a class for spaces of modular symbols that use Glenn
@@ -14,6 +14,14 @@ and the ones in :mod:`sage.modular.modsym`:
   `Div^0(P^1(\QQ))` (cohomological objects), the others are formal linear
   combinations of `Div^0(P^1(\QQ))` (homological objects).
 """
+#*****************************************************************************
+#       Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
+#
+#  Distributed under the terms of the GNU General Public License (GPL)
+#  as published by the Free Software Foundation; either version 2 of
+#  the License, or (at your option) any later version.
+#                  http://www.gnu.org/licenses/
+#*****************************************************************************
 
 from sage.modules.module import Module
 from sage.structure.factory import UniqueFactory
@@ -37,46 +45,57 @@ class PSModularSymbols_factory(UniqueFactory):
     INPUT:
 
     - ``group`` -- integer or congruence subgroup
-    - ``weight`` -- integer `\ge 2`, or None
+
+    - ``weight`` -- integer `\ge 2`, or ``None``
+
     - ``sign`` -- integer; -1, 0, 1
-    - ``base_ring`` -- ring or None
-    - `p` -- prime or None
+
+    - ``base_ring`` --  ring or ``None``
+
+    - ``p`` -- prime or ``None``
+
     - ``prec_cap`` -- positive integer or None
+
     - ``coefficients`` -- the coefficient module (a special type of module,
-      typically distributions), or None.
+      typically distributions), or ``None``
 
     If an explicit coefficient module is given, then the arguments ``weight``,
-    ``base_ring``, ``prec_cap`` and possibly also ``p`` are redundant and are
-    ignored. They are only relevant if ``coefficients`` is None, in which case
-    the coefficient module is inferred from the other data. 
+    ``base_ring``, ``prec_cap``, and ``p`` are redundant and must be ``None``.
+    They are only relevant if ``coefficients`` is ``None``, in which case the
+    coefficient module is inferred from the other data.
 
     EXAMPLES::
 
-        sage: PSModularSymbols(Gamma0(7), weight=2, prec_cap = None)
+        sage: M = PSModularSymbols(Gamma0(7), weight=2, prec_cap = None); M
         Space of modular symbols for Congruence Subgroup Gamma0(7) with sign 0 and values in Sym^0 Q^2
 
     An example with an explict coefficient module::
 
         sage: D = Distributions(3, 7, prec_cap=10)
-        sage: PSModularSymbols(Gamma0(7), coefficients=D)
+        sage: M = PSModularSymbols(Gamma0(7), coefficients=D); M
         Space of overconvergent modular symbols for Congruence Subgroup Gamma0(7) with sign 0 and values in Space of 7-adic distributions with k=3 action and precision cap 10 
 
     TESTS::
 
         sage: TestSuite(PSModularSymbols).run()
+
     """
     def create_key(self, group, weight=None, sign=0, base_ring=None, p=None, prec_cap=None, coefficients=None):
-        """
+        r"""
         Sanitize input.
-        
+
         EXAMPLES::
-        
+
             sage: D = Distributions(3, 7, prec_cap=10)
             sage: M = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
-            sage: TestSuite(PSModularSymbols).run()
+
         """
+        if sign not in (-1,0,1):
+            raise ValueError("sign must be -1, 0, 1")
+
         if isinstance(group, (int, Integer)):
             group = Gamma0(group)
+
         if coefficients is None:
             if isinstance(group, DirichletCharacter):
                 character = group.minimize_base_ring()
@@ -85,53 +104,80 @@ class PSModularSymbols_factory(UniqueFactory):
             else:
                 character = None
             if weight is None: raise ValueError("you must specify a weight or coefficient module")
+
             k = weight - 2
             if prec_cap is None:
                 coefficients = Symk(k, base_ring, character)
             else:
                 coefficients = Distributions(k, p, prec_cap, base_ring, character)
         else:
-            # TODO: require other stuff to be None
-            pass
+            if weight is not None or base_ring is not None or p is not None or prec_cap is not None:
+                raise ValueError("if coefficients are specified, then weight, base_ring, p, and prec_cap must take their default value None")
+
         return (group, coefficients, sign)
 
     def create_object(self, version, key):
-        """
+        r"""
+        Create a space of modular symbols from ``key``.
+
+        INPUT:
+
+        - ``version`` -- the version of the object to create
+
+        - ``key`` -- a tuple of parameters, as created by :meth:`create_key`
+
         EXAMPLES::
-        
-            sage: D = Distributions(5, 7, 15); M = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
+
+            sage: D = Distributions(5, 7, 15)
+            sage: M = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
+            sage: M2 = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
+            sage: M is M2
+            True
+
         """
         return PSModularSymbolSpace(*key)
 
 PSModularSymbols = PSModularSymbols_factory('PSModularSymbols')
 
 class PSModularSymbolSpace(Module):
-    """
-    A class for spaces of modular symbols that use Glenn Stevens'
-    conventions. This class should not be instantiated directly by the user:
-    this is handled by the factory object ``PSModularSymbols``.
-    """
+    r"""
+    A class for spaces of modular symbols that use Glenn Stevens' conventions.
+    This class should not be instantiated directly by the user: this is handled
+    by the factory object ``PSModularSymbols``.
 
+    INPUT:
+
+    - ``group`` -- congruence subgroup
+
+    - ``coefficients`` -- a coefficient module
+
+    - ``sign`` -- (default: 0); 0, -1, or 1
+
+    EXAMPLES::
+
+        sage: D = Distributions(2, 11)
+        sage: M = PSModularSymbols(Gamma0(2), coefficients=D); M.sign()
+        0
+        sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=-1); M.sign()
+        -1
+        sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=1); M.sign()
+        1
+
+    """
     def __init__(self, group, coefficients, sign=0):
-        """
+        r"""
         INPUT:
 
-        - ``group`` -- congruence subgroup
-        - ``coefficients`` -- a coefficient module
-        - ``sign`` -- (default: 0); 0, -1, 1
+            See :class:`PSModularSymbolSpace`
 
         EXAMPLES::
 
-            sage: D = Distributions(2, 11);  M = PSModularSymbols(Gamma0(2), coefficients=D)
+            sage: D = Distributions(2, 11)
+            sage: M = PSModularSymbols(Gamma0(2), coefficients=D)
             sage: type(M)
             <class 'sage.modular.pollack_stevens.space.PSModularSymbolSpace_with_category'>
-            sage: M.sign()
-            0
-            sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=-1); M.sign()
-            -1
-            sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=1); M.sign()
-            1        
             sage: TestSuite(M).run()
+
         """
         Module.__init__(self, coefficients.base_ring())
         if sign not in [0,-1,1]:
@@ -156,8 +202,11 @@ class PSModularSymbolSpace(Module):
 
         EXAMPLES::
 
-            sage: D = Distributions(2, 11);  M = PSModularSymbols(Gamma0(2), coefficients=D); M._repr_()
+            sage: D = Distributions(2, 11)
+            sage: M = PSModularSymbols(Gamma0(2), coefficients=D)
+            sage: M._repr_()
             'Space of overconvergent modular symbols for Congruence Subgroup Gamma0(2) with sign 0 and values in Space of 11-adic distributions with k=2 action and precision cap 20'
+
         """
         if self.coefficient_module().is_symk():
             s = "Space of modular symbols for "
@@ -167,45 +216,40 @@ class PSModularSymbolSpace(Module):
         return s
 
     def source(self):
-        """
-        Return object that represents the domain of the modular
-        symbol elements.
+        r"""
+        Return the domain of the modular symbols in this space.
 
         OUTPUT:
 
-        - object of type fund_domain.PSModularSymbolsDomain
+        A :class:`sage.modular.pollack_stevens.fund_domain.PSModularSymbolsDomain`
 
         EXAMPLES::
 
             sage: D = Distributions(2, 11);  M = PSModularSymbols(Gamma0(2), coefficients=D)
             sage: M.source()
             Manin Relations of level 2
+
         """
         return self._source
 
     def coefficient_module(self):
         r"""
-        Returns the coefficient module of self.
-
-        OUTPUT:
-
-        - module
+        Return the coefficient module of this space.
 
         EXAMPLES::
 
             sage: D = Distributions(2, 11);  M = PSModularSymbols(Gamma0(2), coefficients=D)
             sage: M.coefficient_module()
             Space of 11-adic distributions with k=2 action and precision cap 20
-            sage: M.coefficient_module() == D
-            True
             sage: M.coefficient_module() is D
             True
+
         """
         return self._coefficients
 
     def group(self):
         r"""
-        Returns the congruence subgroup of self.
+        Return the congruence subgroup of this space.
 
         EXAMPLES::
 
@@ -219,12 +263,13 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbols(G, coefficients=D)
             sage: M.group()
             Congruence Subgroup Gamma1(11)
+
         """
         return self._group
 
     def sign(self):
         r"""
-        Returns the sign of self.
+        Return the sign of this space.
 
         EXAMPLES::
 
@@ -236,12 +281,13 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbols(Gamma1(8), coefficients=D, sign=-1)
             sage: M.sign()
             -1
+
         """
         return self._sign
 
     def ngens(self):
         r"""
-        Returns the number of generators defining self.
+        Returns the number of generators defining this space.
 
         EXAMPLES::
 
@@ -258,13 +304,13 @@ class PSModularSymbolSpace(Module):
 
     def ncoset_reps(self):
         r"""
-        Returns the number of coset representatives defining the
-        full_data of self.
+        Returns the number of coset representatives defining the domain of the
+        modular symbols in this space.
 
         OUTPUT:
 
-        - The number of coset representatives stored in the manin
-          relations. (Just the size of P^1(Z/NZ))
+        The number of coset representatives stored in the manin relations.
+        (Just the size of P^1(Z/NZ))
 
         EXAMPLES::
 
@@ -272,16 +318,13 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbols(Gamma0(2), coefficients=D)
             sage: M.ncoset_reps()
             3
+
         """
         return len(self._source.reps())
 
     def level(self):
         r"""
-        Returns the level `N`, where self is of level `Gamma_0(N)`.
-
-        OUTPUT:
-
-        - The level `N`, where self is of level `Gamma_0(N)`
+        Returns the level `N`, where this space is of level `\Gamma_0(N)`.
 
         EXAMPLES::
 
@@ -289,6 +332,7 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbols(Gamma1(14), coefficients=D)
             sage: M.level()
             14
+
         """
         return self._source.level()
 
@@ -318,15 +362,9 @@ class PSModularSymbolSpace(Module):
                         v = v + [R]
         return v
 
-
-
     def precision_cap(self):
         r"""
-        Returns the number of moments of each value of self.
-
-        OUTPUT:
-
-        - Integer
+        Returns the number of moments of each element of this space.
 
         EXAMPLES::
 
@@ -338,20 +376,19 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbols(Gamma0(7), coefficients=D)
             sage: M.precision_cap()
             10
+
         """
         return self.coefficient_module()._prec_cap
 
     def weight(self):
-        r""" 
-        Returns the weight of self.
+        r"""
+        Returns the weight of this space.
 
-        We emphasize that in the Pollack-Stevens notation, this is the
-        usual weight minus 2, so a classical weight 2 modular form corresponds
-        to a modular symbol of "weight 0".
+        .. WARNING::
 
-        OUTPUT:
-
-        - Integer
+            We emphasize that in the Pollack-Stevens notation, this is the usual
+            weight minus 2, so a classical weight 2 modular form corresponds to a
+            modular symbol of "weight 0".
 
         EXAMPLES::
 
@@ -359,29 +396,27 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbols(Gamma1(7), coefficients=D)
             sage: M.weight()
             5
+
         """
         return self.coefficient_module()._k
 
     def prime(self):
         r"""
-        Returns the prime of self.
-
-        OUTPUT:
-
-        - Integer
+        Returns the prime of this space.
 
         EXAMPLES:
             sage: D = Distributions(2, 11)
             sage: M = PSModularSymbols(Gamma(2), coefficients=D)
             sage: M.prime()
             11
+
         """
         return self.coefficient_module()._p
 
     def _p_stabilize_parent_space(self, p, new_base_ring):
         r"""
         Returns the space of Pollack-Stevens modular symbols of level
-        p * N, with changed base ring.  This is used internally when
+        ``p * N``, with changed base ring.  This is used internally when
         constructing the p-stabilization of a modular symbol.
 
         INPUT:
@@ -391,8 +426,8 @@ class PSModularSymbolSpace(Module):
 
         OUTPUT:
 
-        - The space of modular symbols of level p * N, where N is the level of
-          self, with precision M.
+        The space of modular symbols of level ``p * N``, where N is the level
+        of this space.
 
         EXAMPLES::
 
@@ -407,8 +442,8 @@ class PSModularSymbolSpace(Module):
             Space of overconvergent modular symbols for Congruence
             Subgroup Gamma1(51) with sign 0 and values in Space of
             17-adic distributions with k=4 action and precision cap 20
-        """
 
+        """
         N = self.level()
         if N % p == 0:
             raise ValueError("the level isn't prime to p")
@@ -425,10 +460,18 @@ class PSModularSymbolSpace(Module):
         return PSModularSymbols(G, coefficients=self.coefficient_module().change_ring(new_base_ring), sign=self.sign())
 
     def _specialize_parent_space(self, new_base_ring):
-        """
+        r"""
         Internal function that is used by the specialize method on
         elements.  It returns a space with same parameters as this
-        one, but over new_base_ring.
+        one, but over ``new_base_ring``.
+
+        INPUT:
+
+        - ``new_base_ring`` -- a ring
+
+        OUTPUT:
+
+        A space of modular symbols to which our space specializes.
 
         EXAMPLES::
 
@@ -440,18 +483,24 @@ class PSModularSymbolSpace(Module):
             5-adic Ring with capped absolute precision 20
             sage: M._specialize_parent_space(QQ).base_ring()
             Rational Field
+
         """
         return PSModularSymbols(self.group(), coefficients=self.coefficient_module().specialize(new_base_ring), sign=self.sign())
 
     def _lift_parent_space(self, p, M, new_base_ring):
-        """
-        Used internally when lifting modular symbols.
+        r"""
+        Used internally to lift a space of modular symbols to space of
+        overconvergent modular symbols.
 
         INPUT:
 
-        - `p` -- prime
-        - `M` -- precision cap
+        - ``p`` -- prime
+        - ``M`` -- precision cap
         - ``new_base_ring`` -- ring
+
+        OUTPUT:
+
+        A space of distribution valued modular symbols.
 
         EXAMPLES::
 
@@ -464,6 +513,7 @@ class PSModularSymbolSpace(Module):
             TypeError: Coefficient module must be a Symk
             sage: PSModularSymbols(Gamma1(3), weight=3)._lift_parent_space(17,10,Qp(17))
             Space of overconvergent modular symbols for Congruence Subgroup Gamma1(3) with sign 0 and values in Space of 17-adic distributions with k=1 action and precision cap 10
+
         """
         if self.coefficient_module().is_symk():
             return PSModularSymbols(self.group(), coefficients=self.coefficient_module().lift(p, M, new_base_ring), sign=self.sign())
@@ -471,8 +521,16 @@ class PSModularSymbolSpace(Module):
             raise TypeError("Coefficient module must be a Symk")
 
     def change_ring(self, new_base_ring):
-        """
-        Changes base ring of self to new_base_ring
+        r"""
+        Changes the base ring of this space to ``new_base_ring``.
+
+        INPUT:
+
+        - ``new_base_ring`` -- a ring
+
+        OUTPUT:
+
+        A space of modular symbols over the specified base.
 
         EXAMPLES::
 
@@ -482,13 +540,20 @@ class PSModularSymbolSpace(Module):
             Space of modular symbols for Congruence Subgroup Gamma(6) with sign 0 and values in Sym^4 Q^2
             sage: M.change_ring(Qp(5,8))
             Space of modular symbols for Congruence Subgroup Gamma(6) with sign 0 and values in Sym^4 Q_5^2
+
         """
         return PSModularSymbols(self.group(), coefficients=self.coefficient_module().change_ring(new_base_ring), sign=self.sign())
 
     def _an_element_(self):
         r"""
-        Returns a "typical" element of self; in this case the constant map sending every element
-        to an element of the coefficient module.
+        Returns the cusps associated to an element of a congruence subgroup.
+
+        OUTPUT:
+
+        An element of the modular symbol space.
+
+        Returns a "typical" element of this space; in this case the constant
+        map sending every element to an element of the coefficient module.
 
         EXAMPLES::
 
@@ -503,25 +568,24 @@ class PSModularSymbolSpace(Module):
             [(0, 1 + O(11^20), 2 + O(11^20)), (0, 1 + O(11^20), 2 + O(11^20))]
             sage: x in M
             True
+
         """
         return self(self.coefficient_module().an_element())
 
-
 def cusps_from_mat(g):
     r"""
-    Returns the cusps associated to an element of a congruence
-    subgroup.
+    Returns the cusps associated to an element of a congruence subgroup.
 
     INPUT:
 
-    - `g` -- an element of a congruence subgroup or a matrix
+    - ``g`` -- an element of a congruence subgroup or a matrix
 
     OUTPUT:
 
-    - The cusps associated to `g`.
+    A tuple of cusps associated to ``g``.
 
     EXAMPLES::
-    
+
         sage: from sage.modular.pollack_stevens.space import cusps_from_mat
         sage: g = SL2Z.one()
         sage: cusps_from_mat(g)
@@ -534,15 +598,15 @@ def cusps_from_mat(g):
         sage: cusps_from_mat(g.matrix())
         (+Infinity, 0)
 
-
     Another example::
-    
+
         sage: from sage.modular.pollack_stevens.space import cusps_from_mat
         sage: g = GammaH(3, [2]).generators()[1].matrix(); g
         [-1  1]
-        [-3  2]        
+        [-3  2]
         sage: cusps_from_mat(g)
         (1/3, 1/2)
+
     """
     if isinstance(g, ArithmeticSubgroupElement):
         g = g.matrix()
@@ -557,14 +621,14 @@ def ps_modsym_from_elliptic_curve(E):
     r"""
     Returns the PS modular symbol associated to an elliptic curve
     defined over the rationals.
-    
+
     INPUT:
 
     - ``E`` -- an elliptic curve defined over the rationals
 
     OUTPUT:
 
-    - the Pollack-Stevens modular symbol associated to ``E``
+    The Pollack-Stevens modular symbol associated to ``E``
 
     EXAMPLES::
 
@@ -576,12 +640,13 @@ def ps_modsym_from_elliptic_curve(E):
         sage: symb.values()
         [-1/2, 3/2, -2, 1/2, 0, 1, 2, -3/2, 0, -3/2, 0, -1/2, 0, 1, -2, 1/2, 0,
         0, 2, 0, 0]
-        
+
         sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
         sage: E = EllipticCurve([0,1])
         sage: symb = ps_modsym_from_elliptic_curve(E)
         sage: symb.values()
         [-1/6, 7/12, 1, 1/6, -5/12, 1/3, -7/12, -1, -1/6, 5/12, 1/4, -1/6, -5/12]
+
     """
     if not (E.base_ring() is QQ):
         raise ValueError("The elliptic curve must be defined over the rationals.")
@@ -598,27 +663,25 @@ def ps_modsym_from_elliptic_curve(E):
     return V(val)
 
 def ps_modsym_from_simple_modsym_space(A):
-    """
-    Returns some choice -- only well defined up a nonzero scalar (!)
-    -- of a Pollack-Stevens modular symbol that corresponds to A.
-    
+    r"""
+    Returns some choice -- only well defined up a nonzero scalar (!) -- of a
+    Pollack-Stevens modular symbol that corresponds to ``A``.
+
     INPUT:
 
-    - `A` -- nonzero simple Hecke equivariant new space of modular
-      symbols, which need not be cuspidal.
+    - ``A`` -- nonzero simple Hecke equivariant new space of modular symbols,
+      which need not be cuspidal.
 
     OUTPUT:
 
-    - A choice of corresponding Pollack-Stevens modular symbols; when
-      dim(A)>1, we make an arbitrary choice of defining polynomial for
-      the codomain field.
-    
-    EXAMPLES::
+    A choice of corresponding Pollack-Stevens modular symbols; when dim(A)>1,
+    we make an arbitrary choice of defining polynomial for the codomain field.
 
-        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_simple_modsym_space
+    EXAMPLES:
 
     The level 11 example::
 
+        sage: from sage.modular.pollack_stevens.space import ps_modsym_from_simple_modsym_space
         sage: A = ModularSymbols(11, sign=1, weight=2).decomposition()[0]
         sage: A.is_cuspidal()
         True
@@ -641,11 +704,11 @@ def ps_modsym_from_simple_modsym_space(A):
         sage: A.is_cuspidal()
         False
         sage: f = ps_modsym_from_simple_modsym_space(A); f
-        Modular symbol with values in Sym^0 Q^2    
+        Modular symbol with values in Sym^0 Q^2
         sage: f.values()
-        [1, 0, 0]        
+        [1, 0, 0]
 
-    We create the simplest weight 2 example in which A has dimension
+    We create the simplest weight 2 example in which ``A`` has dimension
     bigger than 1::
 
         sage: A = ModularSymbols(23, sign=1, weight=2).decomposition()[0]
@@ -657,7 +720,7 @@ def ps_modsym_from_simple_modsym_space(A):
         sage: f.base_ring()
         Number Field in alpha with defining polynomial x^2 + x - 1
 
-    We create the +1 modular symbol attached to the weight 12 modular form Delta::
+    We create the +1 modular symbol attached to the weight 12 modular form ``Delta``::
 
         sage: A = ModularSymbols(1, sign=+1, weight=12).decomposition()[0]
         sage: f = ps_modsym_from_simple_modsym_space(A); f
@@ -665,7 +728,7 @@ def ps_modsym_from_simple_modsym_space(A):
         sage: f.values()
         [(-1620/691, 0, 1, 0, -9/14, 0, 9/14, 0, -1, 0, 1620/691), (1620/691, 1620/691, 929/691, -453/691, -29145/9674, -42965/9674, -2526/691, -453/691, 1620/691, 1620/691, 0), (0, -1620/691, -1620/691, 453/691, 2526/691, 42965/9674, 29145/9674, 453/691, -929/691, -1620/691, -1620/691)]
 
-    And, the -1 modular symbol attached to Delta::
+    And, the -1 modular symbol attached to ``Delta``::
 
         sage: A = ModularSymbols(1, sign=-1, weight=12).decomposition()[0]
         sage: f = ps_modsym_from_simple_modsym_space(A); f
@@ -673,7 +736,7 @@ def ps_modsym_from_simple_modsym_space(A):
         sage: f.values()
         [(0, 1, 0, -25/48, 0, 5/12, 0, -25/48, 0, 1, 0), (0, -1, -2, -119/48, -23/12, -5/24, 23/12, 3, 2, 0, 0), (0, 0, 2, 3, 23/12, -5/24, -23/12, -119/48, -2, -1, 0)]
 
-    A consistency check with ps_modsym_from_simple_modsym_space::
+    A consistency check with :meth:`sage.modular.pollack_stevens.space.ps_modsym_from_simple_modsym_space`::
 
         sage: from sage.modular.pollack_stevens.space import (ps_modsym_from_elliptic_curve, ps_modsym_from_simple_modsym_space)
         sage: E = EllipticCurve('11a')
@@ -686,28 +749,28 @@ def ps_modsym_from_simple_modsym_space(A):
         sage: f_minus = ps_modsym_from_simple_modsym_space(A); f_minus.values()
         [0, 1, -1]
 
-    We find that a linear combination of the plus and minus parts
-    equals the Pollack-Stevens symbol attached to E. This illustrates
-    how ps_modsym_from_simple_modsym_space is only well-defined up to
-    a nonzero scalar.
-    
+    We find that a linear combination of the plus and minus parts equals the
+    Pollack-Stevens symbol attached to ``E``. This illustrates how
+    ``ps_modsym_from_simple_modsym_space`` is only well-defined up to a nonzero
+    scalar::
+
         sage: (-1/5)*vector(QQ, f_plus.values()) + vector(QQ, f_minus.values())
         (-1/5, 3/2, -1/2)
         sage: vector(QQ, f_E.values())
         (-1/5, 3/2, -1/2)
 
-    The next few examples all illustrate the ways in which exceptions are raised
-    if A does not satisfy various constraints.
+    The next few examples all illustrate the ways in which exceptions are
+    raised if A does not satisfy various constraints.
 
-    First, A must be new::
+    First, ``A`` must be new::
 
         sage: A = ModularSymbols(33,sign=1).cuspidal_subspace().old_subspace()
         sage: ps_modsym_from_simple_modsym_space(A)
         Traceback (most recent call last):
         ...
-        ValueError: A must be new        
+        ValueError: A must be new
 
-    A must be simple::
+    ``A`` must be simple::
 
         sage: A = ModularSymbols(43,sign=1).cuspidal_subspace()
         sage: ps_modsym_from_simple_modsym_space(A)
@@ -715,7 +778,7 @@ def ps_modsym_from_simple_modsym_space(A):
         ...
         ValueError: A must be simple
 
-    A must have sign -1 or +1 in order to be simple::
+    ``A`` must have sign -1 or +1 in order to be simple::
 
         sage: A = ModularSymbols(11).cuspidal_subspace()
         sage: ps_modsym_from_simple_modsym_space(A)
@@ -727,14 +790,15 @@ def ps_modsym_from_simple_modsym_space(A):
 
         sage: A = ModularSymbols(10).cuspidal_subspace(); A
         Modular Symbols subspace of dimension 0 of Modular Symbols space of dimension 3 for Gamma_0(10) of weight 2 with sign 0 over Rational Field
-        sage: ps_modsym_from_simple_modsym_space(A)    
+        sage: ps_modsym_from_simple_modsym_space(A)
         Traceback (most recent call last):
         ...
         ValueError: A must positive dimension
+
     """
     if A.dimension() == 0:
         raise ValueError, "A must positive dimension"
-    
+
     if A.sign() == 0:
         raise ValueError, "A must have sign +1 or -1 (otherwise it is not simple)"
 
@@ -747,7 +811,7 @@ def ps_modsym_from_simple_modsym_space(A):
     M = A.ambient_module()
     w = A.dual_eigenvector()
     K = w.base_ring()
-    V = PSModularSymbols(A.group(), A.weight(), base_ring=K, sign=A.sign()) 
+    V = PSModularSymbols(A.group(), A.weight(), base_ring=K, sign=A.sign())
     D = V.coefficient_module()
     N = V.level()
     k = V.weight() # = A.weight() - 2

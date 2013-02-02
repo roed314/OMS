@@ -13,7 +13,7 @@ Spaces of Distributions
 
 from sage.modules.module import Module
 from sage.structure.parent import Parent
-from sage.rings.padics.factory import ZpCA
+from sage.rings.padics.factory import ZpCA, QpCR
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.rings.rational_field import QQ
 from sage.rings.integer_ring import ZZ
@@ -229,8 +229,10 @@ class Distributions_abstract(Module):
         self._character = character
         self._symk = symk
         act = WeightKAction(self, character, tuplegen, act_on_left)
+        act_S0p = WeightKAction(self, character, tuplegen, act_on_left, padic = True)
         self._act = act
-        self._populate_coercion_lists_(action_list=[iScale(self, act_on_left), act])
+        self._act_S0p = act_S0p
+        self._populate_coercion_lists_(action_list=[iScale(self, act_on_left), act,act_S0p])
 
     def prime(self):
         """
@@ -554,13 +556,23 @@ class Symk_class(Distributions_abstract):
             raise NotImplementedError
         if M is None:
             M = self._prec_cap + 1
+
+        # sanitize new_base_ring. Don't want it to end up being QQ!
         if new_base_ring is None:
             new_base_ring = self.base_ring()
-        if p is None:
-            try:
-                p = new_base_ring.prime()
-            except AttributeError:
-                raise ValueError("You must specify a prime")
+        try:
+            pp = new_base_ring.prime()
+        except AttributeError:
+            pp = None
+
+        if p is None and pp is None:
+            raise ValueError("You must specify a prime")
+        elif pp is None:
+            new_base_ring = QpCR(p, M)
+        elif p is None:
+            p = pp
+        elif p != pp:
+            raise ValueError("Inconsistent primes")
         return Distributions(k=self._k, p=p, prec_cap=M, base=new_base_ring, character=self._character, tuplegen=self._act._tuplegen, act_on_left=self._act.is_left())
 
 class Distributions_class(Distributions_abstract):
