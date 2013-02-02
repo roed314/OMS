@@ -45,7 +45,9 @@ sage: f(M2Z([2,3,4,5]))
 from sage.rings.arith import convergents
 from sage.misc.misc import verbose
 from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2, Matrix_integer_2x2
-from fund_domain import M2Z, t00, t10, t01, t11, Id, basic_hecke_matrix
+from sigma0 import Sigma0
+S0 = Sigma0(0)
+from fund_domain import t00, t10, t01, t11, Id, basic_hecke_matrix
 
 def unimod_matrices_to_infty(r, s):
     r"""
@@ -89,14 +91,14 @@ def unimod_matrices_to_infty(r, s):
     # is very, very relevant to massively optimizing this.
     L = convergents(r / s)
     # Computes the continued fraction convergents of r/s
-    v = [M2Z([1, L[0].numerator(), 0, L[0].denominator()])]
+    v = [S0([1, L[0].numerator(), 0, L[0].denominator()])]
     # Initializes the list of matrices
     for j in range(0, len(L)-1):
         a = L[j].numerator()
         c = L[j].denominator()
         b = L[j + 1].numerator()
         d = L[j + 1].denominator()
-        v.append(M2Z([(-1)**(j + 1) * a, b, (-1)**(j + 1) * c, d]))
+        v.append(S0([(-1)**(j + 1) * a, b, (-1)**(j + 1) * c, d]))
         # The matrix connecting two consecutive convergents is added on
     return v
 
@@ -139,7 +141,7 @@ def unimod_matrices_from_infty(r, s):
     if s != 0:
         L = convergents(r / s)
         # Computes the continued fraction convergents of r/s
-        v = [M2Z([-L[0].numerator(), 1, -L[0].denominator(), 0])]
+        v = [S0([-L[0].numerator(), 1, -L[0].denominator(), 0])]
         # Initializes the list of matrices
         # the function contfrac_q in https://github.com/williamstein/psage/blob/master/psage/modform/rational/modular_symbol_map.pyx
         # is very, very relevant to massively optimizing this.
@@ -148,7 +150,7 @@ def unimod_matrices_from_infty(r, s):
             c = L[j].denominator()
             b = L[j + 1].numerator()
             d = L[j + 1].denominator()
-            v.append(M2Z([-b, (-1)**(j + 1) * a, -d, (-1)**(j + 1) * c]))
+            v.append(S0([-b, (-1)**(j + 1) * a, -d, (-1)**(j + 1) * c]))
             # The matrix connecting two consecutive convergents is added on
         return v
     else:
@@ -199,7 +201,7 @@ class ManinMap(object):
                     if not isinstance(ky, Matrix_integer_2x2):
                         # should eventually check that ky is actually a coset rep,
                         # handle elements of P^1, make sure that we cover all cosets....
-                        ky = M2Z(ky)
+                        ky = S0(ky)
                     self._dict[ky] = val
             else:
                 # constant function
@@ -241,14 +243,11 @@ class ManinMap(object):
             t = self._codomain.zero_element()
         else:
             c, A, g = L[0]
-            A=M2Z(A)
-            A.set_immutable()
-            g1 = (self._dict[self._manin.reps(g)] * A)
+            g1 = self._dict[self._manin.reps(g)] * A
             t = g1 * c
             for c, A, g in L[1:]:
-                A=M2Z(A)
-                A.set_immutable()
-                g1 = (self._dict[self._manin.reps(g)] * A)
+                A=S0(A)
+                g1 = self._dict[self._manin.reps(g)] * A
                 t += g1 * c
         return t
 
@@ -485,10 +484,8 @@ class ManinMap(object):
             (15, 0)
             
         """
-
-        B = self._manin.equivalent_rep(A)
-        gaminv = M2Z(B * A._invert_unit())
-        gaminv.set_immutable()
+        B = S0(self._manin.equivalent_rep(A))
+        gaminv = S0(B * S0(A)._invert_unit())
         return self[B] * gaminv
 
     def __call__(self, A):
@@ -736,11 +733,11 @@ class ManinMap(object):
 
     def p_stabilize(self, p, alpha, V):
         manin = V.source()
-        pmat = M2Z([p,0,0,1])
+        pmat = S0([p,0,0,1])
         D = {}
         scalar = 1/alpha
         one = scalar.parent()(1)
-        for g in manin.gens():
+        for g in map(S0, manin.gens()):
             # we use scale here so that we don't need to define a
             # construction functor in order to scale by something
             # outside the base ring.
