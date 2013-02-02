@@ -46,7 +46,6 @@ from sage.rings.arith import convergents
 from sage.misc.misc import verbose
 from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2, Matrix_integer_2x2
 from fund_domain import M2Z, t00, t10, t01, t11, Id, basic_hecke_matrix
-from distributions import Distributions
 
 def unimod_matrices_to_infty(r, s):
     r"""
