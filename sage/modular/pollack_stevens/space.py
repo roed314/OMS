@@ -45,33 +45,40 @@ class PSModularSymbols_factory(UniqueFactory):
     INPUT:
 
     - ``group`` -- integer or congruence subgroup
-    - ``weight`` -- integer `\ge 2`, or None
+
+    - ``weight`` -- integer `\ge 2`, or ``None``
+
     - ``sign`` -- integer; -1, 0, 1
-    - ``base_ring`` -- ring or None
-    - `p` -- prime or None
+
+    - ``base_ring`` --  ring or ``None``
+
+    - ``p`` -- prime or ``None``
+
     - ``prec_cap`` -- positive integer or None
+
     - ``coefficients`` -- the coefficient module (a special type of module,
-      typically distributions), or None.
+      typically distributions), or ``None``
 
     If an explicit coefficient module is given, then the arguments ``weight``,
-    ``base_ring``, ``prec_cap`` and possibly also ``p`` are redundant and are
-    ignored. They are only relevant if ``coefficients`` is None, in which case
-    the coefficient module is inferred from the other data.
+    ``base_ring``, ``prec_cap``, and ``p`` are redundant and must be ``None``.
+    They are only relevant if ``coefficients`` is ``None``, in which case the
+    coefficient module is inferred from the other data.
 
     EXAMPLES::
 
-        sage: PSModularSymbols(Gamma0(7), weight=2, prec_cap = None)
+        sage: M = PSModularSymbols(Gamma0(7), weight=2, prec_cap = None); M
         Space of modular symbols for Congruence Subgroup Gamma0(7) with sign 0 and values in Sym^0 Q^2
 
     An example with an explict coefficient module::
 
         sage: D = Distributions(3, 7, prec_cap=10)
-        sage: PSModularSymbols(Gamma0(7), coefficients=D)
+        sage: M = PSModularSymbols(Gamma0(7), coefficients=D); M
         Space of overconvergent modular symbols for Congruence Subgroup Gamma0(7) with sign 0 and values in Space of 7-adic distributions with k=3 action and precision cap 10 
 
     TESTS::
 
         sage: TestSuite(PSModularSymbols).run()
+
     """
     def create_key(self, group, weight=None, sign=0, base_ring=None, p=None, prec_cap=None, coefficients=None):
         r"""
@@ -81,10 +88,14 @@ class PSModularSymbols_factory(UniqueFactory):
 
             sage: D = Distributions(3, 7, prec_cap=10)
             sage: M = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
-            sage: TestSuite(PSModularSymbols).run()
+
         """
+        if sign not in (-1,0,1):
+            raise ValueError("sign must be -1, 0, 1")
+
         if isinstance(group, (int, Integer)):
             group = Gamma0(group)
+
         if coefficients is None:
             if isinstance(group, DirichletCharacter):
                 character = group.minimize_base_ring()
@@ -93,21 +104,36 @@ class PSModularSymbols_factory(UniqueFactory):
             else:
                 character = None
             if weight is None: raise ValueError("you must specify a weight or coefficient module")
+
             k = weight - 2
             if prec_cap is None:
                 coefficients = Symk(k, base_ring, character)
             else:
                 coefficients = Distributions(k, p, prec_cap, base_ring, character)
         else:
-            # TODO: require other stuff to be None
-            pass
+            if weight is not None or base_ring is not None or p is not None or prec_cap is not None:
+                raise ValueError("if coefficients are specified, then weight, base_ring, p, and prec_cap must take their default value None")
+
         return (group, coefficients, sign)
 
     def create_object(self, version, key):
         r"""
+        Create a space of modular symbols from ``key``.
+
+        INPUT:
+
+        - ``version`` -- the version of the object to create
+
+        - ``key`` -- a tuple of parameters, as created by :meth:`create_key`
+
         EXAMPLES::
 
-            sage: D = Distributions(5, 7, 15); M = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
+            sage: D = Distributions(5, 7, 15)
+            sage: M = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
+            sage: M2 = PSModularSymbols(Gamma0(7), coefficients=D) # indirect doctest
+            sage: M is M2
+            True
+
         """
         return PSModularSymbolSpace(*key)
 
@@ -115,31 +141,43 @@ PSModularSymbols = PSModularSymbols_factory('PSModularSymbols')
 
 class PSModularSymbolSpace(Module):
     r"""
-    A class for spaces of modular symbols that use Glenn Stevens'
-    conventions. This class should not be instantiated directly by the user:
-    this is handled by the factory object ``PSModularSymbols``.
-    """
+    A class for spaces of modular symbols that use Glenn Stevens' conventions.
+    This class should not be instantiated directly by the user: this is handled
+    by the factory object ``PSModularSymbols``.
 
+    INPUT:
+
+    - ``group`` -- congruence subgroup
+
+    - ``coefficients`` -- a coefficient module
+
+    - ``sign`` -- (default: 0); 0, -1, or 1
+
+    EXAMPLES::
+
+        sage: D = Distributions(2, 11)
+        sage: M = PSModularSymbols(Gamma0(2), coefficients=D); M.sign()
+        0
+        sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=-1); M.sign()
+        -1
+        sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=1); M.sign()
+        1
+
+    """
     def __init__(self, group, coefficients, sign=0):
         r"""
         INPUT:
 
-        - ``group`` -- congruence subgroup
-        - ``coefficients`` -- a coefficient module
-        - ``sign`` -- (default: 0); 0, -1, 1
+            See :class:`PSModularSymbolSpace`
 
         EXAMPLES::
 
-            sage: D = Distributions(2, 11);  M = PSModularSymbols(Gamma0(2), coefficients=D)
+            sage: D = Distributions(2, 11)
+            sage: M = PSModularSymbols(Gamma0(2), coefficients=D)
             sage: type(M)
             <class 'sage.modular.pollack_stevens.space.PSModularSymbolSpace_with_category'>
-            sage: M.sign()
-            0
-            sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=-1); M.sign()
-            -1
-            sage: M = PSModularSymbols(Gamma0(2), coefficients=D, sign=1); M.sign()
-            1
             sage: TestSuite(M).run()
+
         """
         Module.__init__(self, coefficients.base_ring())
         if sign not in [0,-1,1]:
@@ -164,8 +202,11 @@ class PSModularSymbolSpace(Module):
 
         EXAMPLES::
 
-            sage: D = Distributions(2, 11);  M = PSModularSymbols(Gamma0(2), coefficients=D); M._repr_()
+            sage: D = Distributions(2, 11)
+            sage: M = PSModularSymbols(Gamma0(2), coefficients=D)
+            sage: M._repr_()
             'Space of overconvergent modular symbols for Congruence Subgroup Gamma0(2) with sign 0 and values in Space of 11-adic distributions with k=2 action and precision cap 20'
+
         """
         if self.coefficient_module().is_symk():
             s = "Space of modular symbols for "
@@ -176,44 +217,39 @@ class PSModularSymbolSpace(Module):
 
     def source(self):
         r"""
-        Return object that represents the domain of the modular
-        symbol elements.
+        Return the domain of the modular symbols in this space.
 
         OUTPUT:
 
-        - object of type fund_domain.PSModularSymbolsDomain
+        A :class:`sage.modular.pollack_stevens.fund_domain.PSModularSymbolsDomain`
 
         EXAMPLES::
 
             sage: D = Distributions(2, 11);  M = PSModularSymbols(Gamma0(2), coefficients=D)
             sage: M.source()
             Manin Relations of level 2
+
         """
         return self._source
 
     def coefficient_module(self):
         r"""
-        Returns the coefficient module of self.
-
-        OUTPUT:
-
-        - module
+        Return the coefficient module of this space.
 
         EXAMPLES::
 
             sage: D = Distributions(2, 11);  M = PSModularSymbols(Gamma0(2), coefficients=D)
             sage: M.coefficient_module()
             Space of 11-adic distributions with k=2 action and precision cap 20
-            sage: M.coefficient_module() == D
-            True
             sage: M.coefficient_module() is D
             True
+
         """
         return self._coefficients
 
     def group(self):
         r"""
-        Returns the congruence subgroup of self.
+        Return the congruence subgroup of this space.
 
         EXAMPLES::
 
@@ -227,12 +263,13 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbols(G, coefficients=D)
             sage: M.group()
             Congruence Subgroup Gamma1(11)
+
         """
         return self._group
 
     def sign(self):
         r"""
-        Returns the sign of self.
+        Return the sign ofthis space.
 
         EXAMPLES::
 
@@ -244,6 +281,7 @@ class PSModularSymbolSpace(Module):
             sage: M = PSModularSymbols(Gamma1(8), coefficients=D, sign=-1)
             sage: M.sign()
             -1
+
         """
         return self._sign
 
