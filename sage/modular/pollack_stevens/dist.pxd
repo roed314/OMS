@@ -12,6 +12,8 @@ from sage.rings.padics.pow_computer cimport PowComputer_long
 cdef class Dist(ModuleElement):
     cpdef normalize(self)
     cdef long ordp
+    cdef long _relprec(self)
+    cdef unscaled_moment(self, long i)
 
 cdef class Dist_vector(Dist):
     cdef public _moments
@@ -30,6 +32,7 @@ cdef class Dist_long(Dist):
     cdef public PowComputer_long prime_pow
     cdef int quasi_normalize(self) except -1
     cdef Dist_long _new_c(self)
+    cdef Dist_long _addsub(self, Dist_long right, bint negate)
 
 cdef class WeightKAction(Action):
     cdef public _k
