@@ -551,7 +551,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: pass
         """
         if M is None:
-            M = self.parent().precision_cap() + 1
+            M = ZZ(20)
         elif M <= 1:
             raise ValueError("M must be at least 2")
         else:
@@ -869,6 +869,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             else:
                 # We may need extra precision in solving the difference equation
                 extraprec = (M-1).exact_log(p)
+                print "new_base_ring was none and now",extraprec
                 # should eventually be a completion
                 new_base_ring = Qp(p, M+extraprec)
         if algorithm is None:
@@ -947,6 +948,9 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             else:
                 # no two or three torsion
                 D[g] = self._map[g].lift(p, M, new_base_ring)
+                print "M = ",M
+                print "new_base_ring =",new_base_ring
+                print D[g]
 
         t = self.parent().coefficient_module().lift(p, M, new_base_ring).zero_element()
         ## This loops adds up around the boundary of fundamental domain except the two verticle lines
@@ -961,6 +965,10 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         ## (Here I'm using the opposite sign convention of [PS1] regarding D'_i and D''_i)
 
         D[manin.gen(0)] = -t.solve_diff_eqn()  ###### Check this!
+
+        print t
+        print t.solve_diff_eqn()
+    
         return MSS(D)
 
     def _find_aq(self, p, M, check):
@@ -973,18 +981,14 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         while q != p and eisenloss >= M:
             q = next_prime(q)
             aq = self.Tq_eigenvalue(q, check=check)
-            eisenloss = (aq - q**(k+1) - 1).valuation(p)
+            if q != p:
+                eisenloss = (aq - q**(k+1) - 1).valuation(p)
+            else:
+                eisenloss = (aq - 1).valuation(p)                
         return q, aq, eisenloss
 
     def _find_extraprec(self, p, M, alpha, check):
-        eisenloss = (alpha - 1).valuation(p)
-        # Here we make a judgement that lifting to higher precision is cheaper than computing extra Hecke operators.
-        if eisenloss < M:
-            q = None
-            aq = None
-        else:
-            # ap = 1 (mod p^M), so we need to use other Hecke eigenvalues
-            q, aq, eisenloss = self._find_aq(p, M, check)
+        q, aq, eisenloss = self._find_aq(p, M, check)
         newM = M + eisenloss
 
         # We also need to add precision to account for denominators appearing while solving the difference equation.
@@ -1014,10 +1018,15 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         
         
         """
+        print "Using precision :",newM
         if new_base_ring(ap).valuation() > 0: 
             raise ValueError("Lifting non-ordinary eigensymbols not implemented (issue #20)")
         verbose("computing naive lift: M=%s, newM=%s, new_base_ring=%s"%(M, newM, new_base_ring))
         Phi = self._lift_to_OMS(p, newM, new_base_ring, check)
+        ## Act by Hecke to ensure values are in D and not D^dag after sovling difference equation
+        verbose("Applying Hecke")
+        apinv = ~ap
+        Phi = apinv * Phi.hecke(p)
         verbose(Phi._show_malformed_dist("naive lift"), level=2)
         s = - Phi.valuation(p)
         if s > 0:
@@ -1027,46 +1036,50 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         else:
             s = 0
             need_unscaling = False
-        Phi = Phi.reduce_precision(M + s + eisenloss)._normalize()
+#        Phi = Phi.reduce_precision(M + s - eisenloss)._normalize()
+#        verbose("accuracy: ",M + s - eisenloss)
         verbose(Phi._show_malformed_dist("after reduction"), level=2)
-        verbose("Applying Hecke")
-        apinv = ~ap
-        Phi = apinv * Phi.hecke(p)
         verbose("Killing eisenstein part")
         if q is None:
             Phi = 1 / (1 - ap) * (Phi - Phi.hecke(p))
-            if eisenloss > 0:
-                verbose("change precision to %s"%(M + s))
-                Phi = Phi.reduce_precision(M + s)
+#            if eisenloss > 0:
+#                verbose("change precision to %s"%(M + s))
+#                Phi = Phi.reduce_precision(M + s)
         else:
             k = self.parent().weight()
-            Phi = ~(q**(k+1) + 1 - aq) * ((q**(k+1) + 1) * Phi - Phi.hecke(q))
-            if eisenloss > 0:
-                verbose("change precision to %s"%(M + s))
-                Phi = Phi.reduce_precision(M + s)
+            Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q))
+#            Phi = ~(q**(k+1) + 1 - aq) * ((q**(k+1) + 1) * Phi - Phi.hecke(q))
+#            if eisenloss > 0:
+#                verbose("change precision to %s"%(M + s))
+#                Phi = Phi.reduce_precision(M + s)
         verbose(Phi._show_malformed_dist("Eisenstein killed"), level=2)
         verbose("Iterating U_p")
         Psi = apinv * Phi.hecke(p)
         err = (Psi - Phi).diagonal_valuation(p)
         Phi = Psi
-        old_err = err - 1
-        while err < M:
-            if need_unscaling and Phi.valuation(p) >= s:
-                verbose("unscaling by %s^%s"%(p, s))
-                Phi *= (1 / p**s)
+#        old_err = err - 1
+        attempts = 0
+        while (err < M+s-eisenloss) and (attempts < 2*newM):
+#            if need_unscaling and Phi.valuation(p) >= s:
+#                verbose("unscaling by %s^%s"%(p, s))
+#                Phi *= (1 / p**s)
                 # Can't we get this to better precision....
-                Phi = Phi.reduce_precision(M)._normalize()
-                need_unscaling = False
-            Psi = Phi.hecke(p) * apinv # this won't handle precision right in the critical slope case.
+#                Phi = Phi.reduce_precision(M)._normalize()
+#                need_unscaling = False
+            Psi = Phi.hecke(p) * apinv # this won't handle precision right in the critical slope case. ????
             err = (Psi - Phi).diagonal_valuation(p)
+            print "Here's the error ",err
             verbose("error is zero modulo p^%s"%(err))
             verbose((Psi - Phi)._show_malformed_dist("loop %s"%err), level=2)
-            if err == old_err:
-                raise RuntimeError("Precision problem in lifting -- precision did not increase.")
-            else:
-                old_err = err
+ #           if err == old_err:
+ #               raise RuntimeError("Precision problem in lifting -- precision did not increase.")
+ #           else:
+ #               old_err = err
             Phi = Psi
-        return Phi._normalize()
+        if attempts >= 2*newM:
+            raise RuntimeError("Precision problem in lifting -- precision did not increase.")
+        Phi =  ~(q**(k+1) + 1 - aq) * Phi
+        return Phi.reduce_precision(M)
 
     def p_stabilize_and_lift(self, p=None, M=None, alpha=None, ap=None, new_base_ring=None, \
                                ordinary=True, algorithm=None, eigensymbol=False, check=True):
