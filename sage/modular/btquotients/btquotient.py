@@ -41,16 +41,16 @@ from sage.rings.arith import fundamental_discriminant
 
 class DoubleCosetReduction(SageObject):
     r"""
-    Edges in the Bruhat-tits tree are represented by cosets of 
-    matrices in `\GL_2`. Given a matrix `x` in `\GL_2`, this 
-    class computes and stores the data corresponding to the 
-    double coset representation of `x` in terms of a fundamental 
+    Edges in the Bruhat-tits tree are represented by cosets of
+    matrices in `\GL_2`. Given a matrix `x` in `\GL_2`, this
+    class computes and stores the data corresponding to the
+    double coset representation of `x` in terms of a fundamental
     domain of edges for the action of the arithmetic group `\Gamma'.
 
     More precisely:
-    Initialized with an element `x` of `\GL_2(\ZZ)`, finds elements 
-    `\gamma` in `\Gamma`, `t` and an edge `e` such that `get=x`. It 
-    stores these values as members ``gamma``, ``label`` and functions 
+    Initialized with an element `x` of `\GL_2(\ZZ)`, finds elements
+    `\gamma` in `\Gamma`, `t` and an edge `e` such that `get=x`. It
+    stores these values as members ``gamma``, ``label`` and functions
     ``self.sign()``,  ``self.t()`` and ``self.igamma()``, satisfying:
         if ``self.sign()==+1``:
             ``igamma()*edge_list[label].rep*t()==x``
@@ -59,24 +59,24 @@ class DoubleCosetReduction(SageObject):
 
     It also stores a member called power so that:
         ``p**(2*power)=gamma.reduced_norm()``
-   
+
     The usual decomposition ``get=x`` would be:
         g=gamma/(p**power)
         e=edge_list[label]
         t'=t*p**power
     Here usual denotes that we've rescaled gamma to have unit
-    determinant, and so that the result is honestly an element 
-    of the arithmetic quarternion group under consideration. In 
-    practice we store integral multiples and keep track of the 
+    determinant, and so that the result is honestly an element
+    of the arithmetic quarternion group under consideration. In
+    practice we store integral multiples and keep track of the
     powers of `p`.
 
     INPUT:
 
     - ``Y`` -  BTQuotient object in which to work
-    - ``x`` -  Something coercible into a matrix in `\GL_2(\ZZ)`. In 
-       principle we should allow elements in `\GL_2(\QQ_p)`, but it is 
+    - ``x`` -  Something coercible into a matrix in `\GL_2(\ZZ)`. In
+       principle we should allow elements in `\GL_2(\QQ_p)`, but it is
        enough to work with integral entries
-    - ``extrapow`` - gets added to the power attribute, and it is 
+    - ``extrapow`` - gets added to the power attribute, and it is
        used for the Hecke action.
 
     EXAMPLES::
@@ -107,7 +107,7 @@ class DoubleCosetReduction(SageObject):
         Initializes and computes the reduction as a double coset.
 
         EXAMPLES::
-            
+
             sage: Y = BTQuotient(5,13)
             sage: x = Matrix(ZZ,2,2,[123,153,1231,1231])
             sage: d = DoubleCosetReduction(Y,x)
@@ -148,18 +148,50 @@ class DoubleCosetReduction(SageObject):
         """
         return "DoubleCosetReduction"
 
+    def __cmp__(self,other):
+        """
+        Return self == other
+
+        TESTS::
+
+            sage: Y = BTQuotient(5,13)
+            sage: x = Matrix(ZZ,2,2,[123,153,1231,1231])
+            sage: d1 = DoubleCosetReduction(Y,x)
+            sage: d1 == d1
+            True
+        """
+        c = cmp(self._parent,other._parent)
+        if c: return c
+        c = cmp(self.parity,other.parity)
+        if c: return c
+        c = cmp(self._num_edges,other._num_edges)
+        if c: return c
+        c = cmp(self.label,other.label)
+        if c: return c
+        c = cmp(self.gamma,other.gamma)
+        if c: return c
+        c = cmp(self.x,other.x)
+        if c: return c
+        c = cmp(self.power,other.power)
+        if c: return c
+        c = cmp(self._t_prec,other._t_prec)
+        if c: return c
+        c = cmp(self._igamma_prec,other._igamma_prec)
+        if c: return c
+        return 0
+
     def sign(self):
         r"""
         The direction of the edge.
 
-        The BT quotients are directed graphs but we only store 
-        half the edges (we treat them more like unordered graphs). 
-        The sign tells whether the matrix self.x is equivalent to the 
+        The BT quotients are directed graphs but we only store
+        half the edges (we treat them more like unordered graphs).
+        The sign tells whether the matrix self.x is equivalent to the
         representative in the quotient (sign = +1), or to the
         opposite of one of the representatives (sign = -1).
 
         OUTPUT :
-       
+
         - an int that is +1 or -1 according to the sign of self
 
         EXAMPLES::
@@ -188,8 +220,8 @@ class DoubleCosetReduction(SageObject):
         Image under gamma.
 
         Elements of the arithmetic group can be regarded as elements
-        of the global quarterion order, and hence may be represented 
-        exactly. This function computes the image of such an element 
+        of the global quarterion order, and hence may be represented
+        exactly. This function computes the image of such an element
         under the local splitting and returns the corresponding p-adic
         approximation.
 
@@ -213,7 +245,7 @@ class DoubleCosetReduction(SageObject):
 
             sage: from sage.modular.btquotients.btquotient import DoubleCosetReduction
             sage: Y = BTQuotient(7,11)
-            sage: d = DoubleCosetReduction(Y,Matrix(ZZ,2,2,[123,45,88,1])) 
+            sage: d = DoubleCosetReduction(Y,Matrix(ZZ,2,2,[123,45,88,1]))
             sage: d.igamma()
             [6 + 6*7 + 6*7^2 + 6*7^3 + 6*7^4 + O(7^5)                                   O(7^5)]
             [                                  O(7^5) 6 + 6*7 + 6*7^2 + 6*7^3 + 6*7^4 + O(7^5)]
@@ -240,13 +272,13 @@ class DoubleCosetReduction(SageObject):
         r"""
         Return the 't part' of the decomposition using the rest of the data.
 
-        INPUT: 
-       
+        INPUT:
+
         - ``prec`` - a p-adic precision that t will be computed
         to. Default is the default working precision of self
 
-        OUTPUT: 
-        
+        OUTPUT:
+
         - ``cached_t`` - a 2x2 p-adic matrix with entries of
         precision 'prec' that is the 't-part' of the decomposition of
         self
@@ -285,7 +317,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
 
     INPUT:
 
-    - ``p`` - a prime number. The corresponding tree is then p+1 regular 
+    - ``p`` - a prime number. The corresponding tree is then p+1 regular
 
     EXAMPLES:
 
@@ -325,7 +357,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
         Initializes a BruhatTitsTree object for a given prime p
 
         EXAMPLES::
-            
+
             sage: from sage.modular.btquotients.btquotient import BruhatTitsTree
             sage: T = BruhatTitsTree(17)
             sage: TestSuite(T).run()
@@ -345,7 +377,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
 
           - ``e`` - a 2x2 matrix with integer entries
 
-          - ``normalized`` - boolean (default: false). If true 
+          - ``normalized`` - boolean (default: false). If true
             then the input matrix is assumed to be normalized.
 
         OUPUT:
@@ -378,7 +410,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
 
           - ``e`` - a 2x2 matrix with integer entries
 
-          - ``normalized`` - boolean (default: false). If true 
+          - ``normalized`` - boolean (default: false). If true
             then the input matrix M is assumed to be normalized
 
         OUTPUT:
@@ -485,7 +517,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
     # def is_in_group(self,t,as_edge = True):
     #     """
     #     INPUT:
-    #       - ``t`` - 
+    #       - ``t`` -
     #       - ``as_edge`` - a boolean
 
     #     OUTPUT:
@@ -1091,10 +1123,36 @@ class Vertex(SageObject):
         EXAMPLES::
         
             sage: X = BTQuotient(3,5)
-            sage: X.get_vertex_list[0]
+            sage: X.get_vertex_list()[0]
             Vertex of BT-tree for p = 3
         """
         return "Vertex of BT-tree for p = %s"%(self.p)
+
+    def __cmp__(self,other):
+        """
+        Returns self == other
+
+        TESTS::
+
+            sage: from sage.modular.btquotients.btquotient import Vertex
+            sage: v1 = Vertex(7,0,Matrix(ZZ,2,2,[1,2,3,18]))
+            sage: v1 == v1
+            True
+
+        """
+        c = cmp(self.p,other.p)
+        if c: return c
+        c = cmp(self.label,other.label)
+        if c: return c
+        c = cmp(self.rep,other.rep)
+        if c: return c
+        c = cmp(self.determinant,other.determinant)
+        if c: return c
+        c = cmp(self.valuation,other.valuation)
+        if c: return c
+        c = cmp(self.parity,other.parity)
+        if c: return c
+        return 0
 
 class Edge(SageObject):
     r""" 
@@ -1180,10 +1238,46 @@ class Edge(SageObject):
         EXAMPLES::
         
             sage: X = BTQuotient(3,5)
-            sage: X.get_edge_list[0]
+            sage: X.get_edge_list()[0]
             Edge of BT-tree for p = 3
         """
         return "Edge of BT-tree for p = %s"%(self.p)
+
+    def __cmp__(self,other):
+        """
+        Returns self == other
+
+        TESTS::
+
+            sage: from sage.modular.btquotients.btquotient import Edge,Vertex
+            sage: v1 = Vertex(7,0,Matrix(ZZ,2,2,[1,2,3,18]))
+            sage: v2 = Vertex(7,0,Matrix(ZZ,2,2,[3,2,1,18]))
+            sage: e1 = Edge(7,0,Matrix(ZZ,2,2,[1,2,3,18]),v1,v2)
+            sage: e1 == e1
+            True
+
+        """
+        c = cmp(self.p,other.p)
+        if c: return c
+        c = cmp(self.label,other.label)
+        if c: return c
+        c = cmp(self.rep,other.rep)
+        if c: return c
+        c = cmp(self.origin,other.origin)
+        if c: return c
+        c = cmp(self.target,other.target)
+        if c: return c
+        c = cmp(self.links,other.links)
+        if c: return c
+        c = cmp(self.opposite,other.opposite)
+        if c: return c
+        c = cmp(self.determinant,other.determinant)
+        if c: return c
+        c = cmp(self.valuation,other.valuation)
+        if c: return c
+        c = cmp(self.parity,other.parity)
+        if c: return c
+        return 0
 
 class BTQuotient(SageObject, UniqueRepresentation):
     @staticmethod
@@ -1307,7 +1401,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
             self._use_magma = False
 
         self._BT=BruhatTitsTree(p)
-        self._prec=-1
+        self._prec = -1
         self._cached_vertices=dict()
         self._cached_edges=dict()
         self._cached_paths=dict()
@@ -1504,7 +1598,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
         """
         Compute the `e_3` invariant defined by the formula 
 
-        ..math::
+        .. math::
 
         e_k =\prod_{\ell\mid pN^-}\left(1-\left(\frac{-3}{\ell}\right)\right)\prod_{\ell \| N^+}\left(1+\left(\frac{-3}{\ell}\right)\right)\prod_{\ell^2\mid N^+} \nu_\ell(3)
 
@@ -1525,7 +1619,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
         """
         Compute the `e_4` invariant defined by the formula
 
-        ..math::
+        .. math::
 
         e_k =\prod_{\ell\mid pN^-}\left(1-\left(\frac{-k}{\ell}\right)\right)\prod_{\ell \| N^+}\left(1+\left(\frac{-k}{\ell}\right)\right)\prod_{\ell^2\mid N^+} \nu_\ell(k)
 
@@ -1665,13 +1759,9 @@ class BTQuotient(SageObject, UniqueRepresentation):
             sage: X = BTQuotient(3,7)
             sage: print [X.dimension_harmonic_cocycles(k) for k in range(2,20,2)]
             [1, 4, 4, 8, 8, 12, 12, 16, 16]
-            sage: print [len(HarmonicCocycles(X,k,100).basis()) for k in range(2,20,2)] # long time
-            [1, 4, 4, 8, 8, 12, 12, 16, 16]
 
             sage: X = BTQuotient(2,5) # optional - magma
             sage: print [X.dimension_harmonic_cocycles(k) for k in range(2,40,2)] # optional - magma
-            [0, 1, 3, 1, 3, 5, 3, 5, 7, 5, 7, 9, 7, 9, 11, 9, 11, 13, 11]
-            sage: print [len(HarmonicCocycles(X,k,100).basis()) for k in range(2,40,2)] # optional - magma
             [0, 1, 3, 1, 3, 5, 3, 5, 7, 5, 7, 9, 7, 9, 11, 9, 11, 13, 11]
         """
 
@@ -1955,9 +2045,9 @@ class BTQuotient(SageObject, UniqueRepresentation):
             True
         """
         assert self._use_magma == False
-        if(prec<=self._prec):
+        if prec <= self._prec:
             return self._II,self._JJ,self._KK
-        self._prec=prec
+
         A=self.get_quaternion_algebra()
 
         ZZp=Zp(self._p,prec)
@@ -2101,18 +2191,15 @@ class BTQuotient(SageObject, UniqueRepresentation):
 
         EXAMPLES:
 
-            sage: X = BTQuotient(3,7)
+            sage: X = BTQuotient(3,101)
             sage: X.get_embedding_matrix()
-            [1 + O(3) 1 + O(3) 1 + O(3) 2 + O(3)]
-            [2 + O(3)     O(3) 1 + O(3) 1 + O(3)]
-            [2 + O(3) 1 + O(3) 1 + O(3) 1 + O(3)]
-            [    O(3) 2 + O(3) 2 + O(3) 1 + O(3)]
+            [    O(3) 1 + O(3) 1 + O(3) 1 + O(3)]
+            [2 + O(3)     O(3) 2 + O(3) 2 + O(3)]
+            [1 + O(3) 1 + O(3)     O(3) 2 + O(3)]
+            [1 + O(3) 2 + O(3) 2 + O(3) 2 + O(3)]
             sage: X._increase_precision(5)
-            sage: X.get_embedding_matrix()
-            [                1 + 2*3^2 + 3^4 + 2*3^5 + O(3^6)           1 + 3 + 3^2 + 3^3 + 3^4 + 3^5 + O(3^6)             1 + 3^2 + 3^3 + 2*3^4 + 3^5 + O(3^6) 2 + 2*3 + 2*3^2 + 2*3^3 + 2*3^4 + 2*3^5 + O(3^6)]
-            [          2 + 3 + 3^2 + 3^3 + 3^4 + 3^5 + O(3^6)                     2*3^2 + 3^4 + 2*3^5 + O(3^6)                                       1 + O(3^6)             1 + 3^2 + 3^3 + 2*3^4 + 3^5 + O(3^6)]
-            [          2 + 3 + 3^2 + 3^3 + 3^4 + 3^5 + O(3^6)                 1 + 2*3^2 + 3^4 + 2*3^5 + O(3^6)                                       1 + O(3^6)             1 + 3^2 + 3^3 + 2*3^4 + 3^5 + O(3^6)]
-            [                      3^2 + 2*3^3 + 3^4 + O(3^6)           2 + 3 + 3^2 + 3^3 + 3^4 + 3^5 + O(3^6)               2 + 2*3 + 3^2 + 3^3 + 3^5 + O(3^6)                                       1 + O(3^6)]
+            sage: X.get_embedding_matrix()[0,0]
+            2*3^3 + 2*3^5 + O(3^6)
         """
         if amount >= 1:
             self.get_embedding_matrix(prec = self._prec+amount)
@@ -2177,13 +2264,13 @@ class BTQuotient(SageObject, UniqueRepresentation):
             self._pN=self._p**prec
             self._R=Qp(self._p,prec = prec)
 
-            if(prec>self._prec):
-                Iotamod=self._compute_embedding_matrix(prec)
-                self._Iotainv_lift=Iotamod.inverse().lift()
-                self._Iota=Matrix(self._R,4,4,[Iotamod[ii,jj] for ii in range(4) for jj in range(4)])
+            if prec > self._prec:
+                Iotamod = self._compute_embedding_matrix(prec)
+                self._Iotainv_lift = Iotamod.inverse().lift()
+                self._Iota = Matrix(self._R,4,4,[Iotamod[ii,jj] for ii in range(4) for jj in range(4)])
 
-            self._prec=prec
-            self._Iotainv=self._Mat_44([self._Iotainv_lift[ii,jj]%self._pN for ii in range(4) for jj in range(4)])
+            self._prec = prec
+            self._Iotainv = self._Mat_44([self._Iotainv_lift[ii,jj]%self._pN for ii in range(4) for jj in range(4)])
             return self._Iota
 
     def embed_quaternion(self, g, exact = False, prec=None):
@@ -2442,7 +2529,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
             return self._OMax
 
     def get_splitting_field(self):
-        r""" 
+        r"""
         Returns a quadratic field that splits the quaternion
         algebra attached to ``self``. Currently requires Magma.
 
@@ -2929,7 +3016,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
             sage: X = BTQuotient(3,7)
             sage: M = Matrix(ZZ,2,2,[1,3,2,7])
             sage: M.set_immutable()
-            sage: X.fundom_rep(M)           
+            sage: X.fundom_rep(M)
             Vertex of BT-tree for p = 3
         """
         try:
@@ -3184,6 +3271,17 @@ class BTQuotient(SageObject, UniqueRepresentation):
         return None
 
     def _compute_exact_splitting(self):
+        r"""
+        Uses Magma to calculate a splitting of the order into
+        the Matrix algebra with coefficients in an appropriate
+        number field.
+
+        TESTS::
+
+            sage: X = BTQuotient(3,23,use_magma = True) # optional - magma
+            sage: X._compute_exact_splitting() # optional - magma
+        """
+
         self._init_order()
         self._magma.eval('f:=MatrixRepresentation(R)')
         f=self._magma.function_call('MatrixRepresentation',args=[self._OMaxmagma],nvals=1)
@@ -3341,11 +3439,11 @@ class BTQuotient(SageObject, UniqueRepresentation):
         EXAMPLES::
 
             sage: X = BTQuotient(11,2)
-            sage: X.get_graph()
+            sage: X.get_graph() # indirect doctest
             Multi-graph on 2 vertices
 
             sage: X = BTQuotient(17,19)
-            sage: X.get_graph()
+            sage: X.get_graph() # indirect doctest
             Multi-graph on 4 vertices
 
        The following examples require magma::
@@ -3382,7 +3480,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
         num_verts=0
         num_edges=0
         self.get_extra_embedding_matrices()
-        self.get_embedding_matrix(prec = 1)
+        self.get_embedding_matrix(prec = 3)
         p=self._p
         v0=Vertex(p,num_verts,self._Mat_22([1,0,0,1]),determinant = 1,valuation = 0)
         V=collections.deque([v0])
