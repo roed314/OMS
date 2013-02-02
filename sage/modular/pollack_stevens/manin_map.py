@@ -455,6 +455,7 @@ class ManinMap(object):
         """
         if isinstance(right, Matrix_integer_2x2):
             return self._right_action(right)
+
         D = {}
         sd = self._dict
         for ky, val in sd.iteritems():
