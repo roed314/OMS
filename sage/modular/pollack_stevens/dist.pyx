@@ -480,7 +480,10 @@ cdef class Dist(ModuleElement):
             raise ValueError("not enough moments")
         V = self.parent().specialize(new_base_ring)
         new_base_ring = V.base_ring()
-        return V([new_base_ring.coerce(self.moment(j)) for j in range(k+1)])
+        if self.precision_relative() == 0:
+            return V.zero_element()
+        else:
+            return V([new_base_ring.coerce(self.moment(j)) for j in range(k+1)])
 
     def lift(self, p=None, M=None, new_base_ring=None):
         r"""

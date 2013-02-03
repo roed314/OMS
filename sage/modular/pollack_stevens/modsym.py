@@ -1225,11 +1225,12 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: f._find_aq(5,10,True)
             (2, -2, 1)
         """
+        N = self.parent().level()
         q = ZZ(2)
         k = self.parent().weight()
         aq = self.Tq_eigenvalue(q, check=check)
         eisenloss = (aq - q**(k+1) - 1).valuation(p)
-        while q != p and eisenloss >= M:
+        while (q == p) or (N % q == 0) or (eisenloss >= M):
             q = next_prime(q)
             aq = self.Tq_eigenvalue(q, check=check)
             if q != p:
@@ -1307,7 +1308,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         verbose(Phi._show_malformed_dist("after reduction"), level=2)
 
         ## Killing eisenstein part
-        verbose("Killing eisenstein part")
+        verbose("Killing eisenstein part with q = %s"%(q))
         k = self.parent().weight()
         Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q))
         verbose(Phi._show_malformed_dist("Eisenstein killed"), level=2)
@@ -1317,7 +1318,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         Psi = apinv * Phi.hecke(p)
         attempts = 0
         while (Phi != Psi) and (attempts < 2*newM):
-            verbose("%s attempt",%(attempts+1))
+            verbose("%s attempt"%(attempts+1))
             Phi = Psi
             Psi = Phi.hecke(p) * apinv 
             attempts += 1
