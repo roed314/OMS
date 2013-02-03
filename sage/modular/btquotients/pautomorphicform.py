@@ -53,6 +53,26 @@ class _btquot_tuplegen(UniqueRepresentation):
         return g[1,1], g[0,1], g[1,0], g[0,0]
 
 def act_left(g,v):
+    """
+    Multiply a 2x1 vector by a 2x2 matrix.
+
+    INPUT:
+
+    - `g` - 2x2 matrix with entries coercible into the entries of v
+
+    - `v` - a 2x1 vector
+
+    OUTPUT:
+
+    A 2x1 vector with entries in the same ring as v
+
+    EXAMPLES::
+
+        sage: from sage.modular.btquotients.pautomorphicform import act_left
+        sage: act_left(Matrix(ZZ,2,2,[1,2,3,4]),Matrix(ZZ,2,1,[0,1]))
+        [2]
+        [4]
+    """
     group = MatrixSpace(v.base_ring(),2,2)
     return group(g) * v
 
@@ -257,7 +277,7 @@ class HarmonicCocycleElement(HeckeModuleElement):
             sage: v1 == H(0)
             False
         """
-        tmp = [0 for nnn in range(parent(self)._X._num_edges)]
+        tmp = [0 for nnn in range(self.parent()._X._num_edges)]
         return any([self._F[e]==tmp for e in range(self._nE)])
 
     def valuation(self):
@@ -280,7 +300,7 @@ class HarmonicCocycleElement(HeckeModuleElement):
             sage: b2.valuation()
             1
             sage: H(0).valuation()
-            Infinity
+            +Infinity
         """
         if self.is_zero():
             return Infinity
@@ -289,7 +309,7 @@ class HarmonicCocycleElement(HeckeModuleElement):
 
     def _compute_element(self):
         r"""
-
+        
         """
         R = self._R
         A = self.parent().basis_matrix().transpose()
@@ -308,8 +328,8 @@ class HarmonicCocycleElement(HeckeModuleElement):
 
         OUTPUT:
 
-        - An element of the coefficient module of the cocycle which describes 
-          the value of the cocycle on e1
+        - An element of the coefficient module of the cocycle which
+          describes the value of the cocycle on e1
 
         EXAMPLES:
         """
@@ -328,7 +348,8 @@ class HarmonicCocycleElement(HeckeModuleElement):
     #In HarmonicCocycle
     def riemann_sum(self,f,center = 1,level = 0,E = None):
         r"""
-        This function evaluates the integral of the funtion ``f`` with respect to the measure determined by ``self``.
+        Evaluates the integral of the funtion ``f`` with respect
+        to the measure determined by ``self``.
 
         EXAMPLES::
         """
@@ -712,6 +733,11 @@ class HarmonicCocycles(AmbientHeckeModule):
         This function returns the underlying free module
 
         EXAPLES::
+
+            sage: X = BTQuotient(3,7)
+            sage: H = HarmonicCocycles(X,2,prec=10)
+            sage: H.free_module()
+            Vector space of dimension 1 over 3-adic Field with capped relative precision 10
         """
         try: return self.__free_module
         except AttributeError: pass
@@ -725,6 +751,13 @@ class HarmonicCocycles(AmbientHeckeModule):
 
         EXAMPLES::
 
+            sage: X = BTQuotient(3,7)
+            sage: H = HarmonicCocycles(X,2,prec = 10)
+            sage: f = H.character()
+            sage: f(1)
+            1
+            sage: f(2)
+            2
         """
         return lambda x:x
 
@@ -732,7 +765,20 @@ class HarmonicCocycles(AmbientHeckeModule):
         r"""
         Embed the quaternion element ``g`` into the matrix algebra.
 
+        INPUT:
+
+        - `g` - a quaternion.
+
+        OUTPUT:
+
+        A 2x2 matrix with p-adic entries.
+
         EXAMPLES::
+
+            sage: X = BTQuotient(7,2)
+            sage: q = X._conv(X.get_stabilizers()[0][1][0])
+            sage: H = HarmonicCocycles(X,2,prec = 5)
+            sage: H.embed_quaternion(q)
         """
         tmp = self._X.embed_quaternion(g,exact = self._R.is_exact(), prec = self._prec)
         tmp.set_immutable()
@@ -830,8 +876,7 @@ class HarmonicCocycles(AmbientHeckeModule):
 
     def __apply_atkin_lehner(self,q,f):
         r"""
-        This function applies an Atkin-Lehner involution to a
-        harmonic cocycle
+        Applies an Atkin-Lehner involution to a harmonic cocycle
 
         INPUT:
 
@@ -1635,6 +1680,16 @@ class pAutomorphicForms(Module):
     - Marc Masdeu (2012-02-20)
     """
     def __init__(self,domain,U,prec = None,t = None,R = None,overconvergent = False):
+        """
+        Create a space of p-automorphic forms
+
+        EXAMPLES::
+
+            sage: X = BTQuotient(11,5)
+            sage: H = HarmonicCocycles(X,2,prec=10)
+            sage: A = pAutomorphicForms(X,H)
+            sage: TestSuite(A).run()
+        """
         if(R is None):
             if not isinstance(U,Integer):
                 self._R = U.base_ring()
@@ -1664,6 +1719,21 @@ class pAutomorphicForms(Module):
         self._populate_coercion_lists_()
 
     def prime(self):
+        """
+        Return the underlying prime.
+
+        OUTPUT:
+
+        - `p` - a prime integer
+
+        EXAMPLES::
+
+            sage: X = BTQuotient(11,5)
+            sage: H = HarmonicCocycles(X,2,prec=10)
+            sage: A = pAutomorphicForms(X,H)
+            sage: A.prime()
+            11
+        """
         return self._p
 
     def _repr_(self):
