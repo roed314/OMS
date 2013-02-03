@@ -543,6 +543,11 @@ class Symk_class(Distributions_abstract):
         """
         return Symk(k=self._k, base=new_base_ring, character=self._character, tuplegen=self._act._tuplegen, act_on_left=self._act.is_left())
 
+    def base_extend(self, new_base_ring):
+        if not new_base_ring.has_coerce_map_from(self.base_ring()):
+            raise ValueError("New base ring (%s) does not have a coercion from %s" % (new_base_ring, self.base_ring()))
+        return self.change_ring(new_base_ring)
+
     def lift(self, p=None, M=None, new_base_ring=None):
         """
         Return distribution space that contains lifts with given p,
