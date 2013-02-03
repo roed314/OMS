@@ -1027,9 +1027,8 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
     
     def _lift_greenberg(self, p, M, new_base_ring=None, check=False):
         """
-        
         This is the Greenberg algorithm for lifting a modular eigensymbol to
-        an overconvergent modular symbol. Once first lifts to any set of numbers
+        an overconvergent modular symbol. One first lifts to any set of numbers
         (not necessarily satifying the Manin relations). Then one applies the U_p,
         and normalizes this result to get a lift satisfying the manin relations.
        
@@ -1056,8 +1055,19 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: Phi.values()
             [(2 + 2*11 + 2*11^2 + 2*11^3 + 2*11^4 + O(11^5), 8 + 6*11 + 3*11^2 + 5*11^3 + O(11^4), 5 + 4*11 + 4*11^2 + O(11^3), 5 + 6*11 + O(11^2), 7 + O(11)), (7 + 5*11 + 5*11^2 + 5*11^3 + 5*11^4 + O(11^5), 7 + 7*11 + 11^2 + 10*11^3 + O(11^4), 6 + 8*11 + O(11^3), 6 + 5*11 + O(11^2), 9 + O(11)), (5 + 5*11 + 5*11^2 + 5*11^3 + 5*11^4 + O(11^5), 7 + 4*11 + 11^2 + 11^3 + O(11^4), 10 + 11 + 7*11^2 + O(11^3), 2 + 3*11 + O(11^2), 5 + O(11))]
 
-        
+        An example in higher weight::
+
+            sage: f = Newforms(7, 4)[0].PS_modular_symbol()
+            sage: fs = f.p_stabilize(5)
+            sage: FsG = fs.lift(M=6, eigensymbol=True,algorithm='greenberg') 
+            sage: FsG.values()[0]
+            (2 + 5 + 3*5^2 + 4*5^3 + 2*5^5 + O(5^6), O(5^5), 2*5 + 3*5^2 + O(5^4), O(5^3), 5 + O(5^2), O(5))
+            sage: FsS = fs.lift(M=6, eigensymbol=True,algorithm='stevens') 
+            sage: FsS.values()[0]                                         
+            (2 + 5 + 3*5^2 + 4*5^3 + O(5^7), O(5^6), 2*5 + 3*5^2 + 2*5^4 + O(5^5), O(5^4), 5 + 2*5^2 + O(5^3), O(5^2), O(5))
         """
+        #FIXME: The above doctests show a discrepancy! Presumably the Stevens
+        #algorithm is correct as FsS is an eigensymbol, whereas FsG isn't.
         p = self._get_prime(p)
 
         #Right now this is actually slower than the Stevens algorithm. Probably due to bad coding.
@@ -1107,7 +1117,6 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 Phi1 = green_lift_once(Phi1,self,r)
         
             return Phi1
-
 
     def _lift_to_OMS(self, p, M, new_base_ring, check):
         r"""
