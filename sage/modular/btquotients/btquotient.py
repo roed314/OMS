@@ -2797,11 +2797,8 @@ class BTQuotient(SageObject, UniqueRepresentation):
             sage: X._get_atkin_lehner_data(3)
             [
             [ 2]
-
             [ 4]
-
             [-3]
-
             [-2], [DoubleCosetReduction, DoubleCosetReduction]
             ]
         """
