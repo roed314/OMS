@@ -34,9 +34,10 @@ from sage.rings.integer import Integer
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
 from modsym import PSModularSymbolElement_symk, PSModularSymbolElement_dist, PSModSymAction
-from fund_domain import ManinRelations, M2ZSpace
+from fund_domain import ManinRelations
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.infinity import infinity as oo
+from sigma0 import Sigma0, Sigma0Element
 
 class PSModularSymbols_factory(UniqueFactory):
     r"""
@@ -198,7 +199,7 @@ class PSModularSymbolSpace(Module):
         # should distingish between Gamma0 and Gamma1...
         self._source = ManinRelations(group.level())
         # We have to include the first action so that scaling by Z doesn't try to pass through matrices
-        actions = [PSModSymAction(ZZ, self), PSModSymAction(M2ZSpace, self)]
+        actions = [PSModSymAction(ZZ, self), PSModSymAction(Sigma0(self.prime()), self)]
         self._populate_coercion_lists_(action_list=actions)
 
     def _repr_(self):
@@ -711,7 +712,7 @@ def cusps_from_mat(g):
         (1/3, 1/2)
 
     """
-    if isinstance(g, ArithmeticSubgroupElement):
+    if isinstance(g, ArithmeticSubgroupElement) or isinstance(g, Sigma0Element):
         g = g.matrix()
     a, b, c, d = g.list()
     if c: ac = a/c
