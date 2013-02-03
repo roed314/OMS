@@ -589,7 +589,7 @@ cdef class Dist_vector(Dist):
         if check:
             # case 1: input is a distribution already
             if PY_TYPE_CHECK(moments, Dist):
-                pass
+                moments = moments.moments
             # case 2: input is a vector, or something with a len
             elif hasattr(moments, '__len__'):
                 M = len(moments)
@@ -1598,7 +1598,7 @@ cdef class WeightKAction_vector(WeightKAction):
         #    g.set_immutable()
         #except AttributeError:
         #    pass
-        ans.moments = v.moments * self.acting_matrix(g, len(v._moments))
+        ans._moments = v._moments * self.acting_matrix(g, len(v._moments))
         ans.ordp = v.ordp
         return ans
 
