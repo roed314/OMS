@@ -760,7 +760,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         try:
             verbose("finding alpha: rooting %s in %s"%(poly, new_base_ring))
             (v0,e0),(v1,e1) = poly.roots(new_base_ring)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             raise ValueError("new base ring must contain a root of x^2 - ap * x + p^(k+1)")
         if v0.valuation(p) > 0:
             v0, v1 = v1, v0
