@@ -38,19 +38,20 @@ from sage.misc.lazy_attribute import lazy_attribute
 from sage.modular.dirichlet import DirichletGroup
 from sage.modular.arithgroup.congroup_gammaH import GammaH_class
 from sage.rings.arith import fundamental_discriminant
+from sage.misc.misc import verbose, cputime
 
 class DoubleCosetReduction(SageObject):
     r"""
-    Edges in the Bruhat-tits tree are represented by cosets of 
-    matrices in `\GL_2`. Given a matrix `x` in `\GL_2`, this 
-    class computes and stores the data corresponding to the 
-    double coset representation of `x` in terms of a fundamental 
+    Edges in the Bruhat-tits tree are represented by cosets of
+    matrices in `\GL_2`. Given a matrix `x` in `\GL_2`, this
+    class computes and stores the data corresponding to the
+    double coset representation of `x` in terms of a fundamental
     domain of edges for the action of the arithmetic group `\Gamma'.
 
     More precisely:
-    Initialized with an element `x` of `\GL_2(\ZZ)`, finds elements 
-    `\gamma` in `\Gamma`, `t` and an edge `e` such that `get=x`. It 
-    stores these values as members ``gamma``, ``label`` and functions 
+    Initialized with an element `x` of `\GL_2(\ZZ)`, finds elements
+    `\gamma` in `\Gamma`, `t` and an edge `e` such that `get=x`. It
+    stores these values as members ``gamma``, ``label`` and functions
     ``self.sign()``,  ``self.t()`` and ``self.igamma()``, satisfying:
         if ``self.sign()==+1``:
             ``igamma()*edge_list[label].rep*t()==x``
@@ -59,24 +60,24 @@ class DoubleCosetReduction(SageObject):
 
     It also stores a member called power so that:
         ``p**(2*power)=gamma.reduced_norm()``
-   
+
     The usual decomposition ``get=x`` would be:
         g=gamma/(p**power)
         e=edge_list[label]
         t'=t*p**power
     Here usual denotes that we've rescaled gamma to have unit
-    determinant, and so that the result is honestly an element 
-    of the arithmetic quarternion group under consideration. In 
-    practice we store integral multiples and keep track of the 
+    determinant, and so that the result is honestly an element
+    of the arithmetic quarternion group under consideration. In
+    practice we store integral multiples and keep track of the
     powers of `p`.
 
     INPUT:
 
     - ``Y`` -  BTQuotient object in which to work
-    - ``x`` -  Something coercible into a matrix in `\GL_2(\ZZ)`. In 
-       principle we should allow elements in `\GL_2(\QQ_p)`, but it is 
+    - ``x`` -  Something coercible into a matrix in `\GL_2(\ZZ)`. In
+       principle we should allow elements in `\GL_2(\QQ_p)`, but it is
        enough to work with integral entries
-    - ``extrapow`` - gets added to the power attribute, and it is 
+    - ``extrapow`` - gets added to the power attribute, and it is
        used for the Hecke action.
 
     EXAMPLES::
@@ -307,7 +308,7 @@ class DoubleCosetReduction(SageObject):
             else:
                 self._cached_t = (self.igamma(tmp_prec)*e.opposite.rep).inverse()*self.x
                 # assert self._cached_t[1,0].valuation()>self._cached_t[1,1].valuation()
-            tmp_prec += 5
+            tmp_prec += 7
             self._t_prec = min([xx.precision_absolute() for xx in self._cached_t.list()])
         return self._cached_t
 
@@ -317,7 +318,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
 
     INPUT:
 
-    - ``p`` - a prime number. The corresponding tree is then p+1 regular 
+    - ``p`` - a prime number. The corresponding tree is then p+1 regular
 
     EXAMPLES:
 
@@ -357,7 +358,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
         Initializes a BruhatTitsTree object for a given prime p
 
         EXAMPLES::
-            
+
             sage: from sage.modular.btquotients.btquotient import BruhatTitsTree
             sage: T = BruhatTitsTree(17)
             sage: TestSuite(T).run()
@@ -377,7 +378,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
 
           - ``e`` - a 2x2 matrix with integer entries
 
-          - ``normalized`` - boolean (default: false). If true 
+          - ``normalized`` - boolean (default: false). If true
             then the input matrix is assumed to be normalized.
 
         OUPUT:
@@ -410,7 +411,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
 
           - ``e`` - a 2x2 matrix with integer entries
 
-          - ``normalized`` - boolean (default: false). If true 
+          - ``normalized`` - boolean (default: false). If true
             then the input matrix M is assumed to be normalized
 
         OUTPUT:
@@ -517,7 +518,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
     # def is_in_group(self,t,as_edge = True):
     #     """
     #     INPUT:
-    #       - ``t`` - 
+    #       - ``t`` -
     #       - ``as_edge`` - a boolean
 
     #     OUTPUT:
@@ -1766,13 +1767,9 @@ class BTQuotient(SageObject, UniqueRepresentation):
             sage: X = BTQuotient(3,7)
             sage: print [X.dimension_harmonic_cocycles(k) for k in range(2,20,2)]
             [1, 4, 4, 8, 8, 12, 12, 16, 16]
-            sage: print [len(HarmonicCocycles(X,k,100).basis()) for k in range(2,20,2)] # long time
-            [1, 4, 4, 8, 8, 12, 12, 16, 16]
 
             sage: X = BTQuotient(2,5) # optional - magma
             sage: print [X.dimension_harmonic_cocycles(k) for k in range(2,40,2)] # optional - magma
-            [0, 1, 3, 1, 3, 5, 3, 5, 7, 5, 7, 9, 7, 9, 11, 9, 11, 13, 11]
-            sage: print [len(HarmonicCocycles(X,k,100).basis()) for k in range(2,40,2)] # optional - magma
             [0, 1, 3, 1, 3, 5, 3, 5, 7, 5, 7, 9, 7, 9, 11, 9, 11, 13, 11]
         """
 
@@ -2276,6 +2273,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
             self._R=Qp(self._p,prec = prec)
 
             if prec > self._prec:
+                verbose('self._prec = %s, prec = %s'%(self._prec,prec))
                 Iotamod = self._compute_embedding_matrix(prec)
                 self._Iotainv_lift = Iotamod.inverse().lift()
                 self._Iota = Matrix(self._R,4,4,[Iotamod[ii,jj] for ii in range(4) for jj in range(4)])
