@@ -725,8 +725,8 @@ class PSModularSymbolSpace(Module):
             D[g] += mu_1
             t = t + mu_1 * gam - mu_1
 
-        for g in manin.gens()[1:]:
-            print g,"--",D[g]
+#        for g in manin.gens()[1:]:
+#            print g,"--",D[g]
 
         mu = t.solve_diff_eqn()
         Id = manin.gens()[0]
