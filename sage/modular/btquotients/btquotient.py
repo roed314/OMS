@@ -1287,7 +1287,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
         Ensures that a canonical BTQuotient is created.
 
         EXAMPLES:
-        
+
             sage: BTQuotient(3,17) is BTQuotient(3,17,1)
             True
         """
@@ -1304,21 +1304,21 @@ class BTQuotient(SageObject, UniqueRepresentation):
     INPUT:
 
      - ``p`` - a prime number
-     
+
      - ``Nminus`` - squarefree integer divisible by an odd number of
        distinct primes and relatively prime to p. This is the
        discriminant of the definite quaternion algebra that one is
        quotienting by.
-     
+
      - ``Nplus`` - an integer corpime to pNminus (Default: 1). This is
        the tame level. It need not be squarefree! If Nplus is not 1
        then the user currently needs magma installed due to sage's
        inability to compute well with nonmaximal Eichler orders in
        rational (definite) quaternion algebras.
-    
+
      - ``character`` - a Dirichlet character (Default: None) of modulus
        `pN^-N^+`.
-     
+
      - ``use_magma`` - boolean (default: False). If True, uses magma
        for quaternion arithmetic.
 
@@ -1333,8 +1333,8 @@ class BTQuotient(SageObject, UniqueRepresentation):
         Multi-graph on 4 vertices
 
     And an example with a Dirichlet character::
-  
-      sage: f = DirichletGroup(6)[1] 
+
+      sage: f = DirichletGroup(6)[1]
       sage: X = BTQuotient(3,2*5*7,character = f)
       sage: X.genus()
       5
@@ -1351,7 +1351,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
     def __init__(self,p,Nminus,Nplus=1,character = None, use_magma = False, seed = None):
         """
         Computes the quotient of the Bruhat-Tits tree by an arithmetic
-        quaternionic group. 
+        quaternionic group.
 
         EXAMPLES::
 
@@ -1402,7 +1402,14 @@ class BTQuotient(SageObject, UniqueRepresentation):
             self._use_magma = False
 
         self._BT=BruhatTitsTree(p)
+
+        # This value for self._prec was chosen to agree with a hardcoded
+        # value in _compute_quotient (the line:
+        # self.get_embedding_matrix(prec = 3))
+        # It was previously -1 and caused the program to default to
+        # exact splittings (hence magma) in many situations
         self._prec = -1
+
         self._cached_vertices=dict()
         self._cached_edges=dict()
         self._cached_paths=dict()
@@ -3436,7 +3443,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
 
         INPUT:
 
-        - ``check`` - Boolean (Default = True). 
+        - ``check`` - Boolean (Default = True).
 
         EXAMPLES::
 
@@ -3452,9 +3459,9 @@ class BTQuotient(SageObject, UniqueRepresentation):
 
             sage: X = BTQuotient(5,7,12) # optional - magma
             sage: X.get_graph()          # optional - magma
-            Multi-graph on 24 vertices   
+            Multi-graph on 24 vertices
             sage: len(X._edge_list)      # optional - magma
-            72 
+            72
 
             sage: X = BTQuotient(2,3,5)  # optional - magma
             sage: X.get_graph() # optional - magma
