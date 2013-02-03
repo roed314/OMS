@@ -375,7 +375,7 @@ class PSModularSymbolElement(ModuleElement):
         """
         return self.__class__(self._map.hecke(ell, algorithm), self.parent(), construct=True)
 
-    def valuation(self, p):
+    def valuation(self, p=None):
         r"""
         Returns the valuation of self at `p`.
 
@@ -404,8 +404,23 @@ class PSModularSymbolElement(ModuleElement):
            -1
            sage: phi.valuation(7)
            0
+           sage: phi.valuation()
+           Traceback (most recent call last):
+           ...
+           ValueError: you must specify a prime
+
+           sage: phi2 = phi.lift(11, M=2)
+           sage: phi2.valuation()
+           0
+           sage: phi2.valuation(3)
+           Traceback (most recent call last):
+           ...
+           ValueError: Inconsistent prime
+           sage: phi2.valuation(11)
+           0
         """
-        return min([val.valuation(p) for val in self._map])
+        q = self._get_prime(p)
+        return min([val.valuation(q) for val in self._map])
 
     def diagonal_valuation(self, p):
         """
@@ -1456,6 +1471,3 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
             37-adic L-series of Modular symbol with values in Space of 37-adic distributions with k=0 action and precision cap 6
         """
         return pAdicLseries(self, *args, **kwds)
-
-                
-                
