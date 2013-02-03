@@ -308,7 +308,7 @@ class DoubleCosetReduction(SageObject):
             else:
                 self._cached_t = (self.igamma(tmp_prec)*e.opposite.rep).inverse()*self.x
                 # assert self._cached_t[1,0].valuation()>self._cached_t[1,1].valuation()
-            tmp_prec += 7
+            tmp_prec += 5
             self._t_prec = min([xx.precision_absolute() for xx in self._cached_t.list()])
         return self._cached_t
 
@@ -1422,7 +1422,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
         self._Mat_22=MatrixSpace(ZZ,2,2)
         self._Mat_41=MatrixSpace(ZZ,4,1)
         if extra_level == 1:
-            self._extra_level = [1]
+            self._extra_level = []
         else:
             self._extra_level = [ff[0] for ff in extra_level.factor()]
         self._character = character
@@ -2150,7 +2150,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
         """
         try: return self._extra_embedding_matrices
         except AttributeError: pass
-        if self._use_magma == False:
+        if self._use_magma == False or len(self._extra_level) == 0:
             self._extra_embedding_matrices = []
         else:
             n_iters = 0
@@ -2797,11 +2797,8 @@ class BTQuotient(SageObject, UniqueRepresentation):
             sage: X._get_atkin_lehner_data(3)
             [
             [ 2]
-
             [ 4]
-
             [-3]
-
             [-2], [DoubleCosetReduction, DoubleCosetReduction]
             ]
         """
