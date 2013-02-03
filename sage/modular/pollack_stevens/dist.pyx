@@ -216,7 +216,7 @@ cdef class Dist(ModuleElement):
                 return False
         return True
 
-    def find_scalar(self, other, p, M = None, check=True):
+    def find_scalar(self, _other, p, M = None, check=True):
         r"""
         Returns an ``alpha`` with ``other = self * alpha``, or raises a ValueError.
 
@@ -254,31 +254,32 @@ cdef class Dist(ModuleElement):
             ValueError: not a scalar multiple
 
         """
+        cdef Dist other = _other
         i = 0
         n = self.precision_relative()
         if n != other.precision_relative():
             raise ValueError("other should have the same number of moments")
         verbose("n = %s"%n)
         verbose("moment 0")
-        a = self.moment(i)
+        a = self._unscaled_moment(i)
         verbose("a = %s"%(a))
         padic = isinstance(a.parent(), pAdicGeneric)
         if self.parent().is_symk():
             while a == 0:
-                if other.moment(i) != 0:
+                if other._unscaled_moment(i) != 0:
                     raise ValueError("not a scalar multiple")
                 i += 1
                 verbose("moment %s"%i)
                 try:
-                    a = self.moment(i)
+                    a = self._unscaled_moment(i)
                 except IndexError:
                     raise ValueError("self is zero")
-            alpha = other.moment(i) / a
+            alpha = other._unscaled_moment(i) / a
             if check:
                 i += 1
                 while i < n:
                     verbose("comparing moment %s"%i)
-                    if alpha * self.moment(i) != other.moment(i):
+                    if alpha * self._unscaled_moment(i) != other._unscaled_moment(i):
                         raise ValueError("not a scalar multiple")
                     i += 1
         else:
@@ -288,37 +289,38 @@ cdef class Dist(ModuleElement):
                 i += 1
                 verbose("p moment %s"%i)
                 try:
-                    a = self.moment(i)
+                    a = self._unscaled_moment(i)
                 except IndexError:
                     raise ValueError("self is zero")
                 v = a.valuation(p)
             relprec = n - i - v
-            verbose("p=%s, n-i=%s\nself.moment=%s, other.moment=%s"%(p, n-i, a, other.moment(i)),level=2)
+            verbose("p=%s, n-i=%s\nself.moment=%s, other.moment=%s"%(p, n-i, a, other._unscaled_moment(i)),level=2)
             if padic:
-                alpha = (other.moment(i) / a).add_bigoh(n-i)
+                alpha = (other._unscaled_moment(i) / a).add_bigoh(n-i)
             else:
-                alpha = (other.moment(i) / a) % p**(n-i)
+                alpha = (other._unscaled_moment(i) / a) % p**(n-i)
             verbose("alpha = %s"%(alpha))
             while i < n-1:
                 i += 1
                 verbose("comparing p moment %s"%i)
-                a = self.moment(i)
+                a = self._unscaled_moment(i)
                 if check:
-                    verbose("self.moment=%s, other.moment=%s"%(a, other.moment(i)))
-                    if (padic and other.moment(i) != alpha * a) or \
-                       (not padic and other.moment() % p**(n-i) != alpha * a % p**(n-i)):
+                    verbose("self.moment=%s, other.moment=%s"%(a, other._unscaled_moment(i)))
+                    if (padic and other._unscaled_moment(i) != alpha * a) or \
+                       (not padic and other._unscaled_moment(i) % p**(n-i) != alpha * a % p**(n-i)):
                         raise ValueError("not a scalar multiple")
                 v = a.valuation(p)
                 if n - i - v > relprec:
                     verbose("Reseting alpha: relprec=%s, n-i=%s, v=%s"%(relprec, n-i, v))
                     relprec = n - i - v
                     if padic:
-                        alpha = (other.moment(i) / a).add_bigoh(n-i)
+                        alpha = (other._unscaled_moment(i) / a).add_bigoh(n-i)
                     else:
-                        alpha = (other.moment(i) / a) % p**(n-i)
+                        alpha = (other._unscaled_moment(i) / a) % p**(n-i)
                     verbose("alpha=%s"%(alpha))
             if relprec < M:
                 raise ValueError("result not determined to high enough precision")
+        alpha = alpha * self.parent().prime()**(other.ordp - self.ordp)
         try:
             return self.parent().base_ring()(alpha)
         except ValueError:
@@ -392,8 +394,8 @@ cdef class Dist(ModuleElement):
         """
         if p is None:
             p = self.parent()._p
-        n = self.precision_absolute()
-        return min([n] + [a + self.moment(a).valuation(p) for a in range(n)])
+        n = self.precision_relative()
+        return self.ordp + min([n] + [a + self._unscaled_moment(a).valuation(p) for a in range(n)])
 
     def valuation(self, p=None):
         """
@@ -429,8 +431,8 @@ cdef class Dist(ModuleElement):
         """
         if p is None:
             p = self.parent()._p
-        n = self.precision_absolute()
-        return min([self.moment(a).valuation(p) for a in range(n)])
+        n = self.precision_relative()
+        return self.ordp + min([self._unscaled_moment(a).valuation(p) for a in range(n) if not self._unscaled_moment(a).is_zero()])
 
     def specialize(self, new_base_ring=None):
         """
@@ -839,11 +841,16 @@ cdef class Dist_vector(Dist):
             V = self._moments.parent()
             R = V.base_ring()
             n = self.precision_relative()
+            p = self.parent()._p
             if isinstance(R, pAdicGeneric):
                 self._moments = V([self._moments[i].add_bigoh(n-i) for i in range(n)])
             else:
-                p = self.parent()._p
                 self._moments = V([self._moments[i]%(p**(n-i)) for i in range(n)])
+            shift = self.valuation() - self.ordp
+            if shift != 0:
+                V = self.parent().approx_module(n-shift)
+                self.ordp += shift
+                self._moments = V([self._moments[i] // p**shift for i in range(n-shift)])
         return self
 
     def reduce_precision(self, M):
@@ -1399,9 +1406,9 @@ cdef class WeightKAction(Action):
         self._actmat = {}
         self._maxprecs = {}
         if not padic:
-            Action.__init__(self, Sigma0(self._p), Dk, on_left, operator.mul)
+            Action.__init__(self, Sigma0(0,base_ring = QQ,tuplegen = self._tuplegen), Dk, on_left, operator.mul)
         else:
-            Action.__init__(self, Sigma0(self._p, base_ring = Dk.base_ring()), Dk, on_left, operator.mul)
+            Action.__init__(self, Sigma0(self._p, base_ring = Dk.base_ring(),tuplegen = self._tuplegen), Dk, on_left, operator.mul)
 
     def clear_cache(self):
         r"""
@@ -1542,10 +1549,10 @@ cdef class WeightKAction_vector(WeightKAction):
         """
         #tim = verbose("Starting")
         a, b, c, d = self._tuplegen(g)
-        if g.parent().base_ring().is_exact():
-            self._check_mat(a, b, c, d)
+        # if g.parent().base_ring().is_exact():
+        #     self._check_mat(a, b, c, d)
         k = self._k
-        if g.parent().base_ring().is_exact():
+        if g.parent().base_ring() is ZZ:
             if self._symk:
                 base_ring = QQ
             else:
@@ -1727,7 +1734,7 @@ cdef class WeightKAction_long(WeightKAction):
         """
         _a, _b, _c, _d = self._tuplegen(g)
         if self._character is not None: raise NotImplementedError
-        self._check_mat(_a, _b, _c, _d)
+        # self._check_mat(_a, _b, _c, _d)
         cdef long k = self._k
         cdef Py_ssize_t row, col, M = _M
         cdef zmod_poly_t t, scale, xM, bdy
