@@ -1368,23 +1368,18 @@ cdef class Dist_long(Dist):
 
 cdef class WeightKAction(Action):
     r"""
-    
 
     INPUT:
 
     - ``Dk`` -- a space of distributions
-
-    - ``character`` -- data specifying a Dirichlet character to apply
-      to the top right corner, and a power of the determinant by which
-      to scale.  See the documentation of
+    - ``character`` -- data specifying a Dirichlet character to apply to the
+      top right corner, and a power of the determinant by which to scale.  See
+      the documentation of
       :class:`sage.modular.pollack_stevens.distributions.Distributions_factory`
       for more details.
-
     - ``tuplegen`` -- a callable object that turns matrices into 4-tuples.
-
     - ``on_left`` -- whether this action should be on the left.
-
-    - ``padic`` -- if True, define an action of Sigma_0(p)
+    - ``padic`` -- if True, define an action of p-adic matrices (not just integer ones)
 
     OUTPUT:
 
@@ -1394,7 +1389,7 @@ cdef class WeightKAction(Action):
 
         sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
     """
-    def __init__(self, Dk, character, tuplegen, on_left, padic = False):
+    def __init__(self, Dk, character, tuplegen, on_left, padic=False):
         r"""
         Initialization.
 
@@ -1438,7 +1433,10 @@ cdef class WeightKAction(Action):
         else:
             m = self._p # Sigma0(p) acts
 
-        Action.__init__(self, Sigma0(m, base_ring=ZZ, tuplegen=self._tuplegen), Dk, on_left, operator.mul)
+        if padic:
+            Action.__init__(self, Sigma0(m, base_ring=Dk.base_ring(), tuplegen=self._tuplegen), Dk, on_left, operator.mul)
+        else:
+            Action.__init__(self, Sigma0(m, base_ring=ZZ, tuplegen=self._tuplegen), Dk, on_left, operator.mul)
 
     def clear_cache(self):
         r"""
