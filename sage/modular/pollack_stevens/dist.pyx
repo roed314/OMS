@@ -1,3 +1,5 @@
+# cython: profile=True
+
 #*****************************************************************************
 #       Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
 #
@@ -1400,10 +1402,10 @@ cdef class WeightKAction_vector(WeightKAction):
             _v,g = g,_v
         cdef Dist_vector v = <Dist_vector?>_v
         cdef Dist_vector ans = v._new_c()
-        try:
-            g.set_immutable()
-        except AttributeError:
-            pass
+        #try:
+        #    g.set_immutable()
+        #except AttributeError:
+        #    pass
         ans.moments = v.moments * self.acting_matrix(g, len(v.moments))
         return ans
 
