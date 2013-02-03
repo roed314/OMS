@@ -415,7 +415,7 @@ class PSModularSymbolElement(ModuleElement):
            sage: phi2.valuation(3)
            Traceback (most recent call last):
            ...
-           ValueError: Inconsistent prime
+           ValueError: inconsistent prime
            sage: phi2.valuation(11)
            0
         """
@@ -590,11 +590,12 @@ class PSModularSymbolElement(ModuleElement):
         `\phi` is ordinary at one but not the other.::
 
             sage: f = Newforms(32, 8, names='a')[1]
-            sage: K,a1 = f.hecke_eigenvalue_field().objgen()
+            sage: K = f.hecke_eigenvalue_field()
+            sage: a = f[3]
             sage: phi = f.PS_modular_symbol()
-            sage: phi.is_ordinary(K.ideal(3, 1/16*a1 + 3/2))
+            sage: phi.is_ordinary(K.ideal(3, 1/16*a + 3/2))
             False
-            sage: phi.is_ordinary(K.ideal(3, 1/16*a1 + 5/2))
+            sage: phi.is_ordinary(K.ideal(3, 1/16*a + 5/2))
             True
             sage: phi.is_ordinary(3)
             Traceback (most recent call last):
