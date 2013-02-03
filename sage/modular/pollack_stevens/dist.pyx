@@ -443,7 +443,11 @@ cdef class Dist(ModuleElement):
         if p is None:
             p = self.parent()._p
         n = self.precision_relative()
-        return self.ordp + min([n] + [self._unscaled_moment(a).valuation(p) for a in range(n) if not self._unscaled_moment(a).is_zero()])
+        if self.parent().is_symk():
+            return self.ordp + min([self._unscaled_moment(a).valuation(p) for a in range(n)])
+        else:
+            return self.ordp + min([n] + [self._unscaled_moment(a).valuation(p) for a in range(n) if not self._unscaled_moment(a).is_zero()])
+
 
     def specialize(self, new_base_ring=None):
         """

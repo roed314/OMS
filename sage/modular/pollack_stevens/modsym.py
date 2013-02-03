@@ -905,9 +905,12 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
               Defn: alpha |--> 33 + 18*41 + 21*41^2 + 30*41^3 + 12*41^4 + 18*41^5 + 31*41^6 + 15*41^7 + 32*41^9 + O(41^10))]
         """
         K = self.base_ring()
-        f = K.defining_polynomial()
         R = Qp(p,M+10)['x']
         x = R.gen()
+        if K == QQ:
+            f = x-1
+        else:
+            f = K.defining_polynomial()
         v = R(f).roots()
         if len(v) == 0:
             L = Qp(p,M).extension(f,names='a')
@@ -1314,6 +1317,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         Psi = apinv * Phi.hecke(p)
         attempts = 0
         while (Phi != Psi) and (attempts < 2*newM):
+            verbose("%s attempt",%(attempts+1))
             Phi = Psi
             Psi = Phi.hecke(p) * apinv 
             attempts += 1
