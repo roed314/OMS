@@ -981,11 +981,8 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         We check that lifting and then specializing gives back the original symbol::
 
-            sage: [x.moment(0) for x in g.specialize().values()] == [x.moment(0) for x in f.values()]
+            sage: g.specialize() == f
             True
-
-        (TODO: Calling ``g.specialize() == f`` returns False, because
-        comparison for mod sym objects is apparently broken.)
         """
         if p is None:
             p = self.parent().prime()
