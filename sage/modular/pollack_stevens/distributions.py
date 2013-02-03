@@ -23,7 +23,7 @@ from sage.categories.modules import Modules
 from sage.structure.coerce_actions import LeftModuleAction, RightModuleAction
 from sage.matrix.all import MatrixSpace
 from sage.rings.fast_arith import prime_range
-from sage.modular.pollack_stevens.dist import get_dist_classes, Dist_long, iScale
+from sage.modular.pollack_stevens.dist import get_dist_classes, Dist_long
 from sage.structure.factory import UniqueFactory
 from sage.structure.unique_representation import UniqueRepresentation
 import operator
@@ -227,20 +227,14 @@ class Distributions_abstract(Module):
         self._prec_cap = prec_cap
         self._character = character
         self._symk = symk
-        act = WeightKAction(self, character, tuplegen, act_on_left)
-        self._act = act
+        self._tuplegen=tuplegen
 
-        actlist = [iScale(self, ZZ,True),iScale(self, ZZ,False),iScale(self, QQ,True),
-            iScale(self, QQ,False),iScale(self, base,True),iScale(self, base,False)]
         if symk:
-            actlist.append(act)
+            self._act = WeightKAction(self, character, tuplegen, act_on_left)
+        else: 
+            self._act = WeightKAction(self, character, tuplegen, act_on_left, padic=True)
 
-        if not symk: 
-            act_S0p = WeightKAction(self, character, tuplegen, act_on_left, padic=True)
-            self._act_S0p = act_S0p
-            actlist += [act_S0p]
-
-        self._populate_coercion_lists_(action_list=actlist)
+        self._populate_coercion_lists_(action_list=[self._act])
 
     def _coerce_map_from_(self, other):
         """
@@ -272,11 +266,8 @@ class Distributions_abstract(Module):
             return False
             
 
-    def acting_matrix(self,g,M,padic = False):
-        if padic:
-            return self._act_S0p.acting_matrix(g,M)
-        else:
-            return self._act.acting_matrix(g,M)
+    def acting_matrix(self,g,M):
+        return self._act.acting_matrix(g,M)
 
     def prime(self):
         """
@@ -565,7 +556,7 @@ class Symk_class(Distributions_abstract):
             sage: D2.base_ring()
             7-adic Field with capped relative precision 20
         """
-        return Symk(k=self._k, base=new_base_ring, character=self._character, tuplegen=self._act._tuplegen, act_on_left=self._act.is_left())
+        return Symk(k=self._k, base=new_base_ring, character=self._character, tuplegen=self._tuplegen, act_on_left=self._act.is_left())
 
     def base_extend(self, new_base_ring):
         if not new_base_ring.has_coerce_map_from(self.base_ring()):
@@ -617,7 +608,7 @@ class Symk_class(Distributions_abstract):
             p = pp
         elif p != pp:
             raise ValueError("Inconsistent primes")
-        return Distributions(k=self._k, p=p, prec_cap=M, base=new_base_ring, character=self._character, tuplegen=self._act._tuplegen, act_on_left=self._act.is_left())
+        return Distributions(k=self._k, p=p, prec_cap=M, base=new_base_ring, character=self._character, tuplegen=self._tuplegen, act_on_left=self._act.is_left())
 
 class Distributions_class(Distributions_abstract):
     r"""
@@ -679,7 +670,7 @@ class Distributions_class(Distributions_abstract):
             sage: D2.base_ring()
             7-adic Field with capped relative precision 20
         """
-        return Distributions(k=self._k, p=self._p, prec_cap=self._prec_cap, base=new_base_ring, character=self._character, tuplegen=self._act._tuplegen, act_on_left=self._act.is_left())
+        return Distributions(k=self._k, p=self._p, prec_cap=self._prec_cap, base=new_base_ring, character=self._character, tuplegen=self._tuplegen, act_on_left=self._act.is_left())
 
     def specialize(self, new_base_ring=None):
         """
@@ -705,4 +696,4 @@ class Distributions_class(Distributions_abstract):
             raise NotImplementedError
         if new_base_ring is None:
             new_base_ring = self.base_ring()
-        return Symk(k=self._k, base=new_base_ring, tuplegen=self._act._tuplegen, act_on_left=self._act.is_left())
+        return Symk(k=self._k, base=new_base_ring, tuplegen=self._tuplegen, act_on_left=self._act.is_left())
