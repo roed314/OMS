@@ -1010,7 +1010,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         
         OUTPUT: 
         
-        - an overconvergent modular symbol lifting the symbol that was input.
+        - an overconvergent modular symbol lifting the symbol that was input
         
         EXAMPLES :: 
             sage: E = EllipticCurve('11a')
