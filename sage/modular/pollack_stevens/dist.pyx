@@ -1769,10 +1769,10 @@ cdef class WeightKAction_long(WeightKAction):
         cdef zmod_poly_t t, scale, xM, bdy
         cdef unsigned long pM = self._p**M
         cdef long a, b, c, d
-        a = mymod(_a, pM)
-        b = mymod(_b, pM)
-        c = mymod(_c, pM)
-        d = mymod(_d, pM)
+        a = mymod(ZZ(_a), pM)
+        b = mymod(ZZ(_b), pM)
+        c = mymod(ZZ(_c), pM)
+        d = mymod(ZZ(_d), pM)
         cdef double pMinv = pM
         pMinv = 1.0 / pMinv
         zmod_poly_init2_precomp(t, pM, pMinv, M)
