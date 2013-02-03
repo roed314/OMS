@@ -841,10 +841,10 @@ cdef class Dist_vector(Dist):
             V = self._moments.parent()
             R = V.base_ring()
             n = self.precision_relative()
+            p = self.parent()._p
             if isinstance(R, pAdicGeneric):
                 self._moments = V([self._moments[i].add_bigoh(n-i) for i in range(n)])
             else:
-                p = self.parent()._p
                 self._moments = V([self._moments[i]%(p**(n-i)) for i in range(n)])
             shift = self.valuation() - self.ordp
             if shift != 0:
