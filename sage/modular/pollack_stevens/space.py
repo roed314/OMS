@@ -596,7 +596,7 @@ class PSModularSymbolSpace(Module):
         on the last divisor.
 
         """
-          if self.coefficient_module().is_symk():
+        if self.coefficient_module().is_symk():
             raise ValueError("Not implemented for symk yet")
 
         k = self.coefficient_module()._k
@@ -605,12 +605,12 @@ class PSModularSymbolSpace(Module):
         p = self.prime()
         manin = self.source()
 
-	## There must be a problem here with that +1 -- should be variable depending on a c of some matrix
-	## We'll need to divide by some power of p and so we add extra accuracy here.
-	if k != 0:
-		MM = M + valuation(k,p) + 1 + M.exact_log(p)
-	else:
-		MM = M + M.exact_log(p) + 1
+        ## There must be a problem here with that +1 -- should be variable depending on a c of some matrix
+        ## We'll need to divide by some power of p and so we add extra accuracy here.
+        if k != 0:
+            MM = M + valuation(k,p) + 1 + M.exact_log(p)
+        else:
+            MM = M + M.exact_log(p) + 1
 
         ## this loop runs thru all of the generators (except (0)-(infty)) and randomly chooses a distribution 
         ## to assign to this generator (in the 2,3-torsion cases care is taken to satisfy the relevant relation)
@@ -644,11 +644,11 @@ class PSModularSymbolSpace(Module):
         ## here since (mu_1 |_k ([a,b,c,d]-1))(trival char) = chi(a) k a^{k-1} c , 
         ## we take the constant to be minus the total measure of t divided by (chi(a) k a^{k-1} c)
 
-	if k != 0:
+        if k != 0:
             j = 1
             g = manin.gens[j]
             while (g in manin.reps_with_two_torsion()) or (g in manin.reps_with_three_torsion()) and (j < len(manin.gens())):
-		j = j + 1
+                j = j + 1
                 g = manin.gens[j]
             if j == len(manin.gens):
                 raise ValueError("everything is 2 or 3 torsion!  NOT YET IMPLEMENTED IN THIS CASE")
@@ -656,7 +656,7 @@ class PSModularSymbolSpace(Module):
             gam = manin._gammas(g)
             a = gam[0,0]
             c = gam[1,0]
-		
+
             if self.coefficient_module().character != None:
                 chara = self.coefficient_module().character(a)
             else:
@@ -667,12 +667,12 @@ class PSModularSymbolSpace(Module):
             mu_1 = self.coefficient_module(v)
             D[g] += mu_1
             t = t + mu_1.act_right(gam) - mu_1
-		
-	mu = t.solve_diff_eqn()
+
+        mu = t.solve_diff_eqn()
         Id = manin.gens()[0]
         D[Id] = -mu
 
-	return self(D)
+        return self(D)
 
 
 
