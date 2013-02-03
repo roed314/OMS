@@ -253,10 +253,12 @@ class ManinMap(object):
             t = self._codomain.zero_element()
         else:
             c, A, g = L[0]
-            g1 = self._dict[self._manin.reps(g)] * A
+            try:
+                g1 = self._dict[self._manin.reps(g)] * A
+            except ValueError:
+                print "%s is not in Sigma0" % A
             t = g1 * c
             for c, A, g in L[1:]:
-                A=S0(A)
                 g1 = self._dict[self._manin.reps(g)] * A
                 t += g1 * c
         return t
@@ -499,9 +501,11 @@ class ManinMap(object):
             (15, 0)
             
         """
-        B = S0(self._manin.equivalent_rep(A))
-        gaminv = B * S0(A).inverse()
-        return self[B] * gaminv
+        SN = Sigma0(self._N)
+        A = S0(A)
+        B = self._manin.equivalent_rep(A)
+        gaminv = SN(B * S0(A).inverse())
+        return SN(self[B] * gaminv)
 
     def __call__(self, A):
         """

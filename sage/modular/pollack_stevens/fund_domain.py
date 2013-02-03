@@ -117,7 +117,7 @@ class PSModularSymbolsDomain(SageObject):
         self._reps = reps
 
         self._indices = sorted(indices)
-        self._gens = [reps[i] for i in self._indices]
+        self._gens = [S0(reps[i]) for i in self._indices]
         self._ngens = len(indices)
 
         if len(rels) != len(reps):
@@ -583,10 +583,12 @@ class ManinRelations(PSModularSymbolsDomain):
         if N <= 0:
             raise ValueError, "N must be a positive integer"
         self._N = N
+        SN = Sigma0(N)
 
         ## Creates and stores the Sage representation of P^1(Z/NZ)
         P = P1List(N)
         self._P = P
+        IdN = SN([1,0,0,1])
 
         ## Creates a fundamental domain for Gamma_0(N) whose boundary is a union
         ## of unimodular paths (except in the case of 3-torsion).
@@ -627,7 +629,7 @@ class ManinRelations(PSModularSymbolsDomain):
         ##
         ## This will be used for modular symbols as then the value of a
         ## modular symbol phi on the (associated divisor) of the j-th
-        ## element of coset_reps will be the sum of c * phi (r-th genetator) | A
+        ## element of coset_reps will be the sum of c * phi (r-th generator) | A
         ## as one varies over the tuples in rels[j]
 
         boundary_checked = [False] * len(coset_reps)
@@ -652,7 +654,7 @@ class ManinRelations(PSModularSymbolsDomain):
 
                     ## this relation expresses the fact that
                     ## coset_reps[r] is one of our basic generators
-                    rels[r] = [(1,Id,r)]
+                    rels[r] = [(1,IdN,r)]
 
                     ## the index r is adding to our list
                     ## of indexes of generators
@@ -662,7 +664,7 @@ class ManinRelations(PSModularSymbolsDomain):
                     ## generators which satisfy a 2-torsion relation
                     twotor_index.append(r)
 
-                    gam = coset_reps[r] * sig * coset_reps[r].inverse()
+                    gam = SN(coset_reps[r] * sig * coset_reps[r].inverse())
                     ## gam is 2-torsion matrix and in Gamma_0(N).
                     ## if D is the divisor associated to coset_reps[r]
                     ## then gam * D = - D and so (1+gam)D=0.
@@ -692,13 +694,13 @@ class ManinRelations(PSModularSymbolsDomain):
 
                         ## this relation expresses the fact that coset_reps[r]
                         ## is one of our basic generators
-                        rels[r] = [(1,Id,r)]
+                        rels[r] = [(1,IdN,r)]
 
                         ## the index r is adding to our list of indexes of
                         ## generators which satisfy a 3-torsion relation
                         threetor_index.append(r)
 
-                        gam = coset_reps[r] * tau * coset_reps[r].inverse()
+                        gam = SN(coset_reps[r] * tau * coset_reps[r].inverse())
                         ## gam is 3-torsion matrix and in Gamma_0(N).
                         ## if D is the divisor associated to coset_reps[r]
                         ## then (1+gam+gam^2)D=0.
@@ -716,12 +718,13 @@ class ManinRelations(PSModularSymbolsDomain):
 
                         a = coset_reps[r][t00]
                         b = coset_reps[r][t01]
-                        A = S0([-b,a,-d,c])
+
+                        A = SN([-b,a,-d,c])
                         coset_reps.append(A)
                         ## A (representing the reversed edge) is included in
                         ## our list of coset reps
 
-                        rels.append([(-1,Id,r)])
+                        rels.append([(-1,IdN,r)])
                         ## This relation means that phi on the reversed edge
                         ## equals -phi on original edge
 
@@ -749,7 +752,7 @@ class ManinRelations(PSModularSymbolsDomain):
                                 ## the index r is adding to our list of
                                 ## indexes of generators
 
-                                rels[r] = [(1,Id,r)]
+                                rels[r] = [(1,IdN,r)]
                                 ## this relation expresses the fact that
                                 ## coset_reps[r] is one of our basic generators
 
@@ -757,7 +760,7 @@ class ManinRelations(PSModularSymbolsDomain):
                                 ## A corresponds to reversing the orientation
                                 ## of the edge corr. to coset_reps[r]
 
-                                gam = coset_reps[r] * A.inverse()
+                                gam = SN(coset_reps[r] * A.inverse())
                                 ## gam is in Gamma_0(N) (by assumption of
                                 ## ending up here in this if statement)
 
@@ -1463,6 +1466,7 @@ class ManinRelations(PSModularSymbolsDomain):
 
         """
         N = self.level()
+        SN = Sigma0(N)
 
         ans = {}
         for h in self:
@@ -1494,7 +1498,7 @@ class ManinRelations(PSModularSymbolsDomain):
                    gaminv = B * C
                    #  The matrix gaminv * gamma is added to our list in the j-th slot
                    #  (as described above)
-                   tmp = gaminv * gamma
+                   tmp = SN(gaminv * gamma)
                    ans[B].append(tmp)
 
         return ans
