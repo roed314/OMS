@@ -204,16 +204,27 @@ cdef class Dist(ModuleElement):
         n = self.precision_relative()
         aprec = self.precision_absolute()
         if M is None:
-            M = aprec
+            M = n
         elif M > aprec:
             return False
         elif M < aprec:
             n -= (aprec - M)
+            M -= self.ordp
         if p is None:
             p = self.parent().prime()
-        for a in xrange(n):
-            if (p == 0 and not self.moment(a).is_zero()) or (p != 0 and not self.moment(a).is_zero(M-a)):
-                return False
+        cdef bint usearg = True
+        try:
+            z = self.moment(0).is_zero(M)
+        except TypeError:
+            z = self.moment(0).is_zero()
+            use_arg = False
+        if not z: return False
+        for a in xrange(1, n):
+            if usearg:
+                z = self._unscaled_moment(a).is_zero(M-a)
+            else:
+                z = self._unscaled_moment(a).is_zero()
+            if not z: return False
         return True
 
     def find_scalar(self, _other, p, M = None, check=True):
@@ -432,7 +443,7 @@ cdef class Dist(ModuleElement):
         if p is None:
             p = self.parent()._p
         n = self.precision_relative()
-        return self.ordp + min([self._unscaled_moment(a).valuation(p) for a in range(n) if not self._unscaled_moment(a).is_zero()])
+        return self.ordp + min([n] + [self._unscaled_moment(a).valuation(p) for a in range(n) if not self._unscaled_moment(a).is_zero()])
 
     def specialize(self, new_base_ring=None):
         """
@@ -1559,7 +1570,9 @@ cdef class WeightKAction_vector(WeightKAction):
                 base_ring = Zmod(self._p**M)
         else:
             base_ring = self.underlying_set().base_ring()
-
+        cdef Matrix B = matrix(base_ring,M,M)
+        if M == 0:
+            return B.change_ring(self.codomain().base_ring())
         R = PowerSeriesRing(base_ring, 'y', default_prec = M)
         y = R.gen()
         #tim = verbose("Checked, made R",tim)
@@ -1568,7 +1581,6 @@ cdef class WeightKAction_vector(WeightKAction):
         t = (a+c*y)**k # will already have precision M
         if self._character is not None:
             t *= self._character(a, b, c, d)
-        cdef Matrix B = matrix(base_ring,M,M)
         cdef long row, col
         #tim = verbose("Made matrix",tim)
         for col in range(M):
