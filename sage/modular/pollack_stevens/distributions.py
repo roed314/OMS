@@ -23,7 +23,7 @@ from sage.categories.modules import Modules
 from sage.structure.coerce_actions import LeftModuleAction, RightModuleAction
 from sage.matrix.all import MatrixSpace
 from sage.rings.fast_arith import prime_range
-from sage.modular.pollack_stevens.dist import get_dist_classes, Dist_long, iScale
+from sage.modular.pollack_stevens.dist import get_dist_classes, Dist_long
 from sage.structure.factory import UniqueFactory
 from sage.structure.unique_representation import UniqueRepresentation
 import operator
@@ -228,9 +228,6 @@ class Distributions_abstract(Module):
         self._character = character
         self._symk = symk
         self._tuplegen=tuplegen
-
-        actlist = []#[iScale(self, base,True), iScale(self, base,False)]
-        
 
         if symk:
             self._act = WeightKAction(self, character, tuplegen, act_on_left)
