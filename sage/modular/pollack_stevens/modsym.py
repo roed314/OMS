@@ -988,8 +988,84 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         else:
             raise ValueError("algorithm %s not recognized" % algorithm)
 
-    def _lift_greenberg(self, p, M, new_base_ring, check):
-        raise NotImplementedError("Working on the implementation at Sage Days 44.")
+    
+    def _lift_greenberg(self, p, M, new_base_ring=None, check=False):
+        """
+        
+        This is the Greenberg algorithm for lifting a modular eigensymbol to
+        an overconvergent modular symbol. Once first lifts to any set of numbers
+        (not necessarily satifying the Manin relations). Then one applies the U_p,
+        and normalizes this result to get a lift satisfying the manin relations.
+       
+        
+        INPUT:
+        
+        - ``p`` -- prime
+
+        - ``M`` -- integer equal to the number of moments
+
+        - ``new_base_ring`` -- new base ring
+
+        - ``check`` -- THIS IS CURRENTLY NOT USED IN THE CODE!
+        
+        OUTPUT: 
+        
+        - an overconvergent modular symbol lifting the symbol that was input
+        
+        EXAMPLES :: 
+            sage: E = EllipticCurve('11a')
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: Phi=phi.lift(11,5,algorithm='greenberg')
+            sage: Phi.values()
+            [(2 + 2*11 + 2*11^2 + 2*11^3 + 2*11^4 + O(11^5), 8 + 6*11 + 3*11^2 + 5*11^3 + O(11^4), 5 + 4*11 + 4*11^2 + O(11^3), 5 + 6*11 + O(11^2), 7 + O(11)), (7 + 5*11 + 5*11^2 + 5*11^3 + 5*11^4 + O(11^5), 7 + 7*11 + 11^2 + 10*11^3 + O(11^4), 6 + 8*11 + O(11^3), 6 + 5*11 + O(11^2), 9 + O(11)), (5 + 5*11 + 5*11^2 + 5*11^3 + 5*11^4 + O(11^5), 7 + 4*11 + 11^2 + 11^3 + O(11^4), 10 + 11 + 7*11^2 + O(11^3), 2 + 3*11 + O(11^2), 5 + O(11))]
+
+        
+        """
+        #Right now this is actually slower than the Stevens algorithm. Probably due to bad coding.
+        
+        #get a lift that is not a modular symbol
+        MS = self.parent()
+        gens = MS.source().gens()
+        if new_base_ring == None:
+            new_base_ring = MS.base_ring()
+        MS1 = MS._lift_parent_space(11,2, new_base_ring)
+        CM1 = MS1.coefficient_module()
+        D = {}
+        gens = MS.source().gens()
+        for j in range(len(gens)):
+            D[ gens[j]] = CM1( [phi.values()[j], 0] )
+        Phi1bad = MS1(D)
+        
+        #fix the lift by applying a hecke operator
+        Phi1 = Phi1bad.hecke(p)
+        Phi1 = Phi1/Phi1.Tq_eigenvalue(p)
+        
+        #if you don't want to compute with good accuracy, stop
+        #otherwise, keep lifting
+        if M<=2:
+            return Phi1
+        else:
+            padic_prec=15 #FIXME: 
+            R = Qp(p,padic_prec)
+            def green_lift_once(Phi1, self, MS1, r):
+                MS2 = MS._lift_parent_space(p,r+1,MS.base_ring())
+                CM2 = MS2.coefficient_module()
+                newvalues = []
+                for adist in Phi1.values():
+                    newdist = [R(moment).lift_to_precision(moment.precision_absolute()+1) for moment in adist.moments] + [0]
+                    newdist[0] = R(self.values()[Phi1.values().index(adist)],r+1)
+                    newvalues.append(newdist)
+                D2 = {}
+                for j in range(len(gens)):
+                    D2[ gens[j]] = CM2( newvalues[j] )
+                Phi2 = MS2(D2)
+                Phi2 = Phi2.hecke(p)
+                return Phi2/Phi2.Tq_eigenvalue(p), MS2
+    
+            for r in range(2,M):
+                Phi1, MS1 = green_lift_once(Phi1,self,MS1,r)
+        
+            return Phi1
 
 
     def _lift_to_OMS(self, p, M, new_base_ring, check):
