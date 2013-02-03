@@ -1163,31 +1163,54 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             need_unscaling = False
         verbose(Phi._show_malformed_dist("after reduction"), level=2)
         verbose("Killing eisenstein part")
-        if q is None:
-            Phi = 1 / (1 - ap) * (Phi - Phi.hecke(p))
-        else:
-            k = self.parent().weight()
-            Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q))
+        k = self.parent().weight()
+        Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q))
         verbose(Phi._show_malformed_dist("Eisenstein killed"), level=2)
         verbose("Iterating U_p")
         Psi = apinv * Phi.hecke(p)
-        err = (Psi - Phi).diagonal_valuation(p)
-        verbose("Error is ",err)
-        Phi = Psi
+#        err = (Psi - Phi).diagonal_valuation(p)
+#        verbose("Error is zero modulo p^%s"%(err))
         attempts = 0
-        while (err < M+s-eisenloss) and (attempts < 2*newM):
-            Psi = Phi.hecke(p) * apinv # this won't handle precision right in the critical slope case. ????
-            err = (Psi - Phi).diagonal_valuation(p)
-            verbose("error is zero modulo p^%s"%(err))
-#            verbose((Psi - Phi)._show_malformed_dist("loop %s"%err), level=2)
+        while (Phi - Psi).diagonal_valuation(p) < newM and (attempts < 2*newM):
             Phi = Psi
+            Psi = Phi.hecke(p) * apinv # this won't handle precision right in the critical slope case. ????
+#            err = (Psi - Phi).diagonal_valuation(p)
+ #           verbose("error is zero modulo p^%s out of %s"%(err,newM))
+#            verbose((Psi - Phi)._show_malformed_dist("loop %s"%err), level=2)
+            print "In first loop: ",(Phi-Psi).valuation(p)
+            print "--In first loop: ",(Phi-Psi).diagonal_valuation(p)
+            print (Phi-Psi).values()
+            attempts += 1
         if attempts >= 2*newM:
-            raise RuntimeError("Precision problem in lifting -- precision did not increase.")
+            raise RuntimeError("Precision problem in lifting -- applied U_p many times without success")
         Phi =  ~(q**(k+1) + 1 - aq) * Phi
         if need_unscaling:
             Phi = p**(-s) * Phi
+        Phi = Phi.reduce_precision(M)
+        
+        ## Now we check if the above division lost any accuracy
+        verbose("Now checking if scaling lost accuracy")
+        Psi = apinv * Phi.hecke(p)
+#        err = (Psi - Phi).diagonal_valuation(p)
+#        verbose("Error is zero modulo p^%s"%(err))
+        attempts = 0
+        while ((Phi-Psi).diagonal_valuation(p) < M) and (attempts < M):
+            Phi = Psi
+            Psi = Phi.hecke(p) * apinv # this won't handle precision right in the critical slope case. ????
+#            err = (Psi - Phi).diagonal_valuation(p)
+ #           verbose("error is zero modulo p^%s"%(err))
+  #          verbose((Psi - Phi)._show_malformed_dist("loop %s"%err), level=2)
+            attempts += 1
+            print "In second loop",(Phi-Psi).valuation(p)
+            print "--In second loop: ",(Phi-Psi).diagonal_valuation(p)
+            print (Phi-Psi).values()
+            print (Phi-Psi).is_zero()
 
-        return Phi.reduce_precision(M)
+        if attempts >= M:
+ #           return Psi-Phi
+            raise RuntimeError("Precision problem in lifting -- applied U_p many times without success after rescaling")
+
+        return Phi
 
     def p_stabilize_and_lift(self, p=None, M=None, alpha=None, ap=None, new_base_ring=None, \
                                ordinary=True, algorithm=None, eigensymbol=False, check=True):
