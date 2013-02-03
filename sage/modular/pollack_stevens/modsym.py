@@ -1059,6 +1059,8 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         
         """
+        p = self._get_prime(p)
+
         #Right now this is actually slower than the Stevens algorithm. Probably due to bad coding.
         
         #get a lift that is not a modular symbol
@@ -1066,12 +1068,12 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         gens = MS.source().gens()
         if new_base_ring == None:
             new_base_ring = MS.base_ring()
-        MS1 = MS._lift_parent_space(11,2, new_base_ring)
+        MS1 = MS._lift_parent_space(p, self.weight() + 2, new_base_ring)
         CM1 = MS1.coefficient_module()
         D = {}
         gens = MS.source().gens()
         for j in range(len(gens)):
-            D[ gens[j]] = CM1( [self.values()[j], 0] )
+            D[gens[j]] = CM1( self.values()[j]._moments.list() + [0] )
         Phi1bad = MS1(D)
         
         #fix the lift by applying a hecke operator
@@ -1085,23 +1087,25 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         else:
             padic_prec=15 #FIXME: 
             R = Qp(p,padic_prec)
-            def green_lift_once(Phi1, self, MS1, r):
+
+            def green_lift_once(Phi1, self, r):
                 MS2 = MS._lift_parent_space(p,r+1,new_base_ring)
                 CM2 = MS2.coefficient_module()
                 newvalues = []
                 for adist in Phi1.values():
                     newdist = [R(moment).lift_to_precision(moment.precision_absolute()+1) for moment in adist._moments] + [0]
-                    newdist[0] = R(self.values()[Phi1.values().index(adist)],r+1)
+                    for s in xrange(self.weight()):
+                        newdist[s] = R(self.values()[Phi1.values().index(adist)].moment(s), r+1)
                     newvalues.append(newdist)
                 D2 = {}
                 for j in range(len(gens)):
                     D2[ gens[j]] = CM2( newvalues[j] )
                 Phi2 = MS2(D2)
                 Phi2 = Phi2.hecke(p)
-                return Phi2/Phi2.Tq_eigenvalue(p), MS2
-    
-            for r in range(2,M):
-                Phi1, MS1 = green_lift_once(Phi1,self,MS1,r)
+                return Phi2 / self.Tq_eigenvalue(p)
+ 
+            for r in range(self.weight() + 2, M):
+                Phi1 = green_lift_once(Phi1,self,r)
         
             return Phi1
 
