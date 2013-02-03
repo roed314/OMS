@@ -650,6 +650,21 @@ class ManinMap(object):
         r"""
         Normalize every value of self -- e.g., reduces each value's
         `j`-th moment modulo `p^(N-j)`
+            
+        EXAMPLES::
+            
+            sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
+            sage: D = Distributions(0, 5, 10); D
+            Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: manin = sage.modular.pollack_stevens.fund_domain.ManinRelations(11)
+            sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
+            sage: f = ManinMap(D, manin, data)
+            sage: f._dict[M2Z([1,0,0,1])]
+            (1, 2)
+            sage: g = f.normalize()
+            sage: g._dict[M2Z([1,0,0,1])]
+            (1, 2)
+            
         """
         sd = self._dict
         for val in sd.itervalues():
@@ -658,6 +673,25 @@ class ManinMap(object):
 
     def reduce_precision(self, M):
         r"""
+        Reduce the precision of all the values of the Manin map. 
+            
+        INPUT:
+            
+            - ``M`` -- an integer, the new precision.
+            
+        EXAMPLES::
+            
+            sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
+            sage: D = Distributions(0, 5, 10); D
+            Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: manin = sage.modular.pollack_stevens.fund_domain.ManinRelations(11)
+            sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
+            sage: f = ManinMap(D, manin, data)
+            sage: sage: f._dict[M2Z([1,0,0,1])]
+            (1, 2)
+            sage: g = f.reduce_precision(1)
+            sage: g._dict[M2Z([1,0,0,1])]
+            1            
         
         """
         D = {}
@@ -667,6 +701,21 @@ class ManinMap(object):
         return self.__class__(self._codomain, self._manin, D, check=False)
 
     def specialize(self, new_base_ring):
+        r"""
+        Specializes all the values of the Manin map to a new base ring. 
+            
+        EXAMPLES::
+            
+            sage: from sage.modular.pollack_stevens.manin_map import M2Z, ManinMap, Distributions
+            sage: D = Distributions(0, 5, 10); D
+            Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: manin = sage.modular.pollack_stevens.fund_domain.ManinRelations(11)
+            sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
+            sage: f = ManinMap(D, manin, data)
+            sage: g = f.specialize(pAdicRing(5))
+            sage: g._codomain
+            Sym^0 Z_5^2
+        """
         D = {}
         sd = self._dict
         for ky, val in sd.iteritems():
@@ -704,7 +753,6 @@ class ManinMap(object):
             [2/5, -3, 1]
             sage: phi.Tq_eigenvalue(7,7,10)
             -2
-            
         """
         self.compute_full_data()
         self.normalize()
@@ -735,6 +783,33 @@ class ManinMap(object):
             return psi.normalize()
 
     def p_stabilize(self, p, alpha, V):
+        r"""
+        Return the `p`-stablization of self to level `N*p` on which `U_p` acts by `alpha`.
+        
+        INPUT:
+            
+        - ``p`` -- a prime.
+            
+        - ``alpha`` -- a `U_p`-eigenvalue.
+            
+        - ``V`` -- a space of modular symbols.
+            
+        OUTPUT:
+            
+        - The image of this ManinMap under the Hecke operator `T_{\ell}`
+            
+        EXAMPLES:
+            
+            ::
+            
+            sage: E = EllipticCurve('11a')
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: f = phi._map
+            sage: V = phi.parent()
+            sage: f.p_stabilize(5,1,V)
+            Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Sym^0 Q^2            
+        """
         manin = V.source()
         pmat = M2Z([p,0,0,1])
         D = {}
