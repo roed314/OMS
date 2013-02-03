@@ -210,23 +210,46 @@ class PSModularSymbolSpace(Module):
         self._populate_coercion_lists_(action_list=actions)
 
     def _element_constructor_(self, data):
+        r"""
+        Construct an element of self from data.
+        """
         if isinstance(data, PSModularSymbolElement):
             data = data._map
-        elif isinstance(data, (types.DictType, Dist)):
-            # a dict, or a single distribution specifying a constant symbol
-            data = ManinMap(self._coefficients, self._source, data)
         elif isinstance(data, ManinMap):
             pass
         else:
-            raise TypeError("Cannot create an element of %s from %s of type %s" % (self, data, type(data)))
+            # a dict, or a single distribution specifying a constant symbol, etc
+            data = ManinMap(self._coefficients, self._source, data)
+
         if data._codomain != self._coefficients:
             data = data.extend_codomain(self._coefficients)
+ 
         return self.element_class(data, self, construct=True)
 
     def _coerce_map_from_(self, other):
+        r"""
+        Used for comparison and coercion.
+
+        EXAMPLE::
+
+            sage: M1 = PSModularSymbols(Gamma0(11), coefficients=Symk(3))
+            sage: M2 = PSModularSymbols(Gamma0(11), coefficients=Symk(3,Qp(11)))
+            sage: M3 = PSModularSymbols(Gamma0(11), coefficients=Symk(4))
+            sage: M4 = PSModularSymbols(Gamma0(11), coefficients=Distributions(3, 11, 10))
+            sage: M1.has_coerce_map_from(M2)
+            False
+            sage: M2.has_coerce_map_from(M1)
+            True
+            sage: M1.has_coerce_map_from(M3)
+            False
+            sage: M1.has_coerce_map_from(M4)
+            False
+            sage: M2.has_coerce_map_from(M4)
+            True
+        """
         if isinstance(other, PSModularSymbolSpace):
             if other.group() == self.group() \
-                and other.coefficient_module().has_coerce_map_from(self.coefficient_module()):
+                and self.coefficient_module().has_coerce_map_from(other.coefficient_module()):
                 return True
         else:
             return False
