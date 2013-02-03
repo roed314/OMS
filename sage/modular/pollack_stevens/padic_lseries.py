@@ -44,12 +44,12 @@ class pAdicLseries(SageObject):
         sage: Phi = phi_stabilized.lift(p,prec,algorithm='stevens',eigensymbol=True)
         sage: L = pAdicLseries(Phi)
         sage: L[1]
-        2 + 3*5 + O(5^2)
+        2 + 3*5 + O(5^3)
         sage: L[0]
-        O(5^2)
-        
+        O(5^3)
+
     Using the existing algorithm in Sage, it seems we're off by a factor of 2:
-        
+
         sage: L = E.padic_lseries(5)
         sage: L.series(4)[1]
         1 + 4*5 + 2*5^2 + O(5^3)

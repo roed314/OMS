@@ -57,9 +57,9 @@ class PSModularSymbolElement(ModuleElement):
             sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
             sage: phi = ps_modsym_from_elliptic_curve(E)
             sage: phi._repr_()
-            'Modular symbol with values in Sym^0 Q^2'
+            'Modular symbol of level 11 with values in Sym^0 Q^2'
         """
-        return "Modular symbol with values in %s"%(self.parent().coefficient_module())
+        return "Modular symbol of level %s with values in %s"%(self.parent().level(),self.parent().coefficient_module())
     
     def dict(self):
         r"""
@@ -129,7 +129,7 @@ class PSModularSymbolElement(ModuleElement):
             sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
             sage: phi = ps_modsym_from_elliptic_curve(E)
             sage: phi._normalize()
-            Modular symbol with values in Sym^0 Q^2
+            Modular symbol of level 11 with values in Sym^0 Q^2
             sage: phi._normalize().values()
             [-1/5, 3/2, -1/2]
         """
@@ -171,7 +171,7 @@ class PSModularSymbolElement(ModuleElement):
             sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
             [-1/5, 3/2, -1/2]
             sage: phi + phi
-            Modular symbol with values in Sym^0 Q^2
+            Modular symbol of level 11 with values in Sym^0 Q^2
             sage: (phi + phi).values()
             [-2/5, 3, -1]
         """
@@ -188,7 +188,7 @@ class PSModularSymbolElement(ModuleElement):
             sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
             [-1/5, 3/2, -1/2]
             sage: 2*phi
-            Modular symbol with values in Sym^0 Q^2
+            Modular symbol of level 11 with values in Sym^0 Q^2
             sage: (2*phi).values()
             [-2/5, 3, -1]
         """
@@ -205,7 +205,7 @@ class PSModularSymbolElement(ModuleElement):
             sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
             [-1/5, 3/2, -1/2]
             sage: phi*2
-            Modular symbol with values in Sym^0 Q^2
+            Modular symbol of level 11 with values in Sym^0 Q^2
             sage: (phi*2).values()
             [-2/5, 3, -1]
         """
@@ -222,7 +222,7 @@ class PSModularSymbolElement(ModuleElement):
             sage: phi = ps_modsym_from_elliptic_curve(E); phi.values()
             [-1/5, 3/2, -1/2]
             sage: phi - phi
-            Modular symbol with values in Sym^0 Q^2
+            Modular symbol of level 11 with values in Sym^0 Q^2
             sage: (phi - phi).values()
             [0, 0, 0]
         """
@@ -836,7 +836,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: phi = ps_modsym_from_elliptic_curve(E)
             sage: phis = phi.p_stabilize(p,M = prec)
             sage: phis
-            Modular symbol with values in Sym^0 Q_5^2
+            Modular symbol of level 55 with values in Sym^0 Q_5^2
             sage: phis.hecke(7) == phis*E.ap(7)
             True
             sage: phis.hecke(5) == phis*E.ap(5)
@@ -896,10 +896,10 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: D = ModularSymbols(67,2,1).cuspidal_submodule().new_subspace().decomposition()[1]
             sage: f = ps_modsym_from_simple_modsym_space(D)
             sage: f.completions(41,10)
-            [(Modular symbol with values in Sym^0 Q_41^2, Ring morphism:
+            [(Modular symbol of level 67 with values in Sym^0 Q_41^2, Ring morphism:
               From: Number Field in alpha with defining polynomial x^2 + 3*x + 1
               To:   41-adic Field with capped relative precision 10
-              Defn: alpha |--> 5 + 22*41 + 19*41^2 + 10*41^3 + 28*41^4 + 22*41^5 + 9*41^6 + 25*41^7 + 40*41^8 + 8*41^9 + O(41^10)), (Modular symbol with values in Sym^0 Q_41^2, Ring morphism:
+              Defn: alpha |--> 5 + 22*41 + 19*41^2 + 10*41^3 + 28*41^4 + 22*41^5 + 9*41^6 + 25*41^7 + 40*41^8 + 8*41^9 + O(41^10)), (Modular symbol of level 67 with values in Sym^0 Q_41^2, Ring morphism:
               From: Number Field in alpha with defining polynomial x^2 + 3*x + 1
               To:   41-adic Field with capped relative precision 10
               Defn: alpha |--> 33 + 18*41 + 21*41^2 + 30*41^3 + 12*41^4 + 18*41^5 + 31*41^6 + 15*41^7 + 32*41^9 + O(41^10))]
@@ -921,7 +921,6 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             embedded_sym = self.__class__(self._map.apply(psi,codomain=Dist, to_moments=True),V, construct=True)
             ans = [embedded_sym,psi]
             return ans
-            #raise ValueError, "No coercion possible -- no prime over p has degree 1"
         else:
             roots = [r[0] for r in v]
             ans = []
@@ -1067,7 +1066,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             (2 + 5 + 3*5^2 + 4*5^3 + 2*5^5 + O(5^6), O(5^5), 2*5 + 3*5^2 + O(5^4), O(5^3), 5 + O(5^2), O(5))
             sage: FsS = fs.lift(M=6, eigensymbol=True,algorithm='stevens') 
             sage: FsS.values()[0]                                         
-            (2 + 5 + 3*5^2 + 4*5^3 + O(5^7), O(5^6), 2*5 + 3*5^2 + 2*5^4 + O(5^5), O(5^4), 5 + 2*5^2 + O(5^3), O(5^2), O(5))
+            (2 + 5 + 3*5^2 + 4*5^3 + O(5^6), O(5^5), 2*5 + 3*5^2 + O(5^4), O(5^3), 5 + O(5^2), O(5))            
         """
         #FIXME: The above doctests show a discrepancy! Presumably the Stevens
         #algorithm is correct as FsS is an eigensymbol, whereas FsG isn't.
@@ -1151,7 +1150,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: E = EllipticCurve('11a')
             sage: f = ps_modsym_from_elliptic_curve(E)
             sage: f._lift_to_OMS(11,4,Qp(11,4),True)
-            Modular symbol with values in Space of 11-adic distributions with k=0 action and precision cap 4
+            Modular symbol of level 11 with values in Space of 11-adic distributions with k=0 action and precision cap 4
 
         """
         D = {}
@@ -1326,7 +1325,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             raise RuntimeError("Precision problem in lifting -- applied U_p many times without success")
         Phi =  ~(q**(k+1) + 1 - aq) * Phi
 
-        return Phi
+        return Phi.reduce_precision(M)
         
     def p_stabilize_and_lift(self, p=None, M=None, alpha=None, ap=None, new_base_ring=None, \
                                ordinary=True, algorithm=None, eigensymbol=False, check=True):
@@ -1424,7 +1423,7 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
             Space of overconvergent modular symbols for Congruence Subgroup Gamma0(2) with sign 0 and values in Space of 5-adic distributions with k=0 action and precision cap 10
             sage: f = M(1)
             sage: f.specialize()
-            Modular symbol with values in Sym^0 Z_5^2
+            Modular symbol of level 2 with values in Sym^0 Z_5^2
             sage: f.specialize().values()
             [1 + O(5^10), 1 + O(5^10)]
             sage: f.values()
@@ -1437,7 +1436,7 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
             True
 
             sage: f.specialize(QQ)
-            Modular symbol with values in Sym^0 Q^2
+            Modular symbol of level 2 with values in Sym^0 Q^2
             sage: f.specialize(QQ).values()
             [1, 1]
             sage: f.specialize(QQ).parent().coefficient_module()
@@ -1456,6 +1455,6 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
 
             sage: f = Newform("37a")
             sage: f.PS_modular_symbol().lift(37, M=6, algorithm="stevens").padic_lseries()
-            37-adic L-series of Modular symbol with values in Space of 37-adic distributions with k=0 action and precision cap 6
+            37-adic L-series of Modular symbol of level 37 with values in Space of 37-adic distributions with k=0 action and precision cap 6
         """
         return pAdicLseries(self, *args, **kwds)
