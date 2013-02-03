@@ -449,8 +449,13 @@ cdef class Dist(ModuleElement):
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.distributions import Distributions
+            sage: D = Distributions(4, 13)
+            sage: d = D([0,2,4,6,8,10,12])
+            sage: d.specialize()          
+            (O(13^7), 2 + O(13^6), 4 + O(13^5), 6 + O(13^4), 8 + O(13^3))
+
         """
+        self.normalize()
         k=self.parent()._k
         if k < 0:
             raise ValueError("negative weight")
@@ -589,7 +594,7 @@ cdef class Dist_vector(Dist):
         if check:
             # case 1: input is a distribution already
             if PY_TYPE_CHECK(moments, Dist):
-                pass
+                moments = moments._moments
             # case 2: input is a vector, or something with a len
             elif hasattr(moments, '__len__'):
                 M = len(moments)
@@ -1598,7 +1603,7 @@ cdef class WeightKAction_vector(WeightKAction):
         #    g.set_immutable()
         #except AttributeError:
         #    pass
-        ans.moments = v.moments * self.acting_matrix(g, len(v._moments))
+        ans._moments = v._moments * self.acting_matrix(g, len(v._moments))
         ans.ordp = v.ordp
         return ans
 
@@ -1781,7 +1786,7 @@ cdef class WeightKAction_long(WeightKAction):
         cdef Dist_long v = <Dist_long?>_v
         cdef Dist_long ans = v._new_c()
         ans.relprec = v.relprec
-        ans.ordp = self.ordp
+        ans.ordp = v.ordp
         cdef long pM = self._p**ans.relprec
         cdef SimpleMat B = <SimpleMat>self.acting_matrix(g, ans.relprec)
         cdef long row, col, entry = 0
