@@ -953,7 +953,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             p = self.parent().prime()
             if p is None:
                 raise ValueError("must specify a prime")
-        elif self.parent().prime() is not None and p != self.parent().prime():
+        elif (self.parent().prime() != 0) and p != self.parent().prime():
             raise ValueError("inconsistent prime")
         if M is None:
             M = self.parent().precision_cap() + 1
@@ -1221,73 +1221,42 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         """
         if new_base_ring(ap).valuation() > 0:
             raise ValueError("Lifting non-ordinary eigensymbols not implemented (issue #20)")
+
         verbose("computing naive lift: M=%s, newM=%s, new_base_ring=%s"%(M, newM, new_base_ring))
         Phi = self._lift_to_OMS(p, newM, new_base_ring, check)
-        ## Act by Hecke to ensure values are in D and not D^dag after sovling difference equation
+
+        ## Scale by a large enough power of p to clear denominators from solving difference equation
+#        s = newM.exact_log(p)+1
+#        Phi = Phi * p**s
+
+        ## Act by Hecke to ensure values are in D and not D^dag after sovling difference equation        
         verbose("Applying Hecke")
         apinv = ~ap
         Phi = apinv * Phi.hecke(p)
+
         verbose(Phi._show_malformed_dist("naive lift"), level=2)
-        ## I (RP) am worried that scaling by s here isn't enough -- do you need to clear p^(log(M))?
-        s = - Phi.valuation(p)
-        if s > 0:
-            verbose("scaling by %s^%s"%(p, s))
-            Phi = p**s * Phi
-            need_unscaling = True
-        else:
-            s = 0
-            need_unscaling = False
         verbose(Phi._show_malformed_dist("after reduction"), level=2)
+
+        ## Killing eisenstein part
         verbose("Killing eisenstein part")
         k = self.parent().weight()
         Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q))
         verbose(Phi._show_malformed_dist("Eisenstein killed"), level=2)
+
+        ## Iterating U_p
         verbose("Iterating U_p")
         Psi = apinv * Phi.hecke(p)
-#        err = (Psi - Phi).diagonal_valuation(p)
-#        verbose("Error is zero modulo p^%s"%(err))
         attempts = 0
-        while (Phi - Psi).diagonal_valuation(p) < newM and (attempts < 2*newM):
+        while (Phi != Psi) and (attempts < 2*newM):
             Phi = Psi
-            Psi = Phi.hecke(p) * apinv # this won't handle precision right in the critical slope case. ????
-#            err = (Psi - Phi).diagonal_valuation(p)
- #           verbose("error is zero modulo p^%s out of %s"%(err,newM))
-#            verbose((Psi - Phi)._show_malformed_dist("loop %s"%err), level=2)
-            print "In first loop: ",(Phi-Psi).valuation(p)
-            print "--In first loop: ",(Phi-Psi).diagonal_valuation(p)
-            print (Phi-Psi).values()
+            Psi = Phi.hecke(p) * apinv 
             attempts += 1
         if attempts >= 2*newM:
             raise RuntimeError("Precision problem in lifting -- applied U_p many times without success")
         Phi =  ~(q**(k+1) + 1 - aq) * Phi
-        if need_unscaling:
-            Phi = p**(-s) * Phi
-        Phi = Phi.reduce_precision(M)
-        
-        ## Now we check if the above division lost any accuracy
-        verbose("Now checking if scaling lost accuracy")
-        Psi = apinv * Phi.hecke(p)
-#        err = (Psi - Phi).diagonal_valuation(p)
-#        verbose("Error is zero modulo p^%s"%(err))
-        attempts = 0
-        while ((Phi-Psi).diagonal_valuation(p) < M) and (attempts < M):
-            Phi = Psi
-            Psi = Phi.hecke(p) * apinv # this won't handle precision right in the critical slope case. ????
-#            err = (Psi - Phi).diagonal_valuation(p)
- #           verbose("error is zero modulo p^%s"%(err))
-  #          verbose((Psi - Phi)._show_malformed_dist("loop %s"%err), level=2)
-            attempts += 1
-            print "In second loop",(Phi-Psi).valuation(p)
-            print "--In second loop: ",(Phi-Psi).diagonal_valuation(p)
-            print (Phi-Psi).values()
-            print (Phi-Psi).is_zero()
-
-        if attempts >= M:
- #           return Psi-Phi
-            raise RuntimeError("Precision problem in lifting -- applied U_p many times without success after rescaling")
 
         return Phi
-
+        
     def p_stabilize_and_lift(self, p=None, M=None, alpha=None, ap=None, new_base_ring=None, \
                                ordinary=True, algorithm=None, eigensymbol=False, check=True):
         """
