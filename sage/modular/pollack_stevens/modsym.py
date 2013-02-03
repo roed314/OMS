@@ -1119,6 +1119,63 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 Phi1 = green_lift_once(Phi1,self,r)
         
             return Phi1
+    
+    D0 = {}
+    for j in range(num_gens):
+        D0[gens[j]] = CM1( [zero_moms[j]] + (M-1)*[0])
+
+    #hecke and divide by eigenvalue
+    Phi=MS1(D0)
+    Phi=Phi.hecke(p)/ap
+    
+    #fix first moments, hecke and divide by eigenvalues
+    for k in range(M-1):
+        D1 = {}
+        for j in range(num_gens):
+            vals = Phi.values()[j]
+            newvals=[vals.moment(n) for n in range(M)]
+            newvals[0] = K(zero_moms[j])
+            D1[gens[j]] = CM1(vals)
+        Phi = MS1(D1)
+        Phi=Phi.hecke(p)/ap
+        
+    return Phi
+    
+    def _lift_greenberg2(self, p, M, new_base_ring=None, check=False):
+    #this is a slower version of the _lift_greenberg that tries not to
+    #instantiate a bunch of parents. It turns out to be actually slower.
+    #This code actually only works for weight 2 too. 
+        MS = phi.parent()
+        gens=MS.source().gens()
+        num_gens=len(gens)
+        K=Qp(p,M)
+        zero_moms=phi.values()
+        ap = phi.Tq_eigenvalue(p)
+    
+        if new_base_ring == None:
+            new_base_ring = MS.base_ring()
+        MS1 = MS._lift_parent_space(p,M,new_base_ring)
+        CM1=MS1.coefficient_module()
+        D0 = {}
+        for j in range(num_gens):
+            D0[gens[j]] = CM1( [zero_moms[j]] + (M-1)*[0])
+
+        #hecke and divide by eigenvalue
+        Phi=MS1(D0)
+        Phi=Phi.hecke(p)/ap
+        
+        #keep fixing first moments, hecke and divide by eigenvalues
+        for k in range(M-1):
+            D1 = {}
+            for j in range(num_gens):
+                vals = Phi.values()[j]
+                newvals=[vals.moment(n) for n in range(M)]
+                newvals[0] = K(zero_moms[j])
+                D1[gens[j]] = CM1(vals)
+            Phi = MS1(D1)
+            Phi=Phi.hecke(p)/ap
+        return Phi
+    
 
     def _lift_to_OMS(self, p, M, new_base_ring, check):
         r"""
