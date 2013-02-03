@@ -392,8 +392,8 @@ cdef class Dist(ModuleElement):
         """
         if p is None:
             p = self.parent()._p
-        n = self.precision_absolute()
-        return min([n] + [a + self.moment(a).valuation(p) for a in range(n)])
+        n = self.precision_relative()
+        return self.ordp + min([n] + [a + self._unscaled_moment(a).valuation(p) for a in range(n)])
 
     def valuation(self, p=None):
         """
@@ -429,8 +429,8 @@ cdef class Dist(ModuleElement):
         """
         if p is None:
             p = self.parent()._p
-        n = self.precision_absolute()
-        return min([self.moment(a).valuation(p) for a in range(n)])
+        n = self.precision_relative()
+        return self.ordp + min([self._unscaled_moment(a).valuation(p) for a in range(n) if not self._unscaled_moment(a).is_zero()])
 
     def specialize(self, new_base_ring=None):
         """
@@ -839,6 +839,11 @@ cdef class Dist_vector(Dist):
             else:
                 p = self.parent()._p
                 self._moments = V([self._moments[i]%(p**(n-i)) for i in range(n)])
+            shift = self.valuation() - self.ordp
+            if shift != 0:
+                V = self.parent().approx_module(n-shift)
+                self.ordp += shift
+                self._moments = V([self._moments[i] // p**shift for i in range(n-shift)])
         return self
 
     def reduce_precision(self, M):
