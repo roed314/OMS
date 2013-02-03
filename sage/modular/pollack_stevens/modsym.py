@@ -23,11 +23,13 @@ from sage.misc.misc import verbose
 from sage.rings.padics.precision_error import PrecisionError
 
 from sage.categories.action import Action
-from fund_domain import M2ZSpace, M2Z, Id
+from fund_domain import Id
 from manin_map import ManinMap
 from padic_lseries import pAdicLseries
+from sigma0 import Sigma0
+S0 = Sigma0(0)
 
-minusproj = M2Z([1,0,0,-1])
+minusproj = S0([1,0,0,-1])
 
 
 class PSModSymAction(Action):
@@ -573,7 +575,7 @@ class PSModularSymbolElement(ModuleElement):
                 raise ValueError("need to specify a prime")
             p = self.parent().prime()
         else:
-            if (self.parent().prime() != p) and (self.parent().prime() != None):
+            if (self.parent().prime() != p) and (self.parent().prime() != 0):
                 raise ValueError("prime does not match coefficient module's prime")                
         ap = self.Tq_eigenvalue(p)
         if self.base_ring().is_exact() and (self.base_ring() != QQ):
@@ -951,7 +953,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             p = self.parent().prime()
             if p is None:
                 raise ValueError("must specify a prime")
-        elif self.parent().prime() is not None and p != self.parent().prime():
+        elif self.parent().prime() != 0 and p != self.parent().prime():
             raise ValueError("inconsistent prime")
         if M is None:
             M = self.parent().precision_cap() + 1
