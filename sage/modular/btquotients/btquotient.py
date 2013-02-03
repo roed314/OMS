@@ -184,14 +184,14 @@ class DoubleCosetReduction(SageObject):
         r"""
         The direction of the edge.
 
-        The BT quotients are directed graphs but we only store 
-        half the edges (we treat them more like unordered graphs). 
-        The sign tells whether the matrix self.x is equivalent to the 
+        The BT quotients are directed graphs but we only store
+        half the edges (we treat them more like unordered graphs).
+        The sign tells whether the matrix self.x is equivalent to the
         representative in the quotient (sign = +1), or to the
         opposite of one of the representatives (sign = -1).
 
         OUTPUT :
-       
+
         - an int that is +1 or -1 according to the sign of self
 
         EXAMPLES::
@@ -220,8 +220,8 @@ class DoubleCosetReduction(SageObject):
         Image under gamma.
 
         Elements of the arithmetic group can be regarded as elements
-        of the global quarterion order, and hence may be represented 
-        exactly. This function computes the image of such an element 
+        of the global quarterion order, and hence may be represented
+        exactly. This function computes the image of such an element
         under the local splitting and returns the corresponding p-adic
         approximation.
 
@@ -245,7 +245,7 @@ class DoubleCosetReduction(SageObject):
 
             sage: from sage.modular.btquotients.btquotient import DoubleCosetReduction
             sage: Y = BTQuotient(7,11)
-            sage: d = DoubleCosetReduction(Y,Matrix(ZZ,2,2,[123,45,88,1])) 
+            sage: d = DoubleCosetReduction(Y,Matrix(ZZ,2,2,[123,45,88,1]))
             sage: d.igamma()
             [6 + 6*7 + 6*7^2 + 6*7^3 + 6*7^4 + O(7^5)                                   O(7^5)]
             [                                  O(7^5) 6 + 6*7 + 6*7^2 + 6*7^3 + 6*7^4 + O(7^5)]
@@ -272,13 +272,13 @@ class DoubleCosetReduction(SageObject):
         r"""
         Return the 't part' of the decomposition using the rest of the data.
 
-        INPUT: 
-       
+        INPUT:
+
         - ``prec`` - a p-adic precision that t will be computed
         to. Default is the default working precision of self
 
-        OUTPUT: 
-        
+        OUTPUT:
+
         - ``cached_t`` - a 2x2 p-adic matrix with entries of
         precision 'prec' that is the 't-part' of the decomposition of
         self
@@ -1286,7 +1286,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
         Ensures that a canonical BTQuotient is created.
 
         EXAMPLES:
-        
+
             sage: BTQuotient(3,17) is BTQuotient(3,17,1)
             True
         """
@@ -1303,21 +1303,21 @@ class BTQuotient(SageObject, UniqueRepresentation):
     INPUT:
 
      - ``p`` - a prime number
-     
+
      - ``Nminus`` - squarefree integer divisible by an odd number of
        distinct primes and relatively prime to p. This is the
        discriminant of the definite quaternion algebra that one is
        quotienting by.
-     
+
      - ``Nplus`` - an integer corpime to pNminus (Default: 1). This is
        the tame level. It need not be squarefree! If Nplus is not 1
        then the user currently needs magma installed due to sage's
        inability to compute well with nonmaximal Eichler orders in
        rational (definite) quaternion algebras.
-    
+
      - ``character`` - a Dirichlet character (Default: None) of modulus
        `pN^-N^+`.
-     
+
      - ``use_magma`` - boolean (default: False). If True, uses magma
        for quaternion arithmetic.
 
@@ -1332,8 +1332,8 @@ class BTQuotient(SageObject, UniqueRepresentation):
         Multi-graph on 4 vertices
 
     And an example with a Dirichlet character::
-  
-      sage: f = DirichletGroup(6)[1] 
+
+      sage: f = DirichletGroup(6)[1]
       sage: X = BTQuotient(3,2*5*7,character = f)
       sage: X.genus()
       5
@@ -1350,7 +1350,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
     def __init__(self,p,Nminus,Nplus=1,character = None, use_magma = False, seed = None):
         """
         Computes the quotient of the Bruhat-Tits tree by an arithmetic
-        quaternionic group. 
+        quaternionic group.
 
         EXAMPLES::
 
@@ -1401,7 +1401,14 @@ class BTQuotient(SageObject, UniqueRepresentation):
             self._use_magma = False
 
         self._BT=BruhatTitsTree(p)
+
+        # This value for self._prec was chosen to agree with a hardcoded
+        # value in _compute_quotient (the line:
+        # self.get_embedding_matrix(prec = 3))
+        # It was previously -1 and caused the program to default to
+        # exact splittings (hence magma) in many situations
         self._prec = -1
+
         self._cached_vertices=dict()
         self._cached_edges=dict()
         self._cached_paths=dict()
@@ -3438,7 +3445,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
 
         INPUT:
 
-        - ``check`` - Boolean (Default = True). 
+        - ``check`` - Boolean (Default = True).
 
         EXAMPLES::
 
@@ -3454,9 +3461,9 @@ class BTQuotient(SageObject, UniqueRepresentation):
 
             sage: X = BTQuotient(5,7,12) # optional - magma
             sage: X.get_graph()          # optional - magma
-            Multi-graph on 24 vertices   
+            Multi-graph on 24 vertices
             sage: len(X._edge_list)      # optional - magma
-            72 
+            72
 
             sage: X = BTQuotient(2,3,5)  # optional - magma
             sage: X.get_graph() # optional - magma
