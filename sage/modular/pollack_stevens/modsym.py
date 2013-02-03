@@ -953,7 +953,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             p = self.parent().prime()
             if p is None:
                 raise ValueError("must specify a prime")
-        elif self.parent().prime() is not None and p != self.parent().prime():
+        elif (self.parent().prime() != 0) and p != self.parent().prime():
             raise ValueError("inconsistent prime")
         if M is None:
             M = self.parent().precision_cap() + 1
@@ -1048,7 +1048,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             padic_prec=15 #FIXME: 
             R = Qp(p,padic_prec)
             def green_lift_once(Phi1, self, MS1, r):
-                MS2 = MS._lift_parent_space(p,r+1,MS.base_ring())
+                MS2 = MS._lift_parent_space(p,r+1,new_base_ring)
                 CM2 = MS2.coefficient_module()
                 newvalues = []
                 for adist in Phi1.values():
