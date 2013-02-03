@@ -540,13 +540,15 @@ class PSModularSymbolElement(ModuleElement):
                 raise ValueError("not a scalar multiple")
         return aq
 
-    def is_ordinary(self,p=None):
+    def is_ordinary(self,p=None,P=None):
         r"""
         Returns true if the p-th eigenvalue is a p-adic unit.
 
         INPUT:
         
-        - ``p`` - a positive integral prime (defaults to None)
+        - ``p`` - a positive integral prime, or None (default None)
+        - ``P`` - a prime of the base ring above `p`, or None. This is ignored
+          unless the base ring is a number field.
 
         OUTPUT:
 
@@ -569,19 +571,37 @@ class PSModularSymbolElement(ModuleElement):
             sage: phip.is_ordinary()
             True
 
+        A number field example. Here there are multiple primes above `p`, and
+        `\phi` is ordinary at one but not the other.::
+
+            sage: f = Newforms(32, 8, names='a')[1]
+            sage: K,a1 = f.hecke_eigenvalue_field().objgen()
+            sage: phi = f.PS_modular_symbol()
+            sage: phi.is_ordinary(K.ideal(3, 1/16*a1 + 3/2))
+            False
+            sage: phi.is_ordinary(K.ideal(3, 1/16*a1 + 5/2))
+            True
+            sage: phi.is_ordinary(3)
+            Traceback (most recent call last):
+            ...
+            TypeError: P must be an ideal
+
         """
+        # q is the prime below p, if base is a number field; q = p otherwise
         if p == None:
-            if self.parent().prime() == None:
+            if self.parent().prime() == 0:
                 raise ValueError("need to specify a prime")
-            p = self.parent().prime()
+            q = p = self.parent().prime()
+        elif p in ZZ:
+            q = p
         else:
-            if (self.parent().prime() != p) and (self.parent().prime() != None):
-                raise ValueError("prime does not match coefficient module's prime")                
-        ap = self.Tq_eigenvalue(p)
-        if self.base_ring().is_exact() and (self.base_ring() != QQ):
-                raise ValueError("not implemented yet")  ## need to specify a prime of number field, 
-                                                         ## but then you need underlying prime to apply Hecke
-        return ap.valuation(p) == 0
+            q = p.smallest_integer()
+        if not q.is_prime():
+            raise ValueError("p is not prime")
+        if (self.parent().prime() != q) and (self.parent().prime() != 0):
+            raise ValueError("prime does not match coefficient module's prime")
+        aq = self.Tq_eigenvalue(q)
+        return aq.valuation(p) == 0
 
     def _consistency_check(self):
         """
@@ -951,9 +971,9 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         """
         if p is None:
             p = self.parent().prime()
-            if p is None:
+            if p == 0:
                 raise ValueError("must specify a prime")
-        elif self.parent().prime() is not None and p != self.parent().prime():
+        elif self.parent().prime() != 0 and p != self.parent().prime():
             raise ValueError("inconsistent prime")
         if M is None:
             M = self.parent().precision_cap() + 1
@@ -1012,10 +1032,11 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         
         - an overconvergent modular symbol lifting the symbol that was input
         
-        EXAMPLES :: 
+        EXAMPLES:: 
+
             sage: E = EllipticCurve('11a')
-            sage: phi = ps_modsym_from_elliptic_curve(E)
-            sage: Phi=phi.lift(11,5,algorithm='greenberg')
+            sage: phi = E.PS_modular_symbol()
+            sage: Phi = phi.lift(11,5,algorithm='greenberg')
             sage: Phi.values()
             [(2 + 2*11 + 2*11^2 + 2*11^3 + 2*11^4 + O(11^5), 8 + 6*11 + 3*11^2 + 5*11^3 + O(11^4), 5 + 4*11 + 4*11^2 + O(11^3), 5 + 6*11 + O(11^2), 7 + O(11)), (7 + 5*11 + 5*11^2 + 5*11^3 + 5*11^4 + O(11^5), 7 + 7*11 + 11^2 + 10*11^3 + O(11^4), 6 + 8*11 + O(11^3), 6 + 5*11 + O(11^2), 9 + O(11)), (5 + 5*11 + 5*11^2 + 5*11^3 + 5*11^4 + O(11^5), 7 + 4*11 + 11^2 + 11^3 + O(11^4), 10 + 11 + 7*11^2 + O(11^3), 2 + 3*11 + O(11^2), 5 + O(11))]
 
@@ -1033,7 +1054,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         D = {}
         gens = MS.source().gens()
         for j in range(len(gens)):
-            D[ gens[j]] = CM1( [phi.values()[j], 0] )
+            D[ gens[j]] = CM1( [self.values()[j], 0] )
         Phi1bad = MS1(D)
         
         #fix the lift by applying a hecke operator
@@ -1052,7 +1073,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 CM2 = MS2.coefficient_module()
                 newvalues = []
                 for adist in Phi1.values():
-                    newdist = [R(moment).lift_to_precision(moment.precision_absolute()+1) for moment in adist.moments] + [0]
+                    newdist = [R(moment).lift_to_precision(moment.precision_absolute()+1) for moment in adist._moments] + [0]
                     newdist[0] = R(self.values()[Phi1.values().index(adist)],r+1)
                     newvalues.append(newdist)
                 D2 = {}
