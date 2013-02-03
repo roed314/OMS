@@ -1403,7 +1403,7 @@ cdef class WeightKAction(Action):
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
         self._k = Dk._k
-        if self._k < 0: raise ValueError("k must not be negative")
+#        if self._k < 0: raise ValueError("k must not be negative")
         self._tuplegen = tuplegen
         if isinstance(character, tuple):
             if len(character) != 2:
