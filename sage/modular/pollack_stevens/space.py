@@ -688,6 +688,11 @@ class PSModularSymbolSpace(Module):
         t = self.coefficient_module().zero_element()
         for g in manin.gens()[1:]:
             if (not g in manin.reps_with_two_torsion()) and (not g in manin.reps_with_three_torsion()):
+#                print "g:", g
+ #               print "D[g]:",D[g]
+  #              print "manin",manin.gammas[g]
+   #             print "D*m:",D[g] * manin.gammas[g]
+    #            print "-------"
                 t += D[g] * manin.gammas[g] - D[g]
             else:
                 if g in MR.reps_with_two_torsion():
@@ -725,8 +730,8 @@ class PSModularSymbolSpace(Module):
             D[g] += mu_1
             t = t + mu_1 * gam - mu_1
 
-#        for g in manin.gens()[1:]:
-#            print g,"--",D[g]
+        for g in manin.gens()[1:]:
+            print g,"--",D[g]
 
         mu = t.solve_diff_eqn()
         Id = manin.gens()[0]
