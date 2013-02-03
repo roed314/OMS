@@ -1346,7 +1346,8 @@ cdef class WeightKAction_vector(WeightKAction):
         """
         #tim = verbose("Starting")
         a, b, c, d = self._tuplegen(g)
-        self._check_mat(a, b, c, d)
+        if g.parent().base_ring().is_exact():
+            self._check_mat(a, b, c, d)
         k = self._k
         if g.parent().base_ring().is_exact():
             if self._symk:
