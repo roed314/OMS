@@ -1,3 +1,5 @@
+# cython: profile=True
+
 #*****************************************************************************
 #       Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
 #
@@ -36,7 +38,8 @@ cdef extern from "zn_poly/zn_poly.h":
 from sage.libs.flint.zmod_poly cimport *, zmod_poly_t
 from sage.libs.flint.long_extras cimport *
 
-from fund_domain import M2ZSpace,M2Z
+from sigma0 import Sigma0
+
 cdef long overflow = 1 << (4*sizeof(long)-1)
 cdef long underflow = -overflow
 cdef long maxordp = (1L << (sizeof(long) * 8 - 2)) - 1
@@ -1391,9 +1394,9 @@ cdef class WeightKAction(Action):
         self._actmat = {}
         self._maxprecs = {}
         if not padic:
-            Action.__init__(self, M2ZSpace, Dk, on_left, operator.mul)
+            Action.__init__(self, Sigma0(self._p), Dk, on_left, operator.mul)
         else:
-            Action.__init__(self, MatrixSpace(Dk.base_ring(),2,2), Dk, on_left, operator.mul)
+            Action.__init__(self, Sigma0(self._p, base_ring = Dk.base_ring()), Dk, on_left, operator.mul)
 
     def clear_cache(self):
         r"""
@@ -1434,6 +1437,7 @@ cdef class WeightKAction(Action):
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
+        g = g.matrix()
         if not self._maxprecs.has_key(g):
             A = self._compute_acting_matrix(g, M)
             self._actmat[g] = {M:A}
@@ -1533,7 +1537,8 @@ cdef class WeightKAction_vector(WeightKAction):
         """
         #tim = verbose("Starting")
         a, b, c, d = self._tuplegen(g)
-        self._check_mat(a, b, c, d)
+        if g.parent().base_ring().is_exact():
+            self._check_mat(a, b, c, d)
         k = self._k
         if g.parent().base_ring().is_exact():
             if self._symk:
@@ -1589,11 +1594,11 @@ cdef class WeightKAction_vector(WeightKAction):
             _v,g = g,_v
         cdef Dist_vector v = <Dist_vector?>_v
         cdef Dist_vector ans = v._new_c()
-        try:
-            g.set_immutable()
-        except AttributeError:
-            pass
-        ans._moments = v._moments * self.acting_matrix(g, len(v._moments))
+        #try:
+        #    g.set_immutable()
+        #except AttributeError:
+        #    pass
+        ans.moments = v.moments * self.acting_matrix(g, len(v._moments))
         ans.ordp = v.ordp
         return ans
 
