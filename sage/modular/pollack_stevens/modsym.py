@@ -1117,25 +1117,25 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         
             return Phi1
     
-    D0 = {}
-    for j in range(num_gens):
-        D0[gens[j]] = CM1( [zero_moms[j]] + (M-1)*[0])
-
-    #hecke and divide by eigenvalue
-    Phi=MS1(D0)
-    Phi=Phi.hecke(p)/ap
-    
-    #fix first moments, hecke and divide by eigenvalues
-    for k in range(M-1):
-        D1 = {}
+        D0 = {}
         for j in range(num_gens):
-            vals = Phi.values()[j]
-            newvals=[vals.moment(n) for n in range(M)]
-            newvals[0] = K(zero_moms[j])
-            D1[gens[j]] = CM1(vals)
-        Phi = MS1(D1)
+            D0[gens[j]] = CM1( [zero_moms[j]] + (M-1)*[0])
+
+        #hecke and divide by eigenvalue
+        Phi=MS1(D0)
         Phi=Phi.hecke(p)/ap
-    return Phi
+        #fix first moments, hecke and divide by eigenvalues
+        for k in range(M-1):
+            D1 = {}
+            for j in range(num_gens):
+                vals = Phi.values()[j]
+                newvals=[vals.moment(n) for n in range(M)]
+                newvals[0] = K(zero_moms[j])
+                D1[gens[j]] = CM1(vals)
+            Phi = MS1(D1)
+            Phi=Phi.hecke(p)/ap
+           
+        return Phi
     
     def _lift_greenberg2(self, p, M, new_base_ring=None, check=False):
     #this is a slower version of the _lift_greenberg that tries not to
