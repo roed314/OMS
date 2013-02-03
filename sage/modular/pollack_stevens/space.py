@@ -23,9 +23,9 @@ and the ones in :mod:`sage.modular.modsym`:
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+import types
+
 from sage.modules.module import Module
-from sage.structure.factory import UniqueFactory
-from distributions import Distributions, Symk
 from sage.modular.dirichlet import DirichletCharacter
 from sage.modular.arithgroup.all import Gamma0
 from sage.modular.arithgroup.arithgroup_element import ArithmeticSubgroupElement
@@ -33,11 +33,17 @@ from sage.rings.arith import binomial
 from sage.rings.integer import Integer
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
-from modsym import PSModularSymbolElement_symk, PSModularSymbolElement_dist, PSModSymAction
-from fund_domain import ManinRelations
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.infinity import infinity as oo
+from sage.structure.factory import UniqueFactory
+
+from distributions import Distributions, Symk
+from dist import Dist
+from modsym import PSModularSymbolElement, PSModularSymbolElement_symk, PSModularSymbolElement_dist, PSModSymAction
+from fund_domain import ManinRelations
+from manin_map import ManinMap
 from sigma0 import Sigma0, Sigma0Element
+
 S0 = Sigma0(0)
 
 class PSModularSymbols_factory(UniqueFactory):
@@ -202,6 +208,28 @@ class PSModularSymbolSpace(Module):
         # We have to include the first action so that scaling by Z doesn't try to pass through matrices
         actions = [PSModSymAction(ZZ, self), PSModSymAction(Sigma0(self.prime()), self)]
         self._populate_coercion_lists_(action_list=actions)
+
+    def _element_constructor_(self, data):
+        if isinstance(data, PSModularSymbolElement):
+            data = data._map
+        elif isinstance(data, (types.DictType, Dist)):
+            # a dict, or a single distribution specifying a constant symbol
+            data = ManinMap(self._coefficients, self._source, data)
+        elif isinstance(data, ManinMap):
+            pass
+        else:
+            raise TypeError("Cannot create an element of %s from %s of type %s" % (self, data, type(data)))
+        if data._codomain != self._coefficients:
+            data = data.extend_codomain(self._coefficients)
+        return self.element_class(data, self, construct=True)
+
+    def _coerce_map_from_(self, other):
+        if isinstance(other, PSModularSymbolSpace):
+            if other.group() == self.group() \
+                and other.coefficient_module().has_coerce_map_from(self.coefficient_module()):
+                return True
+        else:
+            return False
 
     def _repr_(self):
         r"""

@@ -198,32 +198,35 @@ class ManinMap(object):
                     self._dict[manin_relations.gen(i)] = defining_data[i]
             elif isinstance(defining_data, dict):
                 for ky, val in defining_data.iteritems():
-                    if not isinstance(ky, Matrix_integer_2x2):
-                        # should eventually check that ky is actually a coset rep,
-                        # handle elements of P^1, make sure that we cover all cosets....
-                        ky = S0(ky)
+                    ky = S0(ky)
                     self._dict[ky] = val
             else:
                 # constant function
                 try:
                     c = codomain(defining_data)
                 except TypeError:
-                    raise TypeError("unrecognized type for defining_data")
+                    raise TypeError("unrecognized type %s for defining_data" % type(defining_data))
                 g = manin_relations.gens()
                 self._dict = dict(zip(g, [c]*len(g)))
         else:
             self._dict = defining_data
-            
-    def _compute_image_from_gens(self, B):
+
+    def extend_codomain(self, new_codomain, check=True):
+        new_dict = {}
+        for g in self._manin.gens():
+            new_dict[g] = new_codomain(self._dict[g])
+        return ManinMap(new_codomain, self._manin, new_dict, check)
+
+    def _compute_image_from_gens(self, B):  
         r"""
         Compute image of ``B`` under ``self``.
 
         INPUT:
-            
+
         - ``B`` --  generator of Manin relations.
-            
+
         OUTPUT:
-            
+
         - an element in the codomain of self (e.g. a distribution), the image of ``B`` under ``self``.
         
         EXAMPLES::
