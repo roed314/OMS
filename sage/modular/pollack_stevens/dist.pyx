@@ -98,10 +98,10 @@ cdef class Dist(ModuleElement):
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
-        r"""
-        Returns the `n`-th moment
-        """
-        return self.parent().prime()**(self.ordp) * self._unscaled_moment(n)
+        if self.ordp == 0:
+            return self._unscaled_moment(n)
+        else:
+            return self.parent().prime()**(self.ordp) * self._unscaled_moment(n)
 
     cpdef normalize(self):
         r"""
@@ -169,8 +169,8 @@ cdef class Dist(ModuleElement):
 
     def is_zero(self, p=None, M=None):
         r"""
-        Returns True if all of the moments are either identically zero
-        or zero modulo p^M.
+        Returns True if the `i`th moment is zero for all `i` (case M is None)
+        or zero modulo p^(M-i) for all `i` (M is not None).
 
         Note that some moments are not known to precision M, in which
         case they are only checked to be equal to zero modulo the
@@ -201,9 +201,17 @@ cdef class Dist(ModuleElement):
         n = self.precision_relative()
         aprec = self.precision_absolute()
         if M is None:
-            return all([self.moment(a).is_zero(aprec-a) for a in range(n)])
-        else:
-            return all([self.moment(a).is_zero(min(M, aprec-a)) for a in range(n)])
+            M = aprec
+        elif M > aprec:
+            return False
+        elif M < aprec:
+            n -= (aprec - M)
+        if p is None:
+            p = self.parent().prime()
+        for a in xrange(n):
+            if (p == 0 and not self.moment(a).is_zero()) or (p != 0 and not self.moment(a).is_zero(M-a)):
+                return False
+        return True
 
     def find_scalar(self, other, p, M = None, check=True):
         r"""
@@ -554,6 +562,9 @@ cdef class Dist_vector(Dist):
     - ``parent`` -- a :class:`distributions.Distributions_class` or
       :class:`distributions.Symk_class` instance
 
+    - ``ordp`` -- an integer.  This MUST be zero in the case of Symk
+      of an exact ring.
+
     - ``check`` -- (default: True) boolean, whether to validate input
 
     EXAMPLES::
@@ -587,6 +598,8 @@ cdef class Dist_vector(Dist):
             else:
                 moments = parent.approx_module(1)([moments])
             # TODO: This is not quite right if the input is an inexact zero.
+            if ordp != 0 and parent.prime() == 0:
+                raise ValueError("can not specify a valuation shift for an exact ring")
         self._moments = moments
         self.ordp = ordp
 
@@ -692,9 +705,20 @@ cdef class Dist_vector(Dist):
         rmoments = right._moments
         # we truncate if the moments are too long; extend by zero if too short
         if smoments.parent() is not V:
-            smoments = V(smoments.list(copy=False)[:rprec] + [R(0)] * (rprec - len(smoments)) if rprec > len(smoments) else [])
+            #vv = smoments.list(copy=False)
+            #print len(vv), len(vv[:rprec]), rprec
+            #xx = [R(0)] * (rprec - len(smoments)) if rprec > len(smoments) else []
+            #print len(xx)
+            #ww = vv[:rprec] + xx
+            #print len(ww)
+            #smoments = V(ww)
+            smoments = V(smoments.list(copy=False)[:rprec] + ([R(0)] * (rprec - len(smoments)) if rprec > len(smoments) else []))
         if rmoments.parent() is not V:
-            rmoments = V(rmoments.list(copy=False)[:rprec] + [R(0)] * (rprec - len(rmoments)) if rprec > len(rmoments) else [])
+            #vv = rmoments.list(copy=False)
+            #xx = [R(0)] * (rprec - len(rmoments)) if rprec > len(rmoments) else []
+            #ww = vv[:rprec] + xx
+            #rmoments = V(ww)
+            rmoments = V(rmoments.list(copy=False)[:rprec] + ([R(0)] * (rprec - len(rmoments)) if rprec > len(rmoments) else []))
         # We multiply by the relative power of p
         if self.ordp > right.ordp:
             smoments *= self.parent().prime()**(self.ordp - right.ordp)
@@ -734,18 +758,22 @@ cdef class Dist_vector(Dist):
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
         cdef Dist_vector ans = self._new_c()
-        if right.is_zero():
-            if self.parent().is_symk():
-                ans._moments = self._moments * right
-                ans.ordp = self.ordp
+        p = self.parent().prime()
+        if p == 0:
+            ans._moments = self._moments * right
+            ans.ordp = self.ordp
+        elif right.is_zero():
+            ans._moments = self.parent().approx_module(0)([])
+            if right.is_exact_zero():
+                ans.ordp = maxordp
             else:
-                ans._moments = self.parent().approx_module(0)([])
-                if right.is_exact_zero():
-                    ans.ordp = maxordp
-                else:
-                    ans.ordp = self.ordp + right.valuation()
+                ans.ordp = self.ordp + right.valuation(p)
         else:
-            v, u = right.val_unit(self.parent().prime())
+            #print right, right.parent()
+            try:
+                v, u = right.val_unit(p)
+            except TypeError: # bug in p-adics: they should accept p here
+                v, u = right.val_unit()
             ans._moments = self._moments * u
             ans.ordp = self.ordp + v
             # if the relative precision of u is less than that of self, ans may not be normalized.
@@ -866,10 +894,26 @@ cdef class Dist_vector(Dist):
             for j in range(m-1,M,2):
                 v[j] += binomial(j,m-1) * bern[(j-m+1)//2] * scalar
         p = self.parent().prime()
-        cdef Dist_vector ans = self._new_c()
-        ans.ordp = min(a.valuation(p) for a in v)
-        scalar = K(p) ** (-ans.ordp)
-        ans._moments = V([R(a * scalar) for a in v])
+        cdef Dist_vector ans
+        if p == 0:
+            if R.is_field():
+                ans = self._new_c()
+                ans.ordp = 0
+                ans._moments = V(v)
+            else:
+                newparent = self.parent().change_ring(K)
+                ans = newparent(v)
+        else:
+            ans = self._new_c()
+            ans.ordp = min(a.valuation(p) for a in v)
+            if ans.ordp < 0:
+                scalar = K(p) ** (-ans.ordp)
+                ans._moments = V([R(a * scalar) for a in v])
+            elif ans.ordp > 0:
+                scalar = K(p) ** ans.ordp
+                ans._moments = V([R(a // scalar) for a in v])
+            else:
+                ans._moments = V([R(a) for a in v])
         return ans
 
     #def lift(self):
@@ -978,9 +1022,9 @@ cdef class Dist_long(Dist):
         self.normalize()
         valstr = ""
         if self.ordp == 1:
-            valstr = "%s * "%(self.parent().prime())
+            valstr = "%s * "%(self.prime_pow.prime)
         elif self.ordp != 0:
-            valstr = "%s^%s * "%(self.parent().prime(), self.ordp)
+            valstr = "%s^%s * "%(self.prime_pow.prime, self.ordp)
         if self.relprec == 1:
             return valstr + repr(self._moments[0])
         else:

@@ -67,7 +67,7 @@ class Distributions_factory(UniqueFactory):
     - ``tuplegen`` -- None or callable that turns 2x2 matrices into a 4-tuple
     - ``act_on_left`` -- bool (default: False)
     """
-    def create_key(self, k, p=None, prec_cap=None, base=None, symk=None, character=None, tuplegen=None, act_on_left=False):
+    def create_key(self, k, p=None, prec_cap=None, base=None, character=None, tuplegen=None, act_on_left=False):
         """
         EXAMPLES::
 
@@ -96,7 +96,7 @@ class Distributions_factory(UniqueFactory):
                 prec_cap = base.precision_cap()
             except AttributeError:
                 raise ValueError("You must specify a base or precision cap")
-        return (k, p, prec_cap, base, character, tuplegen, act_on_left, symk)
+        return (k, p, prec_cap, base, character, tuplegen, act_on_left, False)
 
     def create_object(self, version, key):
         """
@@ -142,9 +142,9 @@ class Symk_factory(UniqueFactory):
             sage: from sage.modular.pollack_stevens.distributions import Symk
             sage: Symk(6) # indirect doctest
             Sym^6 Q^2
-            sage: Symk(6, Qp(7)) # indirect doctest
+            sage: V = Symk(6, Qp(7)) # indirect doctest
             Sym^6 Q_7^2
-            sage: TestSuite(Symk).run()
+            sage: TestSuite(V).run()
         """
         k = ZZ(k)
         if tuplegen is None:
@@ -152,8 +152,6 @@ class Symk_factory(UniqueFactory):
         prec_cap = k+1
         if base is None:
             base = QQ
-        if isinstance(base, pAdicGeneric):
-            p = base.prime()
         return (k, base, character, tuplegen, act_on_left)
 
     def create_object(self, version, key):
@@ -246,12 +244,11 @@ class Distributions_abstract(Module):
         """
         Return prime `p` such that this is a space of `p`-adic distributions.
 
-        In case this space is Symk of a non-padic field, this makes no
-        sense, and we raise a ValueError.
+        In case this space is Symk of a non-padic field, we return 0.
 
         OUTPUT:
 
-        - bool
+        - a prime
 
         EXAMPLES::
 
@@ -276,8 +273,6 @@ class Distributions_abstract(Module):
             sage: D.is_symk()
             True
         """
-        if self._p is None:
-            raise ValueError, "not a space of p-adic distributions"
         return self._p
 
     def weight(self):
@@ -453,7 +448,7 @@ class Symk_class(Distributions_abstract):
         if hasattr(base, 'prime'):
             p = base.prime()
         else:
-            p = None
+            p = ZZ(0)
         Distributions_abstract.__init__(self, k, p, k+1, base, character, tuplegen, act_on_left, symk=True)
 
     def _an_element_(self):
