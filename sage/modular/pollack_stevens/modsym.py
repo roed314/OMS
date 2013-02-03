@@ -1138,19 +1138,18 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             D1[gens[j]] = CM1(vals)
         Phi = MS1(D1)
         Phi=Phi.hecke(p)/ap
-        
     return Phi
     
     def _lift_greenberg2(self, p, M, new_base_ring=None, check=False):
     #this is a slower version of the _lift_greenberg that tries not to
     #instantiate a bunch of parents. It turns out to be actually slower.
     #This code actually only works for weight 2 too. 
-        MS = phi.parent()
+        MS = self.parent()
         gens=MS.source().gens()
         num_gens=len(gens)
         K=Qp(p,M)
-        zero_moms=phi.values()
-        ap = phi.Tq_eigenvalue(p)
+        zero_moms=self.values()
+        ap = self.Tq_eigenvalue(p)
     
         if new_base_ring == None:
             new_base_ring = MS.base_ring()
@@ -1173,8 +1172,10 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 newvals[0] = K(zero_moms[j])
                 D1[gens[j]] = CM1(vals)
             Phi = MS1(D1)
-            Phi=Phi.hecke(p)/ap
+            Phi = Phi.hecke(p)/ap
+        
         return Phi
+
     
 
     def _lift_to_OMS(self, p, M, new_base_ring, check):
