@@ -60,7 +60,7 @@ class PSModularSymbolElement(ModuleElement):
             'Modular symbol with values in Sym^0 Q^2'
         """
         return "Modular symbol with values in %s"%(self.parent().coefficient_module())
-
+    
     def dict(self):
         r"""
         Returns dictionary on the modular symbol self, where keys are generators and values are the corresponding values of self on generators

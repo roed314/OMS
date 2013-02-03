@@ -1598,7 +1598,7 @@ cdef class WeightKAction_vector(WeightKAction):
         #    g.set_immutable()
         #except AttributeError:
         #    pass
-        ans.moments = v.moments * self.acting_matrix(g, len(v._moments))
+        ans._moments = v._moments * self.acting_matrix(g, len(v._moments))
         ans.ordp = v.ordp
         return ans
 
