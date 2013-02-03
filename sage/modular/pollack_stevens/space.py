@@ -23,9 +23,9 @@ and the ones in :mod:`sage.modular.modsym`:
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
+import types
+
 from sage.modules.module import Module
-from sage.structure.factory import UniqueFactory
-from distributions import Distributions, Symk
 from sage.modular.dirichlet import DirichletCharacter
 from sage.modular.arithgroup.all import Gamma0
 from sage.modular.arithgroup.arithgroup_element import ArithmeticSubgroupElement
@@ -38,7 +38,15 @@ from modsym import PSModularSymbolElement_symk, PSModularSymbolElement_dist, PSM
 from fund_domain import ManinRelations
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.infinity import infinity as oo
+from sage.structure.factory import UniqueFactory
+
+from distributions import Distributions, Symk
+from dist import Dist
+from modsym import PSModularSymbolElement, PSModularSymbolElement_symk, PSModularSymbolElement_dist, PSModSymAction
+from fund_domain import ManinRelations
+from manin_map import ManinMap
 from sigma0 import Sigma0, Sigma0Element
+
 S0 = Sigma0(0)
 
 class PSModularSymbols_factory(UniqueFactory):
@@ -203,6 +211,51 @@ class PSModularSymbolSpace(Module):
         # We have to include the first action so that scaling by Z doesn't try to pass through matrices
         actions = [PSModSymAction(ZZ, self), PSModSymAction(Sigma0(self.prime()), self)]
         self._populate_coercion_lists_(action_list=actions)
+
+    def _element_constructor_(self, data):
+        r"""
+        Construct an element of self from data.
+        """
+        if isinstance(data, PSModularSymbolElement):
+            data = data._map
+        elif isinstance(data, ManinMap):
+            pass
+        else:
+            # a dict, or a single distribution specifying a constant symbol, etc
+            data = ManinMap(self._coefficients, self._source, data)
+
+        if data._codomain != self._coefficients:
+            data = data.extend_codomain(self._coefficients)
+ 
+        return self.element_class(data, self, construct=True)
+
+    def _coerce_map_from_(self, other):
+        r"""
+        Used for comparison and coercion.
+
+        EXAMPLE::
+
+            sage: M1 = PSModularSymbols(Gamma0(11), coefficients=Symk(3))
+            sage: M2 = PSModularSymbols(Gamma0(11), coefficients=Symk(3,Qp(11)))
+            sage: M3 = PSModularSymbols(Gamma0(11), coefficients=Symk(4))
+            sage: M4 = PSModularSymbols(Gamma0(11), coefficients=Distributions(3, 11, 10))
+            sage: M1.has_coerce_map_from(M2)
+            False
+            sage: M2.has_coerce_map_from(M1)
+            True
+            sage: M1.has_coerce_map_from(M3)
+            False
+            sage: M1.has_coerce_map_from(M4)
+            False
+            sage: M2.has_coerce_map_from(M4)
+            True
+        """
+        if isinstance(other, PSModularSymbolSpace):
+            if other.group() == self.group() \
+                and self.coefficient_module().has_coerce_map_from(other.coefficient_module()):
+                return True
+        else:
+            return False
 
     def _repr_(self):
         r"""

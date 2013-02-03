@@ -624,7 +624,7 @@ cdef class Dist_vector(Dist):
         if check:
             # case 1: input is a distribution already
             if PY_TYPE_CHECK(moments, Dist):
-                moments = moments._moments
+                moments = moments._moments.change_ring(parent.base_ring())
             # case 2: input is a vector, or something with a len
             elif hasattr(moments, '__len__'):
                 M = len(moments)

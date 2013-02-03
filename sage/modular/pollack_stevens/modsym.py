@@ -139,7 +139,7 @@ class PSModularSymbolElement(ModuleElement):
 
     def __cmp__(self, other):
         """
-        Checks if self == other
+        Checks if self == other. Here self and other have the same parent.
 
         EXAMPLES::
 
