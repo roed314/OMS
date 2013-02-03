@@ -262,7 +262,7 @@ class pAdicLseries(SageObject):
             sage: Phi = phi_stabilized.lift(p,prec,None,algorithm='stevens',eigensymbol=True)
             sage: L = pAdicLseries(Phi)
             sage: L._repr_()
-            '5-adic L-series of Modular symbol with values in Space of 5-adic distributions with k=0 action and precision cap 7'
+            '5-adic L-series of Modular symbol of level 37 with values in Space of 5-adic distributions with k=0 action and precision cap 7'
         """
         s = "%s-adic L-series of %s"%(self.prime(), self.symb())
         return s
