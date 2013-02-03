@@ -47,8 +47,6 @@ from fund_domain import ManinRelations
 from manin_map import ManinMap
 from sigma0 import Sigma0, Sigma0Element
 
-S0 = Sigma0(0)
-
 class PSModularSymbols_factory(UniqueFactory):
     r"""
     Create a space of Pollack-Stevens modular symbols.
@@ -208,9 +206,15 @@ class PSModularSymbolSpace(Module):
         self._sign = sign
         # should distingish between Gamma0 and Gamma1...
         self._source = ManinRelations(group.level())
-        # We have to include the first action so that scaling by Z doesn't try to pass through matrices
-        actions = [PSModSymAction(ZZ, self), PSModSymAction(Sigma0(self.prime()), self)]
-        self._populate_coercion_lists_(action_list=actions)
+
+        # Register the action of 2x2 matrices on self. 
+        
+        if coefficients.is_symk():
+            action = PSModSymAction(Sigma0(1), self)
+        else:
+            action = PSModSymAction(Sigma0(self.prime()), self)
+            
+        self._populate_coercion_lists_(action_list=[action])
 
     def _element_constructor_(self, data):
         r"""
@@ -414,12 +418,13 @@ class PSModularSymbolSpace(Module):
                     [0 1], 4)], [(1, [1 0]
                         [0 1], 5)]]
         """
+        S0N = Sigma0(self._source._N)
         v = []
         for r in range(len(self._source.gens())):
             for j in range(len(self._source.reps())):
                 R = self._source.relations(j)
                 if len(R) == 1 and R[0][2] == self._source.indices(r):
-                    if R[0][0] != -1 or R[0][1] != S0(1):
+                    if R[0][0] != -1 or R[0][1] != S0N(1):
                         v = v + [R]
         return v
 
@@ -733,8 +738,6 @@ class PSModularSymbolSpace(Module):
         D[Id] = -mu
 
         return self(D)
-
-
 
 def cusps_from_mat(g):
     r"""

@@ -1433,10 +1433,12 @@ cdef class WeightKAction(Action):
         self._symk = Dk.is_symk()
         self._actmat = {}
         self._maxprecs = {}
-        if not padic:
-            Action.__init__(self, Sigma0(0,base_ring = QQ,tuplegen = self._tuplegen), Dk, on_left, operator.mul)
+        if self._symk:
+            m = 1 # all of M2Z acts
         else:
-            Action.__init__(self, Sigma0(self._p, base_ring = Dk.base_ring(),tuplegen = self._tuplegen), Dk, on_left, operator.mul)
+            m = self._p # Sigma0(p) acts
+
+        Action.__init__(self, Sigma0(m, base_ring=ZZ, tuplegen=self._tuplegen), Dk, on_left, operator.mul)
 
     def clear_cache(self):
         r"""

@@ -1,4 +1,4 @@
-#*****************************************************************************
+
 #       Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
@@ -24,12 +24,11 @@ from sage.rings.padics.precision_error import PrecisionError
 
 from sage.categories.action import Action
 from fund_domain import Id
-from manin_map import ManinMap
+from manin_map import ManinMap, M2Z
 from padic_lseries import pAdicLseries
 from sigma0 import Sigma0
-S0 = Sigma0(0)
 
-minusproj = S0([1,0,0,-1])
+minusproj = [1,0,0,-1]
 
 
 class PSModSymAction(Action):
@@ -304,7 +303,8 @@ class PSModularSymbolElement(ModuleElement):
             sage: (phi.plus_part()+phi.minus_part()) == 2 * phi
             True
         """
-        return self * minusproj + self
+        S0N = Sigma0(self.parent().level())
+        return self + self * S0N(minusproj)
 
     def minus_part(self):
         r"""
@@ -325,7 +325,8 @@ class PSModularSymbolElement(ModuleElement):
             sage: (phi.plus_part()+phi.minus_part()) == phi * 2
             True
         """
-        return self - self * minusproj
+        S0N = Sigma0(self.parent().level())
+        return self - self * S0N(minusproj)
 
     def hecke(self, ell, algorithm="prep"):
         r"""
