@@ -37,7 +37,7 @@ cdef class Dist_long(Dist):
 cdef class WeightKAction(Action):
     cdef public _k
     cdef public _character
-    cdef public _tuplegen
+    cdef public _adjuster
     cdef public _p
     cdef public _Np
     cdef public _actmat
