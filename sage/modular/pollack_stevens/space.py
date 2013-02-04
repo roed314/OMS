@@ -115,6 +115,8 @@ class PSModularSymbols_factory(UniqueFactory):
             if isinstance(group, DirichletCharacter):
                 character = group.minimize_base_ring()
                 group = Gamma0(character.modulus())
+                if character.is_trivial():
+                    character = None
             else:
                 character = None
 
@@ -970,9 +972,9 @@ def ps_modsym_from_simple_modsym_space(A, name="alpha"):
     We check that forms of nontrivial character are getting handled correctly::
 
         sage: f = Newforms(Gamma1(13), names='a')[0]                 
-        sage: phi = f.PS_modular_symbol('foo')
+        sage: phi = f.PS_modular_symbol()
         sage: phi.hecke(7)
-        Modular symbol of level 13 with values in Sym^0 (Number Field in foo with defining polynomial x^2 + 3*x + 3)^2
+        Modular symbol of level 13 with values in Sym^0 (Number Field in alpha with defining polynomial x^2 + 3*x + 3)^2
         sage: phi.hecke(7).values()
         [0, 0, 0, 0, 0]
     """
