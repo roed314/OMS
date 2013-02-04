@@ -721,8 +721,8 @@ class PSModularSymbolSpace(Module):
                 raise ValueError("everything is 2 or 3 torsion!  NOT YET IMPLEMENTED IN THIS CASE")
 
             gam = manin.gammas[g]
-            a = gam[0,0]
-            c = gam[1,0]
+            a = gam.matrix()[0,0]
+            c = gam.matrix()[1,0]
 
             if self.coefficient_module()._character != None:
                 chara = self.coefficient_module()._character(a)
