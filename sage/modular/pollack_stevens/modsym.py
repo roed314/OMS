@@ -251,7 +251,7 @@ class PSModularSymbolElement(ModuleElement):
         EXAMPLES::
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
-            sage: D = Distributions(0, 5, 10);  M = PSModularSymbols(Gamma0(2), coefficients=D)
+            sage: D = Distributions(0, 5, 10);  M = PSModularSymbols(Gamma0(5), coefficients=D)
             sage: f = M(1); f._get_prime()
             5
             sage: f._get_prime(5)
@@ -1052,8 +1052,9 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: E = EllipticCurve('11a')
             sage: phi = E.PS_modular_symbol()
             sage: Phi = phi.lift(11,5,algorithm='greenberg')
-            sage: Phi.values()
-            [(2 + 2*11 + 2*11^2 + 2*11^3 + 2*11^4 + O(11^5), 8 + 6*11 + 3*11^2 + 5*11^3 + O(11^4), 5 + 4*11 + 4*11^2 + O(11^3), 5 + 6*11 + O(11^2), 7 + O(11)), (7 + 5*11 + 5*11^2 + 5*11^3 + 5*11^4 + O(11^5), 7 + 7*11 + 11^2 + 10*11^3 + O(11^4), 6 + 8*11 + O(11^3), 6 + 5*11 + O(11^2), 9 + O(11)), (5 + 5*11 + 5*11^2 + 5*11^3 + 5*11^4 + O(11^5), 7 + 4*11 + 11^2 + 11^3 + O(11^4), 10 + 11 + 7*11^2 + O(11^3), 2 + 3*11 + O(11^2), 5 + O(11))]
+            sage: Phi2 = phi.lift(11,5,algorithm='stevens',eigensymbol=True)
+            sage: Phi == Phi2
+            True
 
         An example in higher weight::
 
@@ -1061,13 +1062,11 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: fs = f.p_stabilize(5)
             sage: FsG = fs.lift(M=6, eigensymbol=True,algorithm='greenberg') 
             sage: FsG.values()[0]
-            (2 + 5 + 3*5^2 + 4*5^3 + 2*5^5 + O(5^6), O(5^5), 2*5 + 3*5^2 + O(5^4), O(5^3), 5 + O(5^2), O(5))
+            (2 + 5 + 3*5^2 + 4*5^3 + O(5^6), O(5^5), 2*5 + 3*5^2 + O(5^4), O(5^3), 5 + O(5^2), O(5))
             sage: FsS = fs.lift(M=6, eigensymbol=True,algorithm='stevens') 
-            sage: FsS.values()[0]                                         
-            (2 + 5 + 3*5^2 + 4*5^3 + O(5^6), O(5^5), 2*5 + 3*5^2 + O(5^4), O(5^3), 5 + O(5^2), O(5))            
+            sage: FsS == FsG
+            True
         """
-        #FIXME: The above doctests show a discrepancy! Presumably the Stevens
-        #algorithm is correct as FsS is an eigensymbol, whereas FsG isn't.
         p = self._get_prime(p)
 
         #Right now this is actually slower than the Stevens algorithm. Probably due to bad coding.
@@ -1077,13 +1076,13 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         gens = MS.source().gens()
         if new_base_ring == None:
             new_base_ring = MS.base_ring()
-        MS1 = MS._lift_parent_space(p, self.weight() + 2, new_base_ring)
-        CM1 = MS1.coefficient_module()
+        MSnew = MS._lift_parent_space(p, M, new_base_ring)
+        CMnew = MSnew.coefficient_module()
         D = {}
         gens = MS.source().gens()
         for j in range(len(gens)):
-            D[gens[j]] = CM1( self.values()[j]._moments.list() + [0] )
-        Phi1bad = MS1(D)
+            D[gens[j]] = CMnew( self.values()[j]._moments.list() + [0] )
+        Phi1bad = MSnew(D)
         
         #fix the lift by applying a hecke operator
         Phi1 = Phi1bad.hecke(p)
@@ -1094,22 +1093,20 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         if M<=2:
             return Phi1
         else:
-            padic_prec=15 #FIXME: 
+            padic_prec=M + 1
             R = Qp(p,padic_prec)
 
             def green_lift_once(Phi1, self, r):
-                MS2 = MS._lift_parent_space(p,r+1,new_base_ring)
-                CM2 = MS2.coefficient_module()
                 newvalues = []
                 for adist in Phi1.values():
                     newdist = [R(moment).lift_to_precision(moment.precision_absolute()+1) for moment in adist._moments] + [0]
-                    for s in xrange(self.weight()):
+                    for s in xrange(self.weight()+1):
                         newdist[s] = R(self.values()[Phi1.values().index(adist)].moment(s), r+1)
                     newvalues.append(newdist)
                 D2 = {}
                 for j in range(len(gens)):
-                    D2[ gens[j]] = CM2( newvalues[j] )
-                Phi2 = MS2(D2)
+                    D2[ gens[j]] = CMnew( newvalues[j] )
+                Phi2 = MSnew(D2)
                 Phi2 = Phi2.hecke(p)
                 return Phi2 / self.Tq_eigenvalue(p)
  
@@ -1475,26 +1472,26 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
 
         EXAMPLES::
 
-            sage: D = Distributions(0, 5, 10);  M = PSModularSymbols(Gamma0(2), coefficients=D); M
-            Space of overconvergent modular symbols for Congruence Subgroup Gamma0(2) with sign 0 and values in Space of 5-adic distributions with k=0 action and precision cap 10
+            sage: D = Distributions(0, 5, 10);  M = PSModularSymbols(Gamma0(5), coefficients=D); M
+            Space of overconvergent modular symbols for Congruence Subgroup Gamma0(5) with sign 0 and values in Space of 5-adic distributions with k=0 action and precision cap 10
             sage: f = M(1)
             sage: f.specialize()
-            Modular symbol of level 2 with values in Sym^0 Z_5^2
+            Modular symbol of level 5 with values in Sym^0 Z_5^2
             sage: f.specialize().values()
-            [1 + O(5^10), 1 + O(5^10)]
+            [1 + O(5^10), 1 + O(5^10), 1 + O(5^10)]
             sage: f.values()
-            [1, 1]
+            [1, 1, 1]
             sage: f.specialize().parent()
-            Space of modular symbols for Congruence Subgroup Gamma0(2) with sign 0 and values in Sym^0 Z_5^2
+            Space of modular symbols for Congruence Subgroup Gamma0(5) with sign 0 and values in Sym^0 Z_5^2
             sage: f.specialize().parent().coefficient_module()
             Sym^0 Z_5^2
             sage: f.specialize().parent().coefficient_module().is_symk()
             True
 
             sage: f.specialize(QQ)
-            Modular symbol of level 2 with values in Sym^0 Q^2
+            Modular symbol of level 5 with values in Sym^0 Q^2
             sage: f.specialize(QQ).values()
-            [1, 1]
+            [1, 1, 1]
             sage: f.specialize(QQ).parent().coefficient_module()
             Sym^0 Q^2
         """

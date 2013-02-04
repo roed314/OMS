@@ -802,11 +802,12 @@ class ManinMap(object):
                 psi[g].normalize()
             return self.__class__(self._codomain, self._manin, psi, check=False)
         elif algorithm == 'naive':
-            psi = self._right_action(M2Z([1,0,0,ell]))
+            S0N = Sigma0(self._manin.level())
+            psi = self._right_action(S0N([1,0,0,ell]))
             for a in range(1, ell):
-                psi += self._right_action(M2Z([1,a,0,ell]))
+                psi += self._right_action(S0N([1,a,0,ell]))
             if self._manin.level() % ell != 0:
-                psi += self._right_action(M2Z([ell,0,0,1]))
+                psi += self._right_action(S0N([ell,0,0,1]))
             return psi.normalize()
 
     def p_stabilize(self, p, alpha, V):

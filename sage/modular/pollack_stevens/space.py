@@ -187,7 +187,7 @@ class PSModularSymbolSpace(Module):
         EXAMPLES::
 
             sage: D = Distributions(2, 11)
-            sage: M = PSModularSymbols(Gamma0(2), coefficients=D)
+            sage: M = PSModularSymbols(Gamma0(11), coefficients=D)
             sage: type(M)
             <class 'sage.modular.pollack_stevens.space.PSModularSymbolSpace_with_category'>
             sage: TestSuite(M).run()
