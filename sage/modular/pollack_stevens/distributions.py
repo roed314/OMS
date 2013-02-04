@@ -29,6 +29,8 @@ from sage.structure.unique_representation import UniqueRepresentation
 import operator
 import sage.rings.ring as ring
 
+from sigma0 import _default_adjuster
+
 class Distributions_factory(UniqueFactory):
     """
     Create a space of distributions.
@@ -243,7 +245,21 @@ class Distributions_abstract(Module):
             return False
             
 
-    def acting_matrix(self,g,M):
+    def acting_matrix(self, g, M):
+        r"""
+        Return the matrix for the action of g on self, truncated to the first M moments.
+        
+        EXAMPLE::
+
+            sage: V = Symk(3)
+            sage: from sage.modular.pollack_stevens.sigma0 import Sigma0
+            sage: V.acting_matrix(Sigma0(1)([3,4,0,1]), 4)
+            [27 36 48 64]
+            [ 0  9 24 48]
+            [ 0  0  3 12]
+            [ 0  0  0  1]
+        """
+        # TODO: Add examples with a non-default action adjuster
         return self._act.acting_matrix(g,M)
 
     def prime(self):
@@ -536,6 +552,14 @@ class Symk_class(Distributions_abstract):
         return Symk(k=self._k, base=new_base_ring, character=self._character, adjuster=self._adjuster, act_on_left=self._act.is_left())
 
     def base_extend(self, new_base_ring):
+        r"""
+        Extend scalars to a new base ring.
+
+        EXAMPLE::
+
+            sage: Symk(3).base_extend(Qp(3))
+            Sym^3 Q_3^2
+        """
         if not new_base_ring.has_coerce_map_from(self.base_ring()):
             raise ValueError("New base ring (%s) does not have a coercion from %s" % (new_base_ring, self.base_ring()))
         return self.change_ring(new_base_ring)
