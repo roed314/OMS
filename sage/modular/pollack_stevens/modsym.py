@@ -663,6 +663,8 @@ class PSModularSymbolElement(ModuleElement):
                     
         id = MR.gens()[0]
         if f[id]*MR.gammas[id] - f[id] != -t:
+            print t
+            print f[id]*MR.gammas[id] - f[id]
             raise ValueError("Does not add up correctly around loop")
 
         print "This modular symbol satisfies the manin relations"
@@ -1299,13 +1301,15 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         k = self.parent().weight()
         aq = self.Tq_eigenvalue(q, check=check)
         eisenloss = (aq - q**(k+1) - 1).valuation(p)
-        while (q == p) or (N % q == 0) or (eisenloss >= M):
+        while ((q == p) or (N % q == 0) or (eisenloss >= M)) and (q<50):
             q = next_prime(q)
             aq = self.Tq_eigenvalue(q, check=check)
             if q != p:
                 eisenloss = (aq - q**(k+1) - 1).valuation(p)
             else:
                 eisenloss = (aq - 1).valuation(p)
+        if q >= 50:
+            raise ValueError("The symbol appears to be eisenstein -- not implemented yet")
         return q, aq, eisenloss
 
     def _find_extraprec(self, p, M, alpha, check):

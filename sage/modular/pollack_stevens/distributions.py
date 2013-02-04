@@ -591,8 +591,9 @@ class Symk_class(Distributions_abstract):
             7-adic Field with capped relative precision 15
         """
         if self._character is not None:
+            if self._character.base_ring() != QQ:
             # need to change coefficient ring for character
-            raise NotImplementedError
+                raise NotImplementedError
         if M is None:
             M = self._prec_cap + 1
 

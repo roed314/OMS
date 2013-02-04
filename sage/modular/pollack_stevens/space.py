@@ -645,7 +645,7 @@ class PSModularSymbolSpace(Module):
         """
         return self(self.coefficient_module().an_element())
 
-    def random_element(self,M):
+    def random_element(self,M=None):
         r"""
         Returns a random OMS in this space with M moments
 
@@ -662,8 +662,6 @@ class PSModularSymbolSpace(Module):
         on the last divisor.
 
         """
-        if self.coefficient_module().is_symk():
-            raise ValueError("Not implemented for symk yet")
 
         k = self.coefficient_module()._k
         p = self.prime()
@@ -737,12 +735,15 @@ class PSModularSymbolSpace(Module):
             D[g] += mu_1
             t = t + mu_1 * gam - mu_1
 
-        for g in manin.gens()[1:]:
-            print g,"--",D[g]
-
-        mu = t.solve_diff_eqn()
         Id = manin.gens()[0]
-        D[Id] = -mu
+        if not self.coefficient_module().is_symk():
+            mu = t.solve_diff_eqn()
+            D[Id] = -mu
+        else:
+            if self.coefficient_module()._k == 0:
+                D[Id] = self.coefficient_module().random_element()
+            else:
+                raise ValueError("Not implemented for symk with k>0 yet")
 
         return self(D)
 
