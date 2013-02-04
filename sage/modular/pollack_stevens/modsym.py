@@ -697,7 +697,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
     def _find_alpha(self, p, k, M=None, ap=None, new_base_ring=None, ordinary=True, check=True, find_extraprec=True):
         r"""
         Finds `alpha`, a `U_p` eigenvalue, which is found as a root of
-        the polynomial `x^2 - ap * x + p^(k+1)`.
+        the polynomial `x^2 - ap * x + p^(k+1)*chi(p)`.
 
         INPUT:
 
@@ -748,7 +748,13 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             ap = self.Tq_eigenvalue(p, check=check)
         if check and ap.valuation(p) > 0:
             raise ValueError("p is not ordinary")
-        poly = PolynomialRing(ap.parent(), 'x')([p**(k+1), -ap, 1])
+
+        chi = self._map._codomain._character
+        if chi is not None:
+            eps = chi[0](p)
+        else:
+            eps = 1
+        poly = PolynomialRing(ap.parent(), 'x')([p**(k+1) * eps, -ap, 1])
         if new_base_ring is None:
             # These should actually be completions of disc.parent()
             if p == 2:
@@ -849,6 +855,16 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: phis = phi.p_stabilize(p,M = prec,ordinary=False)
             sage: phis.Tq_eigenvalue(5)
             5 + 5^2 + 2*5^3 + O(5^4)
+
+        A complicated example (with nontrivial character)::
+
+            sage: chi = DirichletGroup(24)([-1, -1, -1])
+            sage: f = Newforms(chi,names='a')[0]
+            sage: phi = f.PS_modular_symbol()
+            sage: phi11, h11 = phi.completions(11,5)[0]
+            sage: phi11s = phi11.p_stabilize()
+            sage: phi11s.is_Tq_eigensymbol(11)         
+            True
         """
         if check:
             p = self._get_prime(p, alpha)
