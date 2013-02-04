@@ -751,7 +751,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 
         chi = self._map._codomain._character
         if chi is not None:
-            eps = chi[0](p)
+            eps = chi(p)
         else:
             eps = 1
         poly = PolynomialRing(ap.parent(), 'x')([p**(k+1) * eps, -ap, 1])

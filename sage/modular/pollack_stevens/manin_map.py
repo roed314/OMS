@@ -839,8 +839,8 @@ class ManinMap(object):
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Sym^0 Q^2            
         """
         manin = V.source()
-        S01 = Sigma0(1)
-        pmat = S01([p,0,0,1])
+        S0 = Sigma0(self._codomain._act._Np)
+        pmat = S0([p,0,0,1])
         D = {}
         scalar = 1/alpha
         one = scalar.parent()(1)

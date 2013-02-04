@@ -1379,6 +1379,7 @@ cdef class WeightKAction(Action):
       for more details.
     - ``adjuster`` -- a callable object that turns matrices into 4-tuples.
     - ``on_left`` -- whether this action should be on the left.
+    - ``dettwist`` -- a power of the determinant to twist by
     - ``padic`` -- if True, define an action of p-adic matrices (not just integer ones)
 
     OUTPUT:
@@ -1389,7 +1390,7 @@ cdef class WeightKAction(Action):
 
         sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
     """
-    def __init__(self, Dk, character, adjuster, on_left, padic=False):
+    def __init__(self, Dk, character, adjuster, on_left, dettwist, padic=False):
         r"""
         Initialization.
 
@@ -1400,43 +1401,23 @@ cdef class WeightKAction(Action):
         self._k = Dk._k
 #        if self._k < 0: raise ValueError("k must not be negative")
         self._adjuster = adjuster
-        if isinstance(character, tuple):
-            if len(character) != 2:
-                raise ValueError("character must have length 2")
-            if character[0] is None and character[1] is None:
-                self._character = None
-                self._Np = Dk._p
-            else:
-                chr = character[0]
-                dettwist = character[1]
-                if chr is None:
-                    self._character = lambda a, b, c, d: (a*d - b*c)**dettwist
-
-                elif dettwist is None:
-                    self._character = lambda a, b, c, d: chr(a)
-                else:
-                    self._character = lambda a, b, c, d: chr(a) * (a*d - b*c)**dettwist
-
-                if chr is None:
-                    self._Np = Dk._p
-                else:
-                    self._Np = Dk._p * chr.conductor()
-        else:
-            self._character = character
-            self._Np = Dk._p # need to get conductor somehow in the case character = lambda g: ...
+        self._character = character
+        self._dettwist = dettwist
         self._p = Dk._p
         self._symk = Dk.is_symk()
         self._actmat = {}
         self._maxprecs = {}
-        if self._symk:
-            m = 1 # all of M2Z acts
+        if character is None:
+            self._Np = ZZ(1) # all of M2Z acts
         else:
-            m = self._p # Sigma0(p) acts
+            self._Np = character.modulus()
+        if not self._symk:
+            self._Np = self._Np.lcm(self._p)
 
         if padic:
-            Action.__init__(self, Sigma0(m, base_ring=Dk.base_ring(), adjuster=self._adjuster), Dk, on_left, operator.mul)
+            Action.__init__(self, Sigma0(self._Np, base_ring=Dk.base_ring(), adjuster=self._adjuster), Dk, on_left, operator.mul)
         else:
-            Action.__init__(self, Sigma0(m, base_ring=ZZ, adjuster=self._adjuster), Dk, on_left, operator.mul)
+            Action.__init__(self, Sigma0(self._Np, base_ring=ZZ, adjuster=self._adjuster), Dk, on_left, operator.mul)
 
     def clear_cache(self):
         r"""
@@ -1504,27 +1485,27 @@ cdef class WeightKAction(Action):
             mats[M] = A
             return A
 
-    cpdef _check_mat(self, a, b, c, d):
-        r"""
-        
-
-        INPUT:
-
-        - ``a``, ``b``, ``c``, ``d`` -- integers, playing the role of
-          the corresponding entries of the `2 \times 2` matrix that is
-          acting.
-
-        EXAMPLES::
-
-            sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
-        """
-        if a*d == b*c:
-            raise ValueError("zero determinant")
-        if not self._symk:
-            if self._p.divides(a):
-                raise ValueError("p divides a")
-            if not self._Np.divides(c):
-                raise ValueError("Np does not divide c")
+#    cpdef _check_mat(self, a, b, c, d):
+#        r"""
+#        
+#
+#        INPUT:
+#
+#        - ``a``, ``b``, ``c``, ``d`` -- integers, playing the role of
+#          the corresponding entries of the `2 \times 2` matrix that is
+#          acting.
+#
+#        EXAMPLES::
+#
+#            sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
+#        """
+#        if a*d == b*c:
+#            raise ValueError("zero determinant")
+#        if not self._symk:
+#            if self._p.divides(a):
+#                raise ValueError("p divides a")
+#            if not self._Np.divides(c):
+#                raise ValueError("Np does not divide c")
 
     cpdef _compute_acting_matrix(self, g, M):
         r"""
@@ -1606,7 +1587,9 @@ cdef class WeightKAction_vector(WeightKAction):
         # the changering here is annoying, but otherwise we have to change ring each time we multiply
         B = B.change_ring(self.codomain().base_ring())
         if self._character is not None:
-            B *= self._character(a, b, c, d)
+            B *= self._character(a)
+        if self._dettwist is not None:
+            B *= (a*d - b*c)**(self._dettwist)
         return B
 
     cpdef _call_(self, _v, g):
@@ -1763,7 +1746,7 @@ cdef class WeightKAction_long(WeightKAction):
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
         _a, _b, _c, _d = self._adjuster(g)
-        if self._character is not None: raise NotImplementedError
+        #if self._character is not None: raise NotImplementedError
         # self._check_mat(_a, _b, _c, _d)
         cdef long k = self._k
         cdef Py_ssize_t row, col, M = _M
@@ -1794,6 +1777,8 @@ cdef class WeightKAction_long(WeightKAction):
                 B._mat[M*col + row] = zmod_poly_get_coeff_ui(t, row)
             if col < M - 1:
                 zmod_poly_mul_trunc_n(t, t, scale, M)
+        if self._character is not None:
+            B = B * self._character(_a,_b,_c,_d)
         return B
 
     cpdef _call_(self, _v, g):

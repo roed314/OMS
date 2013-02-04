@@ -46,7 +46,7 @@ class Distributions_factory(UniqueFactory):
     - ``adjuster`` -- None or callable that turns 2x2 matrices into a 4-tuple
     - ``act_on_left`` -- bool (default: False)
     """
-    def create_key(self, k, p=None, prec_cap=None, base=None, character=None, adjuster=None, act_on_left=False):
+    def create_key(self, k, p=None, prec_cap=None, base=None, character=None, adjuster=None, act_on_left=False, dettwist=None):
         """
         EXAMPLES::
 
@@ -56,8 +56,7 @@ class Distributions_factory(UniqueFactory):
             sage: TestSuite(Distributions).run()
         """
         k = ZZ(k)
-        if adjuster is None:
-            adjuster = _default_adjuster()
+
         if p is None:
             try:
                 p = base.prime()
@@ -65,17 +64,28 @@ class Distributions_factory(UniqueFactory):
                 raise ValueError("You must specify a prime")
         else:
             p = ZZ(p)
+        
         if base is None:
             if prec_cap is None:
                 base = ZpCA(p)
             else:
                 base = ZpCA(p, prec_cap)
+        
         if prec_cap is None:
             try:
                 prec_cap = base.precision_cap()
             except AttributeError:
                 raise ValueError("You must specify a base or precision cap")
-        return (k, p, prec_cap, base, character, adjuster, act_on_left, False)
+
+        if adjuster is None:
+            adjuster = _default_adjuster()
+
+        if dettwist is not None:
+            dettwist = ZZ(dettwist)
+            if dettwist == 0: 
+                dettwist = None
+
+        return (k, p, prec_cap, base, character, adjuster, act_on_left, dettwist)
 
     def create_object(self, version, key):
         """
@@ -158,7 +168,7 @@ class Distributions_abstract(Module):
         Space of 17-adic distributions with k=2 action and precision cap 100
     """
     def __init__(self, k, p=None, prec_cap=None, base=None, character=None, \
-                 adjuster=None, act_on_left=False, symk=False):
+                 adjuster=None, act_on_left=False, dettwist=None):
         """
         INPUT:
 
@@ -166,20 +176,14 @@ class Distributions_abstract(Module):
         - `p`             -- None or prime
         - ``prec_cap``    -- None or positive integer
         - ``base``        -- None or TODO
-        - ``character``   --
-          - None (default)
-          - (chi, None)
-          - (None, n) (n integral)
-          - (chi, n)
-          - lambda (for n half-integral use this form)
+        - ``character``   -- None or Dirichlet character
         - ``adjuster``    -- None or TODO
         - ``act_on_left`` -- bool (default: False)
-        - ``symk``        -- flag to store whether this is a space of Sym^k
-            distributions (which need to be handled slightly differently).
+        - ``dettwist``    -- None or integer (twist by determinant). Ignored for Symk spaces
 
         EXAMPLES::
 
-            sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
+            sage: from sage.modular.pollack_stevens.distributions import Distributions
             sage: D = Distributions(2, 3, 5); D
             Space of 3-adic distributions with k=2 action and precision cap 5
             sage: type(D)
@@ -196,7 +200,7 @@ class Distributions_abstract(Module):
             raise TypeError("base must be a ring")
         from sage.rings.padics.pow_computer import PowComputer_long
         # should eventually be the PowComputer on ZpCA once that uses longs.
-        Dist, WeightKAction = get_dist_classes(p, prec_cap, base, symk)
+        Dist, WeightKAction = get_dist_classes(p, prec_cap, base, self.is_symk())
         self.Element = Dist
         if Dist is Dist_long:
             self.prime_pow = PowComputer_long(p, prec_cap, prec_cap, prec_cap, 0)
@@ -205,13 +209,12 @@ class Distributions_abstract(Module):
         self._p = p
         self._prec_cap = prec_cap
         self._character = character
-        self._symk = symk
         self._adjuster=adjuster
 
-        if symk:
-            self._act = WeightKAction(self, character, adjuster, act_on_left)
+        if self.is_symk() or character is not None:
+            self._act = WeightKAction(self, character, adjuster, act_on_left, dettwist)
         else: 
-            self._act = WeightKAction(self, character, adjuster, act_on_left, padic=True)
+            self._act = WeightKAction(self, character, adjuster, act_on_left, dettwist, padic=True)
 
         self._populate_coercion_lists_(action_list=[self._act])
 
@@ -239,7 +242,7 @@ class Distributions_abstract(Module):
             and other._k == self._k \
             and self._character == other._character \
             and self.base_ring().has_coerce_map_from(other.base_ring()) \
-            and (self._symk or not other._symk):
+            and (self.is_symk() or not other.is_symk()):
             return True
         else:
             return False
@@ -371,7 +374,7 @@ class Distributions_abstract(Module):
             M = self._prec_cap
         elif M > self._prec_cap:
             raise ValueError("M must be less than or equal to the precision cap")
-        elif M < self._prec_cap and self._symk:
+        elif M < self._prec_cap and self.is_symk():
             raise ValueError("Sym^k objects do not support approximation modules")
         return self.base_ring()**M
 
@@ -469,7 +472,7 @@ class Symk_class(Distributions_abstract):
             p = base.prime()
         else:
             p = ZZ(0)
-        Distributions_abstract.__init__(self, k, p, k+1, base, character, adjuster, act_on_left, symk=True)
+        Distributions_abstract.__init__(self, k, p, k+1, base, character, adjuster, act_on_left, None)
 
     def _an_element_(self):
         r"""

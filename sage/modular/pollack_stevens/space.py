@@ -115,9 +115,9 @@ class PSModularSymbols_factory(UniqueFactory):
             if isinstance(group, DirichletCharacter):
                 character = group.minimize_base_ring()
                 group = Gamma0(character.modulus())
-                character = (character, None)
             else:
                 character = None
+
             if weight is None: raise ValueError("you must specify a weight or coefficient module")
 
             if prec_cap is None:
