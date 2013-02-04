@@ -834,7 +834,7 @@ def ps_modsym_from_elliptic_curve(E):
         val[g] = D([plus_sym(ac) + minus_sym(ac) - plus_sym(bd) - minus_sym(bd)])
     return V(val)
 
-def ps_modsym_from_simple_modsym_space(A):
+def ps_modsym_from_simple_modsym_space(A, name="alpha"):
     r"""
     Returns some choice -- only well defined up a nonzero scalar (!) -- of a
     Pollack-Stevens modular symbol that corresponds to ``A``.
@@ -967,6 +967,14 @@ def ps_modsym_from_simple_modsym_space(A):
         ...
         ValueError: A must positive dimension
 
+    We check that forms of nontrivial character are getting handled correctly::
+
+        sage: f = Newforms(Gamma1(13), names='a')[0]                 
+        sage: phi = f.PS_modular_symbol('foo')
+        sage: phi.hecke(7)
+        Modular symbol of level 13 with values in Sym^0 (Number Field in foo with defining polynomial x^2 + 3*x + 3)^2
+        sage: phi.hecke(7).values()
+        [0, 0, 0, 0, 0]
     """
     if A.dimension() == 0:
         raise ValueError, "A must positive dimension"
@@ -981,9 +989,10 @@ def ps_modsym_from_simple_modsym_space(A):
         raise ValueError, "A must be simple"
 
     M = A.ambient_module()
-    w = A.dual_eigenvector()
+    w = A.dual_eigenvector(name)
     K = w.base_ring()
-    V = PSModularSymbols(A.group(), A.weight()-2, base_ring=K, sign=A.sign())
+    chi = A.q_eigenform_character(name)
+    V = PSModularSymbols(chi, A.weight()-2, base_ring=K, sign=A.sign())
     D = V.coefficient_module()
     N = V.level()
     k = V.weight() # = A.weight() - 2

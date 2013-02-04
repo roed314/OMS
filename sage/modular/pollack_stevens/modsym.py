@@ -896,7 +896,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: from sage.modular.pollack_stevens.space import ps_modsym_from_simple_modsym_space
             sage: D = ModularSymbols(67,2,1).cuspidal_submodule().new_subspace().decomposition()[1]
             sage: f = ps_modsym_from_simple_modsym_space(D)
-            sage: f.completions(41,10)
+            sage: S = f.completions(41,10); S
             [(Modular symbol of level 67 with values in Sym^0 Q_41^2, Ring morphism:
               From: Number Field in alpha with defining polynomial x^2 + 3*x + 1
               To:   41-adic Field with capped relative precision 10
@@ -904,6 +904,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
               From: Number Field in alpha with defining polynomial x^2 + 3*x + 1
               To:   41-adic Field with capped relative precision 10
               Defn: alpha |--> 33 + 18*41 + 21*41^2 + 30*41^3 + 12*41^4 + 18*41^5 + 31*41^6 + 15*41^7 + 32*41^9 + O(41^10))]
+            sage: TestSuite(S[0][0]).run()
         """
         K = self.base_ring()
         R = Qp(p,M+10)['x']
@@ -919,7 +920,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             V = self.parent().change_ring(L)
             Dist = V.coefficient_module()
             psi = K.hom([K.gen()],L)
-            embedded_sym = self.__class__(self._map.apply(psi,codomain=Dist, to_moments=True),V, construct=True)
+            embedded_sym = self.parent().element_class(self._map.apply(psi,codomain=Dist, to_moments=True),V, construct=True)
             ans = [embedded_sym,psi]
             return ans
         else:
@@ -929,7 +930,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             Dist = V.coefficient_module()
             for r in roots:
                 psi = K.hom([r],Qp(p,M))
-                embedded_sym = self.__class__(self._map.apply(psi, codomain=Dist, to_moments=True), V, construct=True)
+                embedded_sym = self.parent().element_class(self._map.apply(psi, codomain=Dist, to_moments=True), V, construct=True)
                 ans.append((embedded_sym,psi))
             return ans
 

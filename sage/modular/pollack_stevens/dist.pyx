@@ -1596,8 +1596,6 @@ cdef class WeightKAction_vector(WeightKAction):
         # special case for small precision, large weight
         scale = (b+d*y)/(a+c*y)
         t = (a+c*y)**k # will already have precision M
-        if self._character is not None:
-            t *= self._character(a, b, c, d)
         cdef long row, col
         #tim = verbose("Made matrix",tim)
         for col in range(M):
@@ -1606,7 +1604,10 @@ cdef class WeightKAction_vector(WeightKAction):
             t *= scale
         #verbose("Finished loop",tim)
         # the changering here is annoying, but otherwise we have to change ring each time we multiply
-        return B.change_ring(self.codomain().base_ring())
+        B = B.change_ring(self.codomain().base_ring())
+        if self._character is not None:
+            B *= self._character(a, b, c, d)
+        return B
 
     cpdef _call_(self, _v, g):
         r"""
