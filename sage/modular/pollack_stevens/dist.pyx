@@ -1377,7 +1377,7 @@ cdef class WeightKAction(Action):
       the documentation of
       :class:`sage.modular.pollack_stevens.distributions.Distributions_factory`
       for more details.
-    - ``tuplegen`` -- a callable object that turns matrices into 4-tuples.
+    - ``adjuster`` -- a callable object that turns matrices into 4-tuples.
     - ``on_left`` -- whether this action should be on the left.
     - ``padic`` -- if True, define an action of p-adic matrices (not just integer ones)
 
@@ -1389,7 +1389,7 @@ cdef class WeightKAction(Action):
 
         sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
     """
-    def __init__(self, Dk, character, tuplegen, on_left, padic=False):
+    def __init__(self, Dk, character, adjuster, on_left, padic=False):
         r"""
         Initialization.
 
@@ -1399,7 +1399,7 @@ cdef class WeightKAction(Action):
         """
         self._k = Dk._k
 #        if self._k < 0: raise ValueError("k must not be negative")
-        self._tuplegen = tuplegen
+        self._adjuster = adjuster
         if isinstance(character, tuple):
             if len(character) != 2:
                 raise ValueError("character must have length 2")
@@ -1434,9 +1434,9 @@ cdef class WeightKAction(Action):
             m = self._p # Sigma0(p) acts
 
         if padic:
-            Action.__init__(self, Sigma0(m, base_ring=Dk.base_ring(), tuplegen=self._tuplegen), Dk, on_left, operator.mul)
+            Action.__init__(self, Sigma0(m, base_ring=Dk.base_ring(), adjuster=self._adjuster), Dk, on_left, operator.mul)
         else:
-            Action.__init__(self, Sigma0(m, base_ring=ZZ, tuplegen=self._tuplegen), Dk, on_left, operator.mul)
+            Action.__init__(self, Sigma0(m, base_ring=ZZ, adjuster=self._adjuster), Dk, on_left, operator.mul)
 
     def clear_cache(self):
         r"""
@@ -1576,7 +1576,7 @@ cdef class WeightKAction_vector(WeightKAction):
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
         #tim = verbose("Starting")
-        a, b, c, d = self._tuplegen(g)
+        a, b, c, d = self._adjuster(g)
         # if g.parent().base_ring().is_exact():
         #     self._check_mat(a, b, c, d)
         k = self._k
@@ -1761,7 +1761,7 @@ cdef class WeightKAction_long(WeightKAction):
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
-        _a, _b, _c, _d = self._tuplegen(g)
+        _a, _b, _c, _d = self._adjuster(g)
         if self._character is not None: raise NotImplementedError
         # self._check_mat(_a, _b, _c, _d)
         cdef long k = self._k
