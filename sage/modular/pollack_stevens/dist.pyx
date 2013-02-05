@@ -638,6 +638,14 @@ cdef class Dist_vector(Dist):
             # TODO: This is not quite right if the input is an inexact zero.
             if ordp != 0 and parent.prime() == 0:
                 raise ValueError("can not specify a valuation shift for an exact ring")
+
+        ## RP: if the input has negative valuations everything was crashing so I added
+        ##     this code, but I don't feel good about it.  DOESN'T WORK!!!!
+#        if self.parent().prime() != 0:
+#            p = self.parent().prime()
+#            ordp = min([m.valuation(p) for m in moments])
+#            moments = [p**(-ordp) * moments[a] for a in range(len(moments))]
+
         self._moments = moments
         self.ordp = ordp
 

@@ -370,6 +370,8 @@ class Distributions_abstract(Module):
             ...
             ValueError: rank (=-1) must be nonnegative
         """
+
+#        print "Calling approx_module with self = ",self," and M = ",M
         if M is None:
             M = self._prec_cap
         elif M > self._prec_cap:
@@ -380,7 +382,7 @@ class Distributions_abstract(Module):
 
     def random_element(self, M=None):
         """
-        Return a random element of the M-th approximation module.
+        Return a random element of the M-th approximation module with non-negative valuation.
 
         INPUT:
 
@@ -405,7 +407,14 @@ class Distributions_abstract(Module):
             ...
             ValueError: M must be less than or equal to the precision cap
         """
-        return self(self.approx_module(M).random_element())
+        if self.is_symk():
+            if M == None:
+                M = self._k+1
+            elif M != (self._k+1):
+                raise ValueError("over specifying number of moments in symk")
+        elif M == None:
+                M = self.precision_cap()
+        return self((ZZ**M).random_element())
 
     def clear_cache(self):
         """
