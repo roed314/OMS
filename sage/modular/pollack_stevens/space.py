@@ -730,8 +730,8 @@ class PSModularSymbolSpace(Module):
                 chara = 1
             err = -t.moment(0)/(chara*k*a**(k-1)*c)
             v = [0 for j in range(M)]
-            v[1] = err
-            mu_1 = self.coefficient_module()(v)
+            v[1] = 1
+            mu_1 = err * self.coefficient_module()(v)
             D[g] += mu_1
             t = t + mu_1 * gam - mu_1
 
