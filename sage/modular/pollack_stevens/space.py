@@ -737,7 +737,8 @@ class PSModularSymbolSpace(Module):
             v[1] = err
 #            print "v: ",v
             mu_1 = self.coefficient_module()(v)
-#            print "mu_1: ",mu_1
+            print v
+            print "mu_1: ",mu_1
             D[g] += mu_1
 #            print "Modifying: ",D[g]
             t = t + mu_1 * gam - mu_1
