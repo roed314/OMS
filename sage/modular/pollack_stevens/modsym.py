@@ -546,6 +546,7 @@ class PSModularSymbolElement(ModuleElement):
             except IndexError:
                 raise ValueError("self is zero")
         aq = self._map[g].find_scalar(qhecke._map[g], p, M, check)
+        verbose("Found eigenvalues of %s"%(aq))
         if check:
             verbose("Checking that this is actually an eigensymbol")
             if p is None or M is None:
