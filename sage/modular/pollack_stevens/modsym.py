@@ -1,5 +1,5 @@
 
-#       Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
+#        Copyright (C) 2012 Robert Pollack <rpollack@math.bu.edu>
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #  as published by the Free Software Foundation; either version 2 of

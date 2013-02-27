@@ -364,6 +364,54 @@ class Distributions_abstract(Module):
         """
         return self._prec_cap
 
+    def lift(self, p=None, M=None, new_base_ring=None):
+        """
+        Return distribution space that contains lifts with given p,
+        precision cap M, and base ring new_base_ring.
+
+        INPUT:
+
+        - `p` -- prime or None
+        - `M` -- nonnegative integer or None
+        - ``new_base_ring`` -- ring or None
+
+        EXAMPLES::
+
+            sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
+            sage: D = Symk(0, Qp(7)); D
+            Sym^0 Q_7^2
+            sage: D.lift(M=20)
+            Space of 7-adic distributions with k=0 action and precision cap 20
+            sage: D.lift(p=7, M=10)
+            Space of 7-adic distributions with k=0 action and precision cap 10
+            sage: D.lift(p=7, M=10, new_base_ring=QpCR(7,15)).base_ring()
+            7-adic Field with capped relative precision 15
+        """
+        if self._character is not None:
+            if self._character.base_ring() != QQ:
+            # need to change coefficient ring for character
+                raise NotImplementedError
+        if M is None:
+            M = self._prec_cap + 1
+
+        # sanitize new_base_ring. Don't want it to end up being QQ!
+        if new_base_ring is None:
+            new_base_ring = self.base_ring()
+        try:
+            pp = new_base_ring.prime()
+        except AttributeError:
+            pp = None
+
+        if p is None and pp is None:
+            raise ValueError("You must specify a prime")
+        elif pp is None:
+            new_base_ring = QpCR(p, M)
+        elif p is None:
+            p = pp
+        elif p != pp:
+            raise ValueError("Inconsistent primes")
+        return Distributions(k=self._k, p=p, prec_cap=M, base=new_base_ring, character=self._character, adjuster=self._adjuster, act_on_left=self._act.is_left())
+
     @cached_method
     def approx_module(self, M=None):
         """
@@ -433,15 +481,12 @@ class Distributions_abstract(Module):
             ...
             ValueError: M must be less than or equal to the precision cap
         """
-        if self.is_symk():
-            if M == None:
-                M = self._k+1
-            elif M != (self._k+1):
-                raise ValueError("over specifying number of moments in symk")
-        elif M == None:
-                M = self.precision_cap()
-        return self((ZZ**M).random_element())
-
+        if M == None:
+            M = self.precision_cap()
+        R = self.base_ring().integer_ring()
+        return self((R**M).random_element())
+##        return self(self.approx_module(M).random_element())
+        
     def clear_cache(self):
         """
         Clear some caches that are created only for speed purposes.
@@ -549,7 +594,7 @@ class Symk_class(Distributions_abstract):
         else:
             V = '(%s)^2'%(self.base_ring())
         s = "Sym^%s %s" % (self._k, V)
-        if self._dettwist is not None:
+        if self._dettwist is not None and self._dettwist != 0:
             s += " * det^%s" % self._dettwist
         if self._character is not None:
             s += " twisted by %s" % self._character
@@ -608,53 +653,6 @@ class Symk_class(Distributions_abstract):
             raise ValueError("New base ring (%s) does not have a coercion from %s" % (new_base_ring, self.base_ring()))
         return self.change_ring(new_base_ring)
 
-    def lift(self, p=None, M=None, new_base_ring=None):
-        """
-        Return distribution space that contains lifts with given p,
-        precision cap M, and base ring new_base_ring.
-
-        INPUT:
-
-        - `p` -- prime or None
-        - `M` -- nonnegative integer or None
-        - ``new_base_ring`` -- ring or None
-
-        EXAMPLES::
-
-            sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
-            sage: D = Symk(0, Qp(7)); D
-            Sym^0 Q_7^2
-            sage: D.lift(M=20)
-            Space of 7-adic distributions with k=0 action and precision cap 20
-            sage: D.lift(p=7, M=10)
-            Space of 7-adic distributions with k=0 action and precision cap 10
-            sage: D.lift(p=7, M=10, new_base_ring=QpCR(7,15)).base_ring()
-            7-adic Field with capped relative precision 15
-        """
-        if self._character is not None:
-            if self._character.base_ring() != QQ:
-            # need to change coefficient ring for character
-                raise NotImplementedError
-        if M is None:
-            M = self._prec_cap + 1
-
-        # sanitize new_base_ring. Don't want it to end up being QQ!
-        if new_base_ring is None:
-            new_base_ring = self.base_ring()
-        try:
-            pp = new_base_ring.prime()
-        except AttributeError:
-            pp = None
-
-        if p is None and pp is None:
-            raise ValueError("You must specify a prime")
-        elif pp is None:
-            new_base_ring = QpCR(p, M)
-        elif p is None:
-            p = pp
-        elif p != pp:
-            raise ValueError("Inconsistent primes")
-        return Distributions(k=self._k, p=p, prec_cap=M, base=new_base_ring, character=self._character, adjuster=self._adjuster, act_on_left=self._act.is_left())
 
 class Distributions_class(Distributions_abstract):
     r"""
