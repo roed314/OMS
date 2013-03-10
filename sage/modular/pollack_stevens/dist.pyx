@@ -990,6 +990,13 @@ cdef class Dist_vector(Dist):
                 ans._moments = V([R(a // scalar) for a in v])
             else:
                 ans._moments = V([R(a) for a in v])
+            v = ans._moments
+            N = len(ans._moments)
+            prec_loss = max([N-j-v[j].precision_absolute() for j in range(N)])
+            #            print "precision loss = ",prec_loss
+            if prec_loss > 0:
+                ans._moments = ans._moments[:(N-prec_loss)]
+            print ans
         return ans
 
     #def lift(self):
