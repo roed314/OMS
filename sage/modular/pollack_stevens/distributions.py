@@ -29,7 +29,7 @@ from sage.structure.unique_representation import UniqueRepresentation
 import operator
 import sage.rings.ring as ring
 
-from sage.modular.pollack_stevens.sigma0 import _default_adjuster
+from sigma0 import _default_adjuster #sage.modular.pollack_stevens.
 
 class Distributions_factory(UniqueFactory):
     """
@@ -454,7 +454,7 @@ class Distributions_abstract(Module):
         if M is None:
             M = self._prec_cap
         elif M > self._prec_cap:
-            raise ValueError("M must be less than or equal to the precision cap")
+            raise ValueError("M(=%s) must be less than or equal to the precision cap (=%s)"%(M,self._prec_cap))
         elif M < self._prec_cap and self.is_symk():
             raise ValueError("Sym^k objects do not support approximation modules")
         return self.base_ring()**M

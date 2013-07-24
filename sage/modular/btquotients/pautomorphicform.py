@@ -1,5 +1,3 @@
-from sage.modular.btquotients.btquotient import *
-from sage.modular.btquotients.ocmodule import *
 #########################################################################
 #       Copyright (C) 2011 Cameron Franc and Marc Masdeu
 #
@@ -7,6 +5,7 @@ from sage.modular.btquotients.ocmodule import *
 #
 #                  http://www.gnu.org/licenses/
 #########################################################################
+from sage.modular.btquotients.btquotient import *
 from collections import namedtuple
 from sage.structure.element import Element, ModuleElement
 from sage.structure.parent import Parent
@@ -25,14 +24,18 @@ from sage.modular.hecke.all import (AmbientHeckeModule, HeckeSubmodule, HeckeMod
 from sage.rings.infinity import Infinity
 import sage.rings.arith as arith
 import sage.modular.hecke.hecke_operator
-from sage.modular.pollack_stevens.distributions import Distributions, Symk
 from sage.misc.misc import verbose, cputime
 from sage.structure.parent import Parent
 from itertools import imap,starmap,izip
-from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
 from operator import mul
 
-use_ps_dists = True
+use_ps_dists = False
+
+if use_ps_dists:
+    from sage.modular.pollack_stevens.distributions import Distributions, Symk
+    from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
+else:
+    from sage.modular.btquotients.ocmodule import *
 
 def eval_dist_at_powseries(phi,f):
     """
@@ -96,32 +99,14 @@ def eval_dist_at_powseries(phi,f):
         return phi.evaluate_at_poly(f)
 
 # Need this to be pickleable
-class _btquot_adjuster(Sigma0ActionAdjuster):
-    """
-    Callable object that turns matrices into 4-tuples.
-
-    Since the modular symbol and harmonic cocycle code use different
-    conventions for group actions, this function is used to make sure
-    that actions are correct for harmonic cocycle computations.
-
-    EXAMPLES::
-
-        sage: from sage.modular.btquotients.pautomorphicform import _btquot_adjuster
-        sage: adj = _btquot_adjuster()
-        sage: adj(matrix(ZZ,2,2,[1..4]))
-        (4, 2, 3, 1)
-    """
-    def __call__(self, g):
+if use_ps_dists:
+    class _btquot_adjuster(Sigma0ActionAdjuster):
         """
-        Turns matrices into 4-tuples.
+        Callable object that turns matrices into 4-tuples.
 
-        INPUT:
-
-        - ``g`` - a 2x2 matrix
-
-        OUTPUT:
-
-        A 4-tuple encoding the entries of ``g``.
+        Since the modular symbol and harmonic cocycle code use different
+        conventions for group actions, this function is used to make sure
+        that actions are correct for harmonic cocycle computations.
 
         EXAMPLES::
 
@@ -130,8 +115,27 @@ class _btquot_adjuster(Sigma0ActionAdjuster):
             sage: adj(matrix(ZZ,2,2,[1..4]))
             (4, 2, 3, 1)
         """
-        a,b,c,d = g.list()
-        return tuple([d, b, c, a])
+        def __call__(self, g):
+            """
+            Turns matrices into 4-tuples.
+
+            INPUT:
+
+            - ``g`` - a 2x2 matrix
+
+            OUTPUT:
+
+            A 4-tuple encoding the entries of ``g``.
+
+            EXAMPLES::
+
+                sage: from sage.modular.btquotients.pautomorphicform import _btquot_adjuster
+                sage: adj = _btquot_adjuster()
+                sage: adj(matrix(ZZ,2,2,[1..4]))
+                (4, 2, 3, 1)
+            """
+            a,b,c,d = g.list()
+            return tuple([d, b, c, a])
 
 class HarmonicCocycleElement(HeckeModuleElement):
     r"""

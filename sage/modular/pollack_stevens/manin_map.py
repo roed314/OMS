@@ -42,10 +42,36 @@ sage: f(M2Z([2,3,4,5]))
 from sage.rings.arith import convergents
 from sage.misc.misc import verbose
 from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2, Matrix_integer_2x2
-from sigma0 import Sigma0
+from sigma0 import Sigma0,Sigma0Element
 from fund_domain import t00, t10, t01, t11, Id, basic_hecke_matrix, M2Z
 from sage.matrix.matrix_space import MatrixSpace
 from sage.rings.integer_ring import ZZ
+from sage.parallel.decorate import fork,parallel
+from sage.modular.pollack_stevens.distributions import Distributions
+from sys import stdout
+from operator import methodcaller
+from sage.structure.sage_object import load
+
+def fast_dist_act(v,g,acting_matrix = None):
+    if g is not None and g == 1:
+        ans = v._moments
+    try:
+        if acting_matrix is None:
+            ans = v._moments.apply_map(methodcaller('lift')) * v.parent().acting_matrix(g,len(v._moments))
+        else:
+            ans = v._moments.apply_map(methodcaller('lift')) * acting_matrix
+    except AttributeError, TypeError:
+        ans = (v * g)._moments
+    assert len(ans) > 0
+    return ans
+
+@parallel
+def f_par(mmap,v,g):
+    try:
+        return sum((fast_dist_act(mmap[h],A) for h,A in v))
+    except TypeError:
+        return sum((mmap[h] * A for h,A in v))
+
 
 def unimod_matrices_to_infty(r, s):
     r"""
@@ -269,16 +295,25 @@ class ManinMap(object):
         L = self._manin.relations(B)
         # could raise KeyError if B is not a generator
         if len(L) == 0:
-            t = self._codomain.zero_element()
+            t = self._codomain(0)
         else:
             c, A, g = L[0]
             try:
-                g1 = self._dict[self._manin.reps(g)] * A
+                mrep = self._manin.reps(g)
+                val = self._dict[mrep]
+                try:
+                    g1 = self._codomain(fast_dist_act(val),A)
+                except TypeError:
+                    g1 = val * A
+
             except ValueError:
                 print "%s is not in Sigma0" % A
             t = g1 * c
             for c, A, g in L[1:]:
-                g1 = self._dict[self._manin.reps(g)] * A
+                try:
+                    g1 = self._codomain(fast_dist_act(self._dict[self._manin.reps(g)],A))
+                except TypeError:
+                    g1 = self._dict[self._manin.reps(g)] * A
                 t += g1 * c
         return t
 
@@ -354,9 +389,11 @@ class ManinMap(object):
             sage: len(f._dict)
             38
         """
+        verbose('Computing full data...')
         for B in self._manin.reps():
             if not self._dict.has_key(B):
                 self._dict[B] = self._compute_image_from_gens(B)
+        verbose('Done')
 
     def __add__(self, right):
         r"""
@@ -562,7 +599,7 @@ class ManinMap(object):
         # v2: a list of unimodular matrices whose divisors add up to {a/c} - {infty}
         v2 = unimod_matrices_to_infty(a,c)
         # ans: the value of self on A
-        ans = self._codomain.zero_element()
+        ans = self._codomain(0)
         # This loop computes self({b/d}-{infty}) by adding up the values of self on elements of v1
         for B in v1:
             ans = ans + self._eval_sl2(B)
@@ -675,7 +712,10 @@ class ManinMap(object):
         # we should eventually replace the for loop with a call to apply_many
         keys = [ky for ky in sd.iterkeys()]
         for ky in keys:
-            D[ky] = self(gamma*ky) * gamma
+            try:
+                D[ky] = self._codomain(fast_dist_act(self(gamma*ky),gamma))
+            except TypeError:
+                D[ky] = self(gamma*ky) * gamma
         return self.__class__(self._codomain, self._manin, D, check=False)
 
     def normalize(self):
@@ -752,7 +792,7 @@ class ManinMap(object):
             D[ky] = val.specialize(*args)
         return self.__class__(self._codomain.specialize(*args), self._manin, D, check=False)
 
-    def hecke(self, ell, algorithm = 'prep'):
+    def hecke(self, ell, algorithm = 'prep', _parallel = False, fname = None):
         r"""
         Return the image of this Manin map under the Hecke operator `T_{\ell}`.
 
@@ -784,25 +824,52 @@ class ManinMap(object):
             sage: phi.Tq_eigenvalue(7,7,10)
             -2
         """
-        self.compute_full_data()
-        self.normalize()
+        verbose('parallel = %s'%_parallel)
+        self.compute_full_data() # Why?
+        self.normalize() # Why?
         M = self._manin
+
         if algorithm == 'prep':
             ## psi will denote self | T_ell
             psi = {}
-            for g in M.gens():
-                ## v is a dictionary so that the value of self | T_ell
-                ## on g is given by
-                ## sum_h sum_A self(h) * A
-                ## where h runs over all coset reps and A runs over
-                ## the entries of v[h] (a list)
-                # verbose("prepping for T_%s: %s"%(ell, g), level = 2)
-                v = M.prep_hecke_on_gen(ell, g)
-                psi[g] = self._codomain.zero_element()
-                for h in M:
-                    for A in v[h]:
-                        psi[g] += self[h] * A
-                psi[g].normalize()
+            if _parallel:
+                input_vector = [(self,list(M.prep_hecke_on_gen_list(ell,g)),g) for g in M.gens()]
+                par_vector = f_par(input_vector)
+                for inp,outp in par_vector:
+                    psi[inp[0][2]] = self._codomain(outp)
+                    psi[inp[0][2]].normalize()
+            elif fname is not None:
+                import cPickle as pickle
+                for i in range(ell):
+                    try:
+                        print 'Loading %s/%s'%(i,ell)
+                        data = pickle.load( open(fname+'_%s.sobj'%i) )
+                        #data load(fname + '_%s.sobj'%i)
+                        print 'Done!!'
+                    except MemoryError:
+                        verbose('Memory error while loading file!')
+                        raise MemoryError
+                    for g in M.gens():
+                        mprep = data[g] #M.prep_hecke_on_gen_list(ell,g)
+                        h,actmat = mprep[0]
+                        psi_g = fast_dist_act( self[h],None,actmat )
+                        for h,actmat in mprep[1:]:
+                            psi_g += fast_dist_act( self[h], None,actmat )
+                        psi_g = self._codomain(psi_g)
+                        #psi_g = self._codomain(sum((fast_dist_act(self[h], A,actmat) for h,A,actmat in mprep),self._codomain(0)._moments))
+                        try:
+                            psi[g] += psi_g
+                        except KeyError:
+                            psi[g] = psi_g
+                        psi[g].normalize()
+            else: # The default, which should be used for most settings which do not strain memory.
+                for g in M.gens():
+                    try:
+                        psi_g = self._codomain(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0)._moments))
+                    except TypeError:
+                        psi_g = sum((self[h] * A for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0))
+                    psi_g.normalize()
+                    psi[g] = psi_g
             return self.__class__(self._codomain, self._manin, psi, check=False)
         elif algorithm == 'naive':
             S0N = Sigma0(self._manin.level())
@@ -812,6 +879,8 @@ class ManinMap(object):
             if self._manin.level() % ell != 0:
                 psi += self._right_action(S0N([ell,0,0,1]))
             return psi.normalize()
+        else:
+            raise ValueError,'Algorithm must be either "naive" or "prep"'
 
     def p_stabilize(self, p, alpha, V):
         r"""

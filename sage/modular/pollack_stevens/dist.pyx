@@ -24,7 +24,6 @@ from sage.misc.prandom import random
 from sage.functions.other import floor
 from sage.structure.element cimport RingElement, Element
 import operator
-#from sage.modular.overconvergent.pollack.S0p import S0
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.rings.padics.padic_capped_absolute_element cimport pAdicCappedAbsoluteElement
 from sage.rings.padics.padic_capped_relative_element cimport pAdicCappedRelativeElement
@@ -34,21 +33,20 @@ from sage.rings.rational cimport Rational
 from sage.misc.misc import verbose, cputime
 from sage.rings.infinity import Infinity
 
-cdef extern from "zn_poly/zn_poly.h":
-    pass
-from sage.libs.flint.zmod_poly cimport *, zmod_poly_t
-from sage.libs.flint.long_extras cimport *
+include "sage/ext/cdefs.pxi"
+include "sage/ext/interrupt.pxi"
+include "sage/libs/flint/fmpz_poly.pxi"
+include "sage/ext/stdsage.pxi"
+
+from sage.libs.flint.nmod_poly cimport nmod_poly_init2_preinv,nmod_poly_set_coeff_ui,nmod_poly_inv_series,nmod_poly_mullow,nmod_poly_pow_trunc,nmod_poly_get_coeff_ui,nmod_poly_t
+
+from sage.libs.flint.ulong_extras cimport *
 
 from sigma0 import Sigma0
 
 cdef long overflow = 1 << (4*sizeof(long)-1)
 cdef long underflow = -overflow
 cdef long maxordp = (1L << (sizeof(long) * 8 - 2)) - 1
-
-r"""
-include "stdsage.pxi"
-include "cdefs.pxi"
-"""
 
 def get_dist_classes(p, prec_cap, base, symk):
     r"""
@@ -900,6 +898,7 @@ cdef class Dist_vector(Dist):
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
+        return self # DEBUG
         if not self.parent().is_symk(): # non-classical
             V = self._moments.parent()
             R = V.base_ring()
@@ -998,7 +997,6 @@ cdef class Dist_vector(Dist):
             #            print "precision loss = ",prec_loss
             if prec_loss > 0:
                 ans._moments = ans._moments[:(N-prec_loss)]
-            print ans
         return ans
 
     #def lift(self):
@@ -1069,7 +1067,7 @@ cdef class Dist_long(Dist):
         for i in range(len(moments)):
             self._moments[i] = moments[i]
         self.relprec = M
-        self.prime_pow = <PowComputer_long?>parent.prime_pow
+        self.prime_pow = <PowComputer_class?>parent.prime_pow
         #gather = 2**(4*sizeof(long)-1) // p**len(moments)
         #if gather >= len(moments):
         #    gather = 0
@@ -1516,8 +1514,8 @@ cdef class WeightKAction(Action):
                 A = mats[maxprec][:M,:M] # submatrix; might want to reduce precisions
                 mats[M] = A
                 return A
-            if M < 2*maxprec:
-                maxprec = 2*maxprec
+            if M < 30: # This should not be hard-coded
+                maxprec = max([M,2*maxprec]) # This may be wasting memory
             else:
                 maxprec = M
             self._maxprecs[g] = maxprec
@@ -1633,6 +1631,9 @@ cdef class WeightKAction_vector(WeightKAction):
             B *= self._character(a)
         if self._dettwist is not None:
             B *= (a*d - b*c)**(self._dettwist)
+        try:
+            B = B.apply_map(operator.methodcaller('lift'))
+        except AttributeError: pass
         return B
 
     cpdef _call_(self, _v, g):
@@ -1660,13 +1661,19 @@ cdef class WeightKAction_vector(WeightKAction):
         # hashing on arithmetic_subgroup_elements is by str
         if self.is_left():
             _v,g = g,_v
+        if g == 1:
+            return _v
         cdef Dist_vector v = <Dist_vector?>_v
         cdef Dist_vector ans = v._new_c()
         #try:
         #    g.set_immutable()
         #except AttributeError:
         #    pass
-        ans._moments = v._moments * self.acting_matrix(g, len(v._moments))
+        try:
+            v_moments = v._moments.apply_map(operator.methodcaller('lift'))
+        except AttributeError:
+            v_moments = v._moments
+        ans._moments = v_moments * self.acting_matrix(g, len(v_moments))
         ans.ordp = v.ordp
         return ans
 
@@ -1793,33 +1800,32 @@ cdef class WeightKAction_long(WeightKAction):
         # self._check_mat(_a, _b, _c, _d)
         cdef long k = self._k
         cdef Py_ssize_t row, col, M = _M
-        cdef zmod_poly_t t, scale, xM, bdy
-        cdef unsigned long pM = self._p**M
+        cdef nmod_poly_t t, scale, xM, bdy
+        cdef mp_limb_t pM = self._p**M #unsigned long
         cdef long a, b, c, d
         a = mymod(ZZ(_a), pM)
         b = mymod(ZZ(_b), pM)
         c = mymod(ZZ(_c), pM)
         d = mymod(ZZ(_d), pM)
-        cdef double pMinv = pM
-        pMinv = 1.0 / pMinv
-        zmod_poly_init2_precomp(t, pM, pMinv, M)
-        zmod_poly_init2_precomp(scale, pM, pMinv, M)
-        zmod_poly_init2_precomp(xM, pM, pMinv, M+1)
-        zmod_poly_init2_precomp(bdy, pM, pMinv, 2)
-        zmod_poly_set_coeff_ui(xM, M, 1)
-        zmod_poly_set_coeff_ui(t, 0, a)
-        zmod_poly_set_coeff_ui(t, 1, c)
-        zmod_poly_newton_invert(scale, t, M)
-        zmod_poly_set_coeff_ui(bdy, 0, b)
-        zmod_poly_set_coeff_ui(bdy, 1, d)
-        zmod_poly_mul_trunc_n(scale, scale, bdy, M) # scale = (b+dy)/(a+cy)
-        zmod_poly_powmod(t, t, k, xM) # t = (a+cy)^k
+        cdef mp_limb_t pMinv = pM #n_preinvert_limb(pM) DEBUG!!!
+        nmod_poly_init2_preinv(t, pM, pMinv, M)
+        nmod_poly_init2_preinv(scale, pM, pMinv, M)
+        nmod_poly_init2_preinv(xM, pM, pMinv, M+1)
+        nmod_poly_init2_preinv(bdy, pM, pMinv, 2)
+        nmod_poly_set_coeff_ui(xM, M, 1)
+        nmod_poly_set_coeff_ui(t, 0, a)
+        nmod_poly_set_coeff_ui(t, 1, c)
+        nmod_poly_inv_series(scale, t, M)
+        nmod_poly_set_coeff_ui(bdy, 0, b)
+        nmod_poly_set_coeff_ui(bdy, 1, d)
+        nmod_poly_mullow(scale, scale, bdy, M) # scale = (b+dy)/(a+cy)
+        nmod_poly_pow_trunc(t, t, k, M) # t = (a+cy)^k
         cdef SimpleMat B = SimpleMat(M)
         for col in range(M):
             for row in range(M):
-                B._mat[M*col + row] = zmod_poly_get_coeff_ui(t, row)
+                B._mat[M*col + row] = nmod_poly_get_coeff_ui(t, row)
             if col < M - 1:
-                zmod_poly_mul_trunc_n(t, t, scale, M)
+                nmod_poly_mullow(t, t, scale, M)
         if self._character is not None:
             B = B * self._character(_a,_b,_c,_d)
         return B
@@ -1858,6 +1864,9 @@ cdef class WeightKAction_long(WeightKAction):
         for col in range(ans.relprec):
             ans._moments[col] = 0
             for row in range(ans.relprec):
-                ans._moments[col] += mymod(B._mat[entry] * v._moments[row], pM)
+                try:
+                    ans._moments[col] += mymod(B._mat[entry] * v._moments[row].apply_map(operator.methodcaller('lift')), pM)
+                except AttributeError:
+                    ans._moments[col] += mymod(B._mat[entry] * v._moments[row], pM)
                 entry += 1
         return ans

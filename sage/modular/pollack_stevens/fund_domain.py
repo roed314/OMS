@@ -1407,7 +1407,7 @@ class ManinRelations(PSModularSymbolsDomain):
         return mats
 
     @cached_method
-    def prep_hecke_on_gen(self, l, gen):
+    def prep_hecke_on_gen(self, l, gen, modulus = None):
         r"""
         This function does some precomputations needed to compute `T_l`.
 
@@ -1477,8 +1477,6 @@ class ManinRelations(PSModularSymbolsDomain):
         SN = Sigma0(N)
 
         ans = {}
-        for h in self:
-            ans[h] = []
         # this will be the dictionary D above enumerated by coset reps
 
         #  This loop will run thru the l+1 (or l) matrices
@@ -1486,7 +1484,7 @@ class ManinRelations(PSModularSymbolsDomain):
         #  computation described above.
         #  -------------------------------------
         for a in range(l + 1):
-           if (a < l) or (N % l != 0):
+           if ((a < l) or (N % l != 0)) and (modulus is None or a%l == modulus%l):
                # if the level is not prime to l the matrix [l, 0, 0, 1] is avoided.
                gamma = basic_hecke_matrix(a, l)
                t = gamma * gen
@@ -1500,15 +1498,48 @@ class ManinRelations(PSModularSymbolsDomain):
                for A in v:
                    #  B is the coset rep equivalent to A
                    B = self.equivalent_rep(A)
-                   #  C equals A^(-1).
-                   C = A.inverse()
                    #  gaminv = B*A^(-1)
-                   gaminv = B * C
+                   gaminv = B * A.inverse()
                    #  The matrix gaminv * gamma is added to our list in the j-th slot
                    #  (as described above)
                    tmp = SN(gaminv * gamma)
-                   ans[B].append(tmp)
+                   try:
+                       ans[B].append(tmp)
+                   except KeyError:
+                       ans[B] = [tmp]
 
+        return ans
+
+    @cached_method
+    def prep_hecke_on_gen_list(self, l, gen, modulus = None):
+        r"""
+        Returns the precomputation to compute `T_l` in a way that speeds up the hecke calculation.
+
+        Namely, returns a list of the form [h,A].
+
+        INPUT:
+
+        - ``l`` -- a prime
+        - ``gen`` -- a generator
+
+        OUTPUT:
+
+        A list of lists (see above).
+
+        EXAMPLES::
+
+            sage: E = EllipticCurve('11a')
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
+            sage: phi = ps_modsym_from_elliptic_curve(E)
+            sage: phi.values()
+            [-1/5, 3/2, -1/2]
+            sage: M = phi.parent().source()
+            sage: len(M.prep_hecke_on_gen_list(2, M.gens()[0]))
+            4
+        """
+        ans = []
+        for h,vh in self.prep_hecke_on_gen(l,gen,modulus = modulus).iteritems():
+            ans.extend([(h,v) for v in vh])
         return ans
 
 def basic_hecke_matrix(a, l):

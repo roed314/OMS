@@ -41,7 +41,6 @@ from sage.rings.infinity import infinity as oo
 from sage.structure.factory import UniqueFactory
 
 from distributions import Distributions, Symk
-from dist import Dist
 from modsym import PSModularSymbolElement, PSModularSymbolElement_symk, PSModularSymbolElement_dist, PSModSymAction
 from fund_domain import ManinRelations
 from manin_map import ManinMap

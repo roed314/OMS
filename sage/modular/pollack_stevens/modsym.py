@@ -18,7 +18,6 @@ from sage.rings.padics.factory import Qp
 from sage.rings.polynomial.all import PolynomialRing
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.rings.arith import next_prime
-from sage.rings.infinity import infinity
 from sage.misc.misc import verbose
 from sage.rings.padics.precision_error import PrecisionError
 
@@ -27,6 +26,9 @@ from fund_domain import Id
 from manin_map import ManinMap, M2Z
 from padic_lseries import pAdicLseries
 from sigma0 import Sigma0
+from sage.modular.pollack_stevens.distributions import Distributions
+from sage.misc.misc import walltime
+from sage.parallel.decorate import fork
 
 minusproj = [1,0,0,-1]
 
@@ -328,7 +330,7 @@ class PSModularSymbolElement(ModuleElement):
         S0N = Sigma0(self.parent().level())
         return self - self * S0N(minusproj)
 
-    def hecke(self, ell, algorithm="prep"):
+    def hecke(self, ell, algorithm="prep", parallel = False,precomp_data = None):
         r"""
         Returns self | `T_{\ell}` by making use of the precomputations in
         self.prep_hecke()
@@ -374,7 +376,10 @@ class PSModularSymbolElement(ModuleElement):
             sage: all([phi.hecke(p, algorithm='naive') == phi * E.ap(p) for p in [2,3,5,101]])
             True
         """
-        return self.__class__(self._map.hecke(ell, algorithm), self.parent(), construct=True)
+        if precomp_data is not None:
+            return self.__class__(fork(self._map.hecke)(ell, algorithm, _parallel = parallel,fname = precomp_data), self.parent(), construct=True)
+        else:
+            return self.__class__(self._map.hecke(ell, algorithm, _parallel = parallel), self.parent(), construct=True)
 
     def valuation(self, p=None):
         r"""
@@ -953,7 +958,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 ans.append((embedded_sym,psi))
             return ans
 
-    def lift(self, p=None, M=None, alpha=None, new_base_ring=None, algorithm='stevens', eigensymbol=False, check=True):
+    def lift(self, p=None, M=None, alpha=None, new_base_ring=None, algorithm='stevens', eigensymbol=False, check=True, parallel = False,precomp_data = None):
         r"""
         Returns a (`p`-adic) overconvergent modular symbol with
         `M` moments which lifts self up to an Eisenstein error
@@ -1036,7 +1041,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 if alpha is None:
                     alpha = self.Tq_eigenvalue(p, check=check)
                 newM, eisenloss, q, aq = self._find_extraprec(p, M, alpha, check)
-                return self._lift_to_OMS_eigen(p, M, new_base_ring, alpha, newM, eisenloss, q, aq, check)
+                return self._lift_to_OMS_eigen(p, M, new_base_ring, alpha, newM, eisenloss, q, aq, check, parallel = parallel,precomp_data = precomp_data)
             else:
                 return self._lift_to_OMS(p, M, new_base_ring, check)
         elif algorithm == 'greenberg':
@@ -1075,6 +1080,13 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             sage: Phi2 = phi.lift(11,5,algorithm='stevens',eigensymbol=True)
             sage: Phi == Phi2
             True
+            sage: set_verbose(1)
+            sage: E = EllipticCurve('105a1')
+            sage: phi = E.PS_modular_symbol().minus_part()
+            sage: Phi = phi.lift(7,8,algorithm='greenberg')
+            sage: Phi2 = phi.lift(7,8,algorithm='stevens',eigensymbol=True)
+            sage: Phi == Phi2
+            True
 
         An example in higher weight::
 
@@ -1088,9 +1100,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             True
         """
         p = self._get_prime(p)
-
-        #Right now this is actually slower than the Stevens algorithm. Probably due to bad coding.
-        
+        aqinv = ~self.Tq_eigenvalue(p)
         #get a lift that is not a modular symbol
         MS = self.parent()
         gens = MS.source().gens()
@@ -1101,60 +1111,40 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         D = {}
         gens = MS.source().gens()
         for j in range(len(gens)):
-            D[gens[j]] = CMnew( self.values()[j]._moments.list() + [0] )
+            D[gens[j]] = CMnew( self.values()[j]._moments.list() + [0] ).lift(M=2)
         Phi1bad = MSnew(D)
-        
+
         #fix the lift by applying a hecke operator
-        Phi1 = Phi1bad.hecke(p)
-        Phi1 = Phi1/Phi1.Tq_eigenvalue(p)
-        
+        Phi1 = aqinv * Phi1bad.hecke(p, parallel = parallel)
         #if you don't want to compute with good accuracy, stop
-        #otherwise, keep lifting
         if M<=2:
             return Phi1
-        else:
-            padic_prec=M + 1
-            R = Qp(p,padic_prec)
 
-            def green_lift_once(Phi1, self, r):
-                newvalues = []
-                for adist in Phi1.values():
-                    newdist = [R(moment).lift_to_precision(moment.precision_absolute()+1) for moment in adist._moments] + [0]
-                    for s in xrange(self.weight()+1):
-                        newdist[s] = R(self.values()[Phi1.values().index(adist)].moment(s), r+1)
-                    newvalues.append(newdist)
-                D2 = {}
-                for j in range(len(gens)):
-                    D2[ gens[j]] = CMnew( newvalues[j] )
-                Phi2 = MSnew(D2)
-                Phi2 = Phi2.hecke(p)
-                return Phi2 / self.Tq_eigenvalue(p)
- 
-            for r in range(self.weight() + 2, M):
-                Phi1 = green_lift_once(Phi1,self,r)
-        
-            return Phi1
-    
-        D0 = {}
-        for j in range(num_gens):
-            D0[gens[j]] = CM1( [zero_moms[j]] + (M-1)*[0])
+        #otherwise, keep lifting
+        padic_prec=M + 1
+        R = Qp(p,padic_prec)
 
-        #hecke and divide by eigenvalue
-        Phi=MS1(D0)
-        Phi=Phi.hecke(p)/ap
-        #fix first moments, hecke and divide by eigenvalues
-        for k in range(M-1):
-            D1 = {}
-            for j in range(num_gens):
-                vals = Phi.values()[j]
-                newvals=[vals.moment(n) for n in range(M)]
-                newvals[0] = K(zero_moms[j])
-                D1[gens[j]] = CM1(vals)
-            Phi = MS1(D1)
-            Phi=Phi.hecke(p)/ap
-           
-        return Phi
-    
+        for r in range(self.weight() + 2, M+2):
+            newvalues = []
+            for j,adist in enumerate(Phi1.values()):
+                newdist = [R(moment).lift_to_precision(moment.precision_absolute()+1) for moment in adist._moments]
+                if r <= M:
+                    newdist.append([0])
+                for s in xrange(self.weight()+1):
+                    newdist[s] = R(self.values()[j].moment(s), r+2)
+                newvalues.append(newdist)
+            D2 = {}
+            for j in range(len(gens)):
+                D2[ gens[j]] = CMnew( newvalues[j] ).lift(M = min([M,r]))
+            Phi2 = MSnew(D2)
+            Phi2 = aqinv * Phi2.hecke(p, parallel = parallel)
+            verbose('Error = O(p^%s)'%(Phi1-Phi2).valuation())
+            Phi1 = Phi2
+        for j,adist in enumerate(Phi1.values()):
+            for s in xrange(self.weight() + 1):
+                Phi1.values()[j]._moments[s] = self.values()[j].moment(s)
+        return Phi1 #.reduce_precision(M) # Fix this!!
+
     def _lift_greenberg2(self, p, M, new_base_ring=None, check=False):
     #this is a slower version of the _lift_greenberg that tries not to
     #instantiate a bunch of parents. It turns out to be actually slower.
@@ -1329,7 +1319,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             newM += -s
         return newM, eisenloss, q, aq
 
-    def _lift_to_OMS_eigen(self, p, M, new_base_ring, ap, newM, eisenloss, q, aq, check):
+    def _lift_to_OMS_eigen(self, p, M, new_base_ring, ap, newM, eisenloss, q, aq, check, parallel = False,precomp_data = None):
         r"""
         Returns Hecke-eigensymbol OMS lifting self -- self must be a
         `p`-ordinary eigensymbol
@@ -1374,27 +1364,48 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
 #        Phi = Phi * p**s
 
         ## Act by Hecke to ensure values are in D and not D^dag after sovling difference equation        
-        verbose("Applying Hecke")
-        apinv = ~ap
-        Phi = apinv * Phi.hecke(p)
+        # verbose("Calculating input vector")
+        # input_vector = []
+        # for g in self._map._manin.gens():
+        #     input_vector.append(([(se,A) for h,A in M.prep_hecke_on_gen_list(p,g)],g))
 
-        verbose(Phi._show_malformed_dist("naive lift"), level=2)
-        verbose(Phi._show_malformed_dist("after reduction"), level=2)
+        # verbose("Computing acting matrices")
+        # acting_matrices = {}
+        # for g in Phi._map._manin.gens():
+        #     acting_matrices[g] = Phi._map._codomain.acting_matrix(g,Phi._map._codomain.precision_cap())
+
+        verbose("Applying Hecke")
+
+        apinv = ~ap
+        t_start = walltime()
+        Phi = apinv * Phi.hecke(p, parallel = parallel,precomp_data = precomp_data)
+        t_end = walltime(t_start)
+        # Estimate the total time to complete
+        eta = (t_end * (newM + 1))/(60*60)
+        verbose("Estimated time to complete: %s hours"%eta)
 
         ## Killing eisenstein part
         verbose("Killing eisenstein part with q = %s"%(q))
+
         k = self.parent().weight()
-        Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q))
-        verbose(Phi._show_malformed_dist("Eisenstein killed"), level=2)
+        Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q, parallel = parallel))
+        #verbose(Phi._show_malformed_dist("Eisenstein killed"), level=2)
 
         ## Iterating U_p
         verbose("Iterating U_p")
-        Psi = apinv * Phi.hecke(p)
+        t_start = walltime()
+        Psi = apinv * Phi.hecke(p, parallel = parallel,precomp_data = precomp_data)
+        t_end = walltime(t_start)
+        # Estimate the total time to complete
+        eta = (t_end * (newM + 1))/(60*60)
+        verbose("Estimated time to complete (second estimate): %s hours"%eta)
+
+
         attempts = 0
         while (Phi != Psi) and (attempts < 2*newM):
             verbose("%s attempt"%(attempts+1))
             Phi = Psi
-            Psi = Phi.hecke(p) * apinv 
+            Psi = Phi.hecke(p, parallel = parallel,precomp_data = precomp_data) * apinv
             attempts += 1
         if attempts >= 2*newM:
             raise RuntimeError("Precision problem in lifting -- applied U_p many times without success")
@@ -1403,7 +1414,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         return Phi.reduce_precision(M)
         
     def p_stabilize_and_lift(self, p=None, M=None, alpha=None, ap=None, new_base_ring=None, \
-                               ordinary=True, algorithm=None, eigensymbol=False, check=True):
+                               ordinary=True, algorithm=None, eigensymbol=False, check=True, parallel = False):
         """
         `p`-stabilizes and lifts self
 
@@ -1461,7 +1472,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         # Now we can stabilize
         self = self.p_stabilize(p=p, alpha=alpha,ap=ap, M=newM, new_base_ring = new_base_ring, check=check)
         # And use the standard lifting function for eigensymbols
-        return self._lift_to_OMS_eigen(p=p, M=M, new_base_ring=new_base_ring, ap=alpha, newM=newM, eisenloss=eisenloss, q=q, aq=aq, check=check)
+        return self._lift_to_OMS_eigen(p=p, M=M, new_base_ring=new_base_ring, ap=alpha, newM=newM, eisenloss=eisenloss, q=q, aq=aq, check=check, parallel = parallel)
 
 class PSModularSymbolElement_dist(PSModularSymbolElement):
 

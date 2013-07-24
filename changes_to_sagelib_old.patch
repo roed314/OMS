@@ -5,6 +5,24 @@
 # Parent  8352a4055d80dc42d481f6f0f549532d0e155872
 Changes to Sage library for Pollack-Stevens
 
+diff --git a/sage/libs/flint/ulong_extras.pxd b/sage/libs/flint/ulong_extras.pxd
+--- a/sage/libs/flint/ulong_extras.pxd
++++ b/sage/libs/flint/ulong_extras.pxd
+@@ -1,7 +1,7 @@
+ include "sage/ext/stdsage.pxi"
+ 
+ from sage.libs.flint.flint cimport *
+-
++from sage.libs.flint.nmod_poly cimport mp_limb_t
+ 
+ cdef extern from "flint/ulong_extras.h":
+ 
+@@ -18,3 +18,4 @@
+ 
+     cdef void n_factor(n_factor_t * factors, unsigned long n, int proved)
+     cdef void n_factor_init(n_factor_t * factors)
++    cdef mp_limb_t n_preinvert_limb(mp_limb_t n)
+
 diff --git a/module_list.py b/module_list.py
 --- a/module_list.py
 +++ b/module_list.py
@@ -16,7 +34,7 @@ diff --git a/module_list.py b/module_list.py
 +              sources = ['sage/modular/pollack_stevens/dist.pyx'],
 +              libraries = ['flint','gmp','zn_poly'],
 +              extra_compile_args=['-std=c99', '-D_XPG6'],
-+              include_dirs = [SAGE_INC + 'FLINT/'],
++              include_dirs = [SAGE_INC + 'flint/'],
 +              depends = flint_depends),
 +
      ################################
@@ -90,20 +108,10 @@ diff --git a/sage/modular/modform/element.py b/sage/modular/modform/element.py
      def _defining_modular_symbols(self):
          """
          Return the modular symbols space corresponding to self.
-diff --git a/sage/modular/overconvergent/all.py b/sage/modular/overconvergent/all.py
---- a/sage/modular/overconvergent/all.py
-+++ b/sage/modular/overconvergent/all.py
-@@ -2,4 +2,6 @@
- 
- from genus0 import OverconvergentModularForms
- 
-+from pollack.all import *
-+
- from hecke_series import hecke_series
 diff --git a/sage/rings/padics/padic_ZZ_pX_CR_element.pyx b/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
 --- a/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
 +++ b/sage/rings/padics/padic_ZZ_pX_CR_element.pyx
-@@ -2239,6 +2239,39 @@
+@@ -2263,6 +2263,39 @@
          # for now, a simple implementation
          return self * (~right)
  
@@ -146,7 +154,7 @@ diff --git a/sage/rings/padics/padic_ZZ_pX_CR_element.pyx b/sage/rings/padics/pa
 diff --git a/sage/rings/padics/padic_capped_absolute_element.pyx b/sage/rings/padics/padic_capped_absolute_element.pyx
 --- a/sage/rings/padics/padic_capped_absolute_element.pyx
 +++ b/sage/rings/padics/padic_capped_absolute_element.pyx
-@@ -1372,7 +1372,7 @@
+@@ -1402,7 +1402,7 @@
          else:
              return self
  
@@ -155,7 +163,7 @@ diff --git a/sage/rings/padics/padic_capped_absolute_element.pyx b/sage/rings/pa
          """
          Returns the valuation of ``self``, ie the largest power of `p`
          dividing ``self``.
-@@ -1402,7 +1402,8 @@
+@@ -1432,7 +1432,8 @@
          """
          # We override this, rather than using the valuation in
          # padic_generic_element, for speed reasons.
@@ -249,26 +257,3 @@ diff --git a/sage/schemes/elliptic_curves/ell_rational_field.py b/sage/schemes/e
      def newform(self):
          r"""
          Same as ``self.modular_form()``.
-diff --git a/setup.py b/setup.py
---- a/setup.py
-+++ b/setup.py
-@@ -744,7 +744,7 @@
-             debug = '--gdb'
- 
-         # call cython, abort if it failed
--        cmd = "cython %s %s --old-style-globals --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I%s -o %s %s"%(debug, cplus, os.getcwd(), outfile, f)
-+        cmd = "cython %s %s --old-style-globals --disable-function-redefinition --embed-positions --directive cdivision=True,autotestdict=False,fast_getattr=True -I'%s' -I%s -o %s %s"%(debug, cplus, os.path.join(SAGE_DEVEL,'sage','sage','ext'), os.getcwd(), outfile, f)
-         r = run_command(cmd)
-         if r:
-             return r
-@@ -962,7 +962,10 @@
-                      'sage.modular.modsym',
-                      'sage.modular.quatalg',
-                      'sage.modular.ssmod',
-+                     'sage.modular.btquotients',
-+                     'sage.modular.pollack_stevens',
-                      'sage.modular.overconvergent',
-+                     'sage.modular.overconvergent.pollack',
-                      'sage.modular.local_comp',
-                      
-                      'sage.monoids',
