@@ -47,6 +47,14 @@ M2ZSpace = MatrixSpace_ZZ_2x2()
 def M2Z(x):
     r"""
     Create an immutable 2x2 integer matrix from x.
+
+    EXAMPLES::
+
+        sage: from sage.modular.pollack_stevens.fund_domain import M2Z
+        sage: print M2Z([1,2,3,4])
+        [1 2]
+        [3 4]
+
     """
     x = M2ZSpace(x)
     x.set_immutable()
@@ -1454,24 +1462,13 @@ class ManinRelations(PSModularSymbolsDomain):
             [-1/5, 3/2, -1/2]
             sage: M = phi.parent().source()
             sage: M.prep_hecke_on_gen(2, M.gens()[0])
-            {[ 1  0]
-            [-1  1]: [], [1 0]
+            {[1 0]
             [0 1]: [[1 0]
             [0 2], [1 1]
             [0 2], [2 0]
             [0 1]], [ 1 -1]
             [-1  2]: [[ 1 -1]
-            [ 0  2]], [ 1  0]
-            [-2  1]: [], [ 0 -1]
-            [ 1  1]: [], [-1 -2]
-            [ 2  3]: [], [ 0 -1]
-            [ 1  3]: [], [-1 -1]
-            [ 2  1]: [], [ 0 -1]
-            [ 1  2]: [], [-2 -1]
-            [ 3  1]: [], [ 1  1]
-            [-1  0]: [], [-1 -1]
-            [ 3  2]: []}
-
+            [ 0  2]]}
         """
         N = self.level()
         SN = Sigma0(N)

@@ -6,8 +6,9 @@ and right action of matrices.
 
 EXAMPLES::
 
+sage: from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
 sage: E = EllipticCurve('11a')
-sage: phi = E.PS_modular_symbol()
+sage: phi = ps_modsym_from_elliptic_curve(E)
 sage: phi
 Modular symbol of level 11 with values in Sym^0 Q^2
 sage: phi.values()
@@ -19,7 +20,7 @@ sage: MR = ManinRelations(11)
 sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
 sage: f = ManinMap(D, MR, data)
 sage: f(M2Z([1,0,0,1]))
-(1 + O(11^2), 2 + O(11))
+(1 + O(11^10), 2 + O(11))
 
 sage: S = Symk(0,QQ)
 sage: MR = ManinRelations(37)
@@ -53,6 +54,28 @@ from operator import methodcaller
 from sage.structure.sage_object import load
 
 def fast_dist_act(v,g,acting_matrix = None):
+    r"""
+    Return the result of the distribution v acted upon by a matrix.
+
+    INPUT:
+
+    - ``v`` -- a distribution
+    - ``g`` -- a matrix in sigma0
+    - ``acting_matrix`` (optional) -- the matrix representing the action, if known
+
+    OUTPUT:
+
+    - The distribution ``v * g``
+
+    EXAMPLES::
+
+        sage: from sage.modular.pollack_stevens.manin_map import fast_dist_act
+        sage: from sage.modular.pollack_stevens.sigma0 import Sigma0
+        sage: D = Distributions(0, 11, 10)
+        sage: v = D([2,1])
+        sage: w = fast_dist_act(v,Sigma0(11)([1,2,11,4])); print w
+        (2 + O(11^2), 8 + 9*11 + O(11^2))
+    """
     if g is not None and g == 1:
         ans = v._moments
     try:
@@ -62,16 +85,8 @@ def fast_dist_act(v,g,acting_matrix = None):
             ans = v._moments.apply_map(methodcaller('lift')) * acting_matrix
     except AttributeError, TypeError:
         ans = (v * g)._moments
-    assert len(ans) > 0
+    #assert len(ans) > 0
     return ans
-
-@parallel
-def f_par(mmap,v,g):
-    try:
-        return sum((fast_dist_act(mmap[h],A) for h,A in v))
-    except TypeError:
-        return sum((mmap[h] * A for h,A in v))
-
 
 def unimod_matrices_to_infty(r, s):
     r"""
@@ -209,7 +224,7 @@ class ManinMap(object):
             sage: f = ManinMap(D, manin, data); f # indirect doctest
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 11-adic distributions with k=0 action and precision cap 10
             sage: f(M2Z([1,0,0,1]))
-            (1 + O(11^2), 2 + O(11))
+            (1 + O(11^10), 2 + O(11))
             
         TESTS:
 
@@ -290,7 +305,7 @@ class ManinMap(object):
             sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
             sage: f = ManinMap(D, MR, data)
             sage: f._compute_image_from_gens(MR.reps()[1])
-            (10 + 10*11 + O(11^2), 8 + O(11))
+            (10 + 10*11 + 10*11^2 + 10*11^3 + 10*11^4 + 10*11^5 + 10*11^6 + 10*11^7 + 10*11^8 + 10*11^9 + O(11^10), 8 + O(11))
         """
         L = self._manin.relations(B)
         # could raise KeyError if B is not a generator
@@ -315,7 +330,7 @@ class ManinMap(object):
                 except TypeError:
                     g1 = self._dict[self._manin.reps(g)] * A
                 t += g1 * c
-        return t
+        return t.normalize()
 
     def __getitem__(self, B):
         r"""
@@ -347,14 +362,14 @@ class ManinMap(object):
             sage: D = Distributions(2, 37, 40)
             sage: f = ManinMap(D, MR, data)
             sage: f.__getitem__(MR.gens()[1])
-            1 + O(37)
+            1 + O(37^40)
             sage: f.__getitem__(MR.gens()[3])
-            0
+            O(37^40)
             sage: f.__getitem__(MR.gens()[5])
-            36 + O(37)
+            36 + 36*37 + 36*37^2 + 36*37^3 + 36*37^4 + 36*37^5 + 36*37^6 + 36*37^7 + 36*37^8 + 36*37^9 + 36*37^10 + 36*37^11 + 36*37^12 + 36*37^13 + 36*37^14 + 36*37^15 + 36*37^16 + 36*37^17 + 36*37^18 + 36*37^19 + 36*37^20 + 36*37^21 + 36*37^22 + 36*37^23 + 36*37^24 + 36*37^25 + 36*37^26 + 36*37^27 + 36*37^28 + 36*37^29 + 36*37^30 + 36*37^31 + 36*37^32 + 36*37^33 + 36*37^34 + 36*37^35 + 36*37^36 + 36*37^37 + 36*37^38 + 36*37^39 + O(37^40)
             sage: f[MR.gens()[5]]
-            36 + O(37)
-            
+            36 + 36*37 + 36*37^2 + 36*37^3 + 36*37^4 + 36*37^5 + 36*37^6 + 36*37^7 + 36*37^8 + 36*37^9 + 36*37^10 + 36*37^11 + 36*37^12 + 36*37^13 + 36*37^14 + 36*37^15 + 36*37^16 + 36*37^17 + 36*37^18 + 36*37^19 + 36*37^20 + 36*37^21 + 36*37^22 + 36*37^23 + 36*37^24 + 36*37^25 + 36*37^26 + 36*37^27 + 36*37^28 + 36*37^29 + 36*37^30 + 36*37^31 + 36*37^32 + 36*37^33 + 36*37^34 + 36*37^35 + 36*37^36 + 36*37^37 + 36*37^38 + 36*37^39 + O(37^40)
+
         """
         try:
             return self._dict[B]
@@ -389,11 +404,9 @@ class ManinMap(object):
             sage: len(f._dict)
             38
         """
-        verbose('Computing full data...')
         for B in self._manin.reps():
             if not self._dict.has_key(B):
                 self._dict[B] = self._compute_image_from_gens(B)
-        verbose('Done')
 
     def __add__(self, right):
         r"""
@@ -418,11 +431,11 @@ class ManinMap(object):
             sage: f = ManinMap(D, manin, data); f
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 11-adic distributions with k=0 action and precision cap 10
             sage: f(M2Z([1,0,0,1]))
-            (1 + O(11^2), 2 + O(11))
+            (1 + O(11^10), 2 + O(11))
             sage: f+f # indirect doctest
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 11-adic distributions with k=0 action and precision cap 10
             sage: (f+f)(M2Z([1,0,0,1]))
-            (2 + O(11^2), 4 + O(11))
+            (2 + O(11^10), 4 + O(11))
         """
         D = {}
         sd = self._dict
@@ -455,11 +468,11 @@ class ManinMap(object):
             sage: f = ManinMap(D, manin, data); f
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 11-adic distributions with k=0 action and precision cap 10
             sage: f(M2Z([1,0,0,1]))
-            (1 + O(11^2), 2 + O(11))
+            (1 + O(11^10), 2 + O(11))
             sage: f-f
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 11-adic distributions with k=0 action and precision cap 10
             sage: (f-f)(M2Z([1,0,0,1]))
-            (0, 0)
+            (O(11^10), O(11))
         
         """
         D = {}
@@ -492,13 +505,12 @@ class ManinMap(object):
             sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
             sage: f = ManinMap(D, manin, data)
             sage: f(M2Z([1,0,0,1]))
-            (1 + O(11^2), 2 + O(11))
+            (1 + O(11^10), 2 + O(11))
             sage: f*2
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 11-adic distributions with k=0 action and precision cap 10
             sage: (f*2)(M2Z([1,0,0,1]))
-            (2 + O(11^2), 4 + O(11))
+            (2 + O(11^10), 4 + O(11))
         """
-#        if isinstance(right, Matrix_integer_2x2):
         if isinstance(right, type(Sigma0(self._manin.level())(MatrixSpace(ZZ,2,2)([1,0,0,1])))):
             return self._right_action(right)
 
@@ -549,14 +561,14 @@ class ManinMap(object):
             sage: f = ManinMap(D, MR, data)
             sage: A = MR.reps()[1]
             sage: f._eval_sl2(A)
-            (10 + 10*11 + O(11^2), 8 + O(11))
-            
+            (10 + 10*11 + 10*11^2 + 10*11^3 + 10*11^4 + 10*11^5 + 10*11^6 + 10*11^7 + 10*11^8 + 10*11^9 + O(11^10), 8 + O(11))
+
         """
         SN = Sigma0(self._manin._N)
         A = M2Z(A)
         B = self._manin.equivalent_rep(A)
         gaminv = SN(B * M2Z(A).inverse())
-        return self[B] * gaminv
+        return (self[B] * gaminv).normalize()
 
     def __call__(self, A):
         """
@@ -580,7 +592,7 @@ class ManinMap(object):
             sage: f = ManinMap(D, manin, data); f
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Space of 11-adic distributions with k=0 action and precision cap 10
             sage: f(M2Z([1,0,0,1]))
-            (1 + O(11^2), 2 + O(11))
+            (1 + O(11^10), 2 + O(11))
             
             sage: S = Symk(0,QQ)
             sage: MR = ManinRelations(37)
@@ -608,7 +620,7 @@ class ManinMap(object):
         # and so in the end ans becomes self({b/d}-{a/c}) = self({A(0)} - {A(infty)}
         for B in v2:
             ans = ans - self._eval_sl2(B)
-        return ans
+        return ans.normalize()
 
     def apply(self, f, codomain=None, to_moments=False):
         r"""
@@ -686,11 +698,12 @@ class ManinMap(object):
         EXAMPLES::
 
             sage: from sage.modular.pollack_stevens.manin_map import ManinMap, M2Z, Sigma0
+            sage: from sage.modular.pollack_stevens.space import ps_modsym_from_simple_modsym_space
             sage: S01 = Sigma0(1)
             sage: f = Newforms(7, 4)[0]
             sage: f.modular_symbols(1)
             Modular Symbols subspace of dimension 1 of Modular Symbols space of dimension 3 for Gamma_0(7) of weight 4 with sign 1 over Rational Field
-            sage: phi = f.PS_modular_symbol()._map
+            sage: phi = ps_modsym_from_simple_modsym_space(f.modular_symbols(1))._map
             sage: psi = phi._right_action(S01([2,3,4,5])); psi
             Map from the set of right cosets of Gamma0(7) in SL_2(Z) to Sym^2 Q^2
 
@@ -701,7 +714,6 @@ class ManinMap(object):
             sage: g = f._right_action(S01([1,2,0,1]))
             sage: g
             Map from the set of right cosets of Gamma0(17) in SL_2(Z) to Sym^2 Q^2
-
             sage: x = sage.modular.pollack_stevens.fund_domain.M2Z([2,3,1,0])
             sage: g(x)
             (17, -34, 69)
@@ -731,10 +743,10 @@ class ManinMap(object):
             sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
             sage: f = ManinMap(D, manin, data)
             sage: f._dict[M2Z([1,0,0,1])]
-            (1 + O(11^2), 2 + O(11))
+            (1 + O(11^10), 2 + O(11))
             sage: g = f.normalize()
             sage: g._dict[M2Z([1,0,0,1])]
-            (1 + O(11^2), 2 + O(11))
+            (1 + O(11^10), 2 + O(11))
             
         """
         sd = self._dict
@@ -758,10 +770,11 @@ class ManinMap(object):
             sage: data  = {M2Z([1,0,0,1]):D([1,2]), M2Z([0,-1,1,3]):D([3,5]), M2Z([-1,-1,3,2]):D([1,1])}
             sage: f = ManinMap(D, manin, data)
             sage: f._dict[M2Z([1,0,0,1])]
-            (1 + O(11^2), 2 + O(11))
+            (1 + O(11^10), 2 + O(11))
             sage: g = f.reduce_precision(1)
             sage: g._dict[M2Z([1,0,0,1])]
-            1 + O(11)            
+            1 + O(11^10)
+
         """
         D = {}
         sd = self._dict
@@ -824,9 +837,8 @@ class ManinMap(object):
             sage: phi.Tq_eigenvalue(7,7,10)
             -2
         """
-        verbose('parallel = %s'%_parallel)
-        self.compute_full_data() # Why?
-        self.normalize() # Why?
+        self.compute_full_data()
+        self.normalize()
         M = self._manin
 
         if algorithm == 'prep':
@@ -834,6 +846,12 @@ class ManinMap(object):
             psi = {}
             if _parallel:
                 input_vector = [(self,list(M.prep_hecke_on_gen_list(ell,g)),g) for g in M.gens()]
+                def f0(mmap,v,g):
+                    try:
+                        return sum((fast_dist_act(mmap[h],A) for h,A in v))
+                    except TypeError:
+                        return sum((mmap[h] * A for h,A in v))
+                f_par = parallel(f0)
                 par_vector = f_par(input_vector)
                 for inp,outp in par_vector:
                     psi[inp[0][2]] = self._codomain(outp)
@@ -856,7 +874,6 @@ class ManinMap(object):
                         for h,actmat in mprep[1:]:
                             psi_g += fast_dist_act( self[h], None,actmat )
                         psi_g = self._codomain(psi_g)
-                        #psi_g = self._codomain(sum((fast_dist_act(self[h], A,actmat) for h,A,actmat in mprep),self._codomain(0)._moments))
                         try:
                             psi[g] += psi_g
                         except KeyError:
@@ -870,7 +887,7 @@ class ManinMap(object):
                         psi_g = sum((self[h] * A for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0))
                     psi_g.normalize()
                     psi[g] = psi_g
-            return self.__class__(self._codomain, self._manin, psi, check=False)
+            return self.__class__(self._codomain, self._manin, psi, check=False).normalize()
         elif algorithm == 'naive':
             S0N = Sigma0(self._manin.level())
             psi = self._right_action(S0N([1,0,0,ell]))
@@ -910,15 +927,18 @@ class ManinMap(object):
             sage: f.p_stabilize(5,1,V)
             Map from the set of right cosets of Gamma0(11) in SL_2(Z) to Sym^0 Q^2            
         """
+
         manin = V.source()
         S0 = Sigma0(self._codomain._act._Np)
         pmat = S0([p,0,0,1])
         D = {}
         scalar = 1/alpha
         one = scalar.parent()(1)
+        W = self._codomain.change_ring(scalar.parent())
         for g in map(M2Z, manin.gens()):
             # we use scale here so that we don't need to define a
             # construction functor in order to scale by something
             # outside the base ring.
-            D[g] = self._eval_sl2(g).scale(one) - (self(pmat * g) * pmat).scale(1/alpha)
-        return self.__class__(self._codomain.change_ring(scalar.parent()), manin, D, check=False)
+            D[g] = W(self._eval_sl2(g) - (self(pmat * g) * pmat).scale(scalar))
+        ans = self.__class__(W, manin, D, check=False)
+        return ans
